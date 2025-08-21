@@ -12,7 +12,7 @@ scrape_configs:
   - job_name: 'nodejs-app'
     static_configs:
       - targets: 
-        - 'website:3001'
+        - '172.22.0.1:3002'
         - 'trading-engine:9091'
         - 'market-data:9092'
         - 'monitoring:9093'
