@@ -57,9 +57,8 @@ COPY --chown=marketdata:nodejs src/lib ./src/lib
 # Copy configuration files
 COPY --chown=marketdata:nodejs tsconfig.json ./
 
-# Copy environment files from the container directory
-COPY --chown=marketdata:nodejs containers/market-data/.env ./
-COPY --chown=marketdata:nodejs containers/market-data/.env.local ./
+# Environment files are handled by docker-compose env_file directive
+# No need to copy them into the container
 
 # Create directories for volumes
 RUN mkdir -p logs data historical analysis predictions correlations && \
