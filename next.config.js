@@ -16,6 +16,10 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Skip environment validation during Docker builds
+  env: {
+    SKIP_ENV_VALIDATION: process.env.SKIP_ENV_VALIDATION,
+  },
   images: {
     unoptimized: true,
   },

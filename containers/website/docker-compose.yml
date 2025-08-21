@@ -6,6 +6,8 @@ services:
     build:
       context: ../..
       dockerfile: containers/website/Dockerfile
+      args:
+        - SKIP_ENV_VALIDATION=true
     ports:
       - "3001:3001"
     environment:

@@ -17,7 +17,16 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build Next.js application
+# Create minimal environment for build
+ENV NODE_ENV=production
+ENV NEXTAUTH_URL=http://localhost:3001
+ENV NEXTAUTH_SECRET=docker-build-secret
+ENV DATABASE_URL="file:./dev.db"
+
+# Skip build-time database connection requirements
+ENV SKIP_ENV_VALIDATION=true
+
+# Build Next.js application with build-time env vars
 RUN npm run build
 
 # Production image, copy all the files and run next
