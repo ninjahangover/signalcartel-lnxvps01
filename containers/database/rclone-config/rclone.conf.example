@@ -1,0 +1,77 @@
+# SignalCartel rclone Configuration Examples
+# Copy this file to rclone.conf and configure your preferred storage provider
+
+# === AWS S3 Example ===
+[aws-s3]
+type = s3
+provider = AWS
+access_key_id = YOUR_ACCESS_KEY
+secret_access_key = YOUR_SECRET_KEY
+region = us-east-1
+storage_class = STANDARD_IA
+
+# === Google Drive Example ===
+[google-drive]
+type = drive
+client_id = YOUR_CLIENT_ID.apps.googleusercontent.com
+client_secret = YOUR_CLIENT_SECRET
+scope = drive
+token = {"access_token":"YOUR_ACCESS_TOKEN"}
+
+# === Dropbox Example ===
+[dropbox]
+type = dropbox
+token = {"access_token":"YOUR_DROPBOX_TOKEN"}
+
+# === OneDrive Example ===
+[onedrive]
+type = onedrive
+client_id = YOUR_CLIENT_ID
+client_secret = YOUR_CLIENT_SECRET
+token = {"access_token":"YOUR_ACCESS_TOKEN"}
+
+# === Backblaze B2 Example ===
+[b2]
+type = b2
+account = YOUR_ACCOUNT_ID
+key = YOUR_APPLICATION_KEY
+hard_delete = true
+
+# === Google Cloud Storage Example ===
+[gcs]
+type = google cloud storage
+project_number = YOUR_PROJECT_NUMBER
+service_account_file = /config/gcs-service-account.json
+location = us
+
+# === Azure Blob Storage Example ===
+[azure]
+type = azureblob
+account = YOUR_STORAGE_ACCOUNT
+key = YOUR_ACCOUNT_KEY
+
+# === SFTP/FTP Server Example ===
+[sftp-backup]
+type = sftp
+host = backup.yourserver.com
+user = signalcartel
+port = 22
+key_file = /config/ssh-key
+
+# === Local Network Storage Example ===
+[nas]
+type = local
+nounc = true
+
+# === Multiple Provider Setup Example ===
+[signalcartel-primary]
+type = s3
+provider = AWS
+access_key_id = YOUR_PRIMARY_KEY
+secret_access_key = YOUR_PRIMARY_SECRET
+region = us-east-1
+
+[signalcartel-secondary]
+type = drive
+client_id = YOUR_BACKUP_CLIENT_ID
+client_secret = YOUR_BACKUP_SECRET

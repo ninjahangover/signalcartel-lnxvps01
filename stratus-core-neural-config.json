@@ -1,0 +1,23 @@
+{
+  "strategyType": "STRATUS_CORE_NEURAL",
+  "symbol": "BTC/USD", 
+  "config": {
+    "neuralLayers": 2,
+    "learningRate": 0.05,
+    "lookbackWindow": 10,
+    "confidenceThreshold": 0.4,
+    "adaptationPeriod": 20,
+    "riskMultiplier": 1.5,
+    "stopLoss": 3.0,
+    "takeProfit": 4.0
+  },
+  "description": "Aggressive Neural Network settings for rapid learning and trading",
+  "notes": [
+    "Simplified network (2 layers) for faster processing",
+    "High learning rate (0.05) for quick adaptation",
+    "Short lookback (10) for responsive signals",
+    "Low confidence threshold (0.4) vs standard (0.7)",
+    "Fast adaptation cycle (20 periods vs 50)",
+    "Increased risk multiplier (1.5) for larger positions"
+  ]
+}

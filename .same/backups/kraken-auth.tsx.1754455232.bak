@@ -1,0 +1,213 @@
+"use client";
+
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import { Alert } from './ui/alert';
+import { Badge } from './ui/badge';
+import { Progress } from './ui/progress';
+import krakenApiService from '../lib/kraken-api-service';
+
+interface KrakenAuthProps {
+  onConnectionChange?: (isConnected: boolean) => void;
+}
+
+export default function KrakenAuth({ onConnectionChange }: KrakenAuthProps) {
+  const [apiKey, setApiKey] = useState('');
+  const [apiSecret, setApiSecret] = useState('');
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectionProgress, setConnectionProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [accountInfo, setAccountInfo] = useState<any>(null);
+
+  const handleConnect = async () => {
+    if (isConnected) {
+      // Disconnect
+      krakenApiService.disconnect();
+      setIsConnected(false);
+      setAccountInfo(null);
+      setError(null);
+      onConnectionChange?.(false);
+      return;
+    }
+
+    if (!apiKey.trim() || !apiSecret.trim()) {
+      setError('Please enter both API key and secret');
+      return;
+    }
+
+    setIsConnecting(true);
+    setError(null);
+    setConnectionProgress(0);
+
+    try {
+      // Simulate connection progress
+      setConnectionProgress(25);
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      setConnectionProgress(50);
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Attempt authentication
+      setConnectionProgress(75);
+      const success = await krakenApiService.authenticate(apiKey, apiSecret);
+
+      if (success) {
+        setConnectionProgress(100);
+        setIsConnected(true);
+
+        // Fetch account info
+        const info = await krakenApiService.getAccountInfo();
+        setAccountInfo(info);
+
+        onConnectionChange?.(true);
+
+        // Clear sensitive data from state
+        setApiKey('');
+        setApiSecret('');
+      } else {
+        throw new Error('Authentication failed - Invalid credentials');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Connection failed');
+      setIsConnected(false);
+      onConnectionChange?.(false);
+    } finally {
+      setIsConnecting(false);
+      setConnectionProgress(0);
+    }
+  };
+
+  const getTotalBalanceUSD = () => {
+    if (!accountInfo?.balance) return 0;
+
+    // Mock USD values for demonstration
+    const prices: { [key: string]: number } = {
+      'XXBT': 42000,
+      'XETH': 2500,
+      'XXRP': 0.60,
+      'XLTC': 75,
+      'XDOGE': 0.08,
+      'ZUSD': 1
+    };
+
+    let total = 0;
+    for (const [asset, amount] of Object.entries(accountInfo.balance)) {
+      const price = prices[asset] || 0;
+      total += parseFloat(amount as string) * price;
+    }
+
+    return total;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Kraken API Connection</h2>
+          <p className="text-gray-600">
+            {process.env.NODE_ENV === 'development'
+              ? 'Connect with any credentials to test with mock data'
+              : 'Connect your Kraken account for live trading'}
+          </p>
+        </div>
+        <Badge variant={isConnected ? "default" : "secondary"}>
+          {isConnected ? "CONNECTED" : "DISCONNECTED"}
+        </Badge>
+      </div>
+
+      <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+        <div className="space-y-4">
+          {!isConnected && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  API Key
+                </label>
+                <input
+                  type="text"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  disabled={isConnecting}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                  placeholder="Enter your Kraken API key"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  API Secret
+                </label>
+                <input
+                  type="password"
+                  value={apiSecret}
+                  onChange={(e) => setApiSecret(e.target.value)}
+                  disabled={isConnecting}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                  placeholder="Enter your Kraken API secret"
+                />
+              </div>
+            </div>
+          )}
+
+          {isConnecting && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Connecting to Kraken...</span>
+                <span>{connectionProgress}%</span>
+              </div>
+              <Progress value={connectionProgress} />
+            </div>
+          )}
+
+          {error && (
+            <Alert className="border-red-200 bg-red-50">
+              <div className="text-red-800">{error}</div>
+            </Alert>
+          )}
+
+          <div className="flex space-x-4">
+            <Button
+              onClick={handleConnect}
+              disabled={isConnecting}
+              variant={isConnected ? "destructive" : "default"}
+              className="flex-1"
+            >
+              {isConnecting ? 'Connecting...' : isConnected ? 'Disconnect' : 'Connect to Kraken'}
+            </Button>
+          </div>
+
+          {isConnected && accountInfo && (
+            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <h3 className="text-lg font-semibold text-green-800 mb-2">Connection Successful!</h3>
+              <div className="space-y-2 text-sm text-green-700">
+                <div className="flex justify-between">
+                  <span>Account Status:</span>
+                  <span className="font-medium">Active</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Trading Enabled:</span>
+                  <span className="font-medium">Yes</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total Portfolio Value:</span>
+                  <span className="font-medium">${getTotalBalanceUSD().toLocaleString(undefined, {maximumFractionDigits: 2})}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Open Orders:</span>
+                  <span className="font-medium">{Object.keys(accountInfo.openOrders || {}).length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Data Source:</span>
+                  <span className="font-medium">
+                    {process.env.NODE_ENV === 'development' ? 'Mock Data (Local Dev)' : 'Live API'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

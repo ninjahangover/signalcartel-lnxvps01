@@ -1,0 +1,24 @@
+{
+  "strategyType": "ENHANCED_RSI_PULLBACK",
+  "symbol": "BTC/USD",
+  "config": {
+    "lookback": 2,
+    "lowerBarrier": 43,
+    "lowerThreshold": 65,
+    "upperBarrier": 45,
+    "upperThreshold": 72,
+    "maLength": 70,
+    "atrMultSL": 11,
+    "atrMultTP": 2,
+    "initialCapital": 50,
+    "tradePercentage": 20
+  },
+  "description": "Aggressive RSI settings for first trade testing",
+  "notes": [
+    "Very short RSI lookback (2) for fast signals",
+    "Close barrier spread (43-45) for frequent triggers",
+    "Wide threshold range (65-72) for easier conditions",
+    "Large stop loss (11x ATR) to avoid early exits",
+    "Conservative take profit (2x ATR) for quick wins"
+  ]
+}

@@ -1,0 +1,174 @@
+//@version=5
+strategy("Claude Quantum Oscillator Pro - Live Trading", 
+         shorttitle="CQO-Pro", overlay=false, 
+         default_qty_type=strategy.percent_of_equity, default_qty_value=5,
+         pyramiding=0, initial_capital=50000, commission_type=strategy.commission.percent, commission_value=0.1)
+
+// === QUANTUM OSCILLATOR PARAMETERS ===
+fast_period = input.int(3, title="Fast EMA Period", minval=2, maxval=20, group="Oscillator Settings")
+slow_period = input.int(8, title="Slow EMA Period", minval=5, maxval=50, group="Oscillator Settings")
+signal_period = input.int(3, title="Signal Line Period", minval=2, maxval=20, group="Oscillator Settings")
+overbought_level = input.int(60, title="Overbought Level", minval=50, maxval=90, group="Signal Settings")
+oversold_level = input.int(40, title="Oversold Level", minval=10, maxval=50, group="Signal Settings")
+momentum_threshold = input.float(0.8, title="Momentum Threshold", minval=0.1, maxval=2.0, group="Signal Settings")
+volume_multiplier = input.float(1.1, title="Volume Confirmation", minval=1.0, maxval=3.0, group="Volume Settings")
+
+// === POSITION SIZING & RISK ===
+max_risk_percent = input.float(2.0, title="Max Risk %", minval=0.5, maxval=10.0, group="Risk Management")
+atr_stop_multiplier = input.float(2.5, title="ATR Stop Loss", minval=1.0, maxval=5.0, group="Risk Management")
+atr_target_multiplier = input.float(3.0, title="ATR Take Profit", minval=1.5, maxval=8.0, group="Risk Management")
+
+// === WEBHOOK CONFIGURATION ===
+webhook_url = "https://kraken.circuitcartel.com/webhook/strategy/claude-quantum-oscillator-001"
+strategy_id = "claude-quantum-oscillator-001"
+
+// === TECHNICAL CALCULATIONS ===
+// Quantum Oscillator Formula: ((FastEMA - SlowEMA) / SlowEMA) * 100
+fast_ema = ta.ema(close, fast_period)
+slow_ema = ta.ema(close, slow_period)
+quantum_osc = ((fast_ema - slow_ema) / slow_ema) * 100
+
+// Signal Line: EMA of oscillator values
+signal_line = ta.ema(quantum_osc, signal_period)
+
+// Momentum calculation
+momentum = ta.change(quantum_osc, 1)
+strong_momentum = math.abs(momentum) > momentum_threshold
+
+// Volume confirmation
+avg_volume = ta.sma(volume, 20)
+volume_confirmed = volume > avg_volume * volume_multiplier
+
+// ATR for dynamic stops
+atr = ta.atr(14)
+
+// === ENTRY CONDITIONS ===
+// Bullish: Quantum oscillator crosses above signal line in oversold region
+bullish_crossover = ta.crossover(quantum_osc, signal_line)
+in_oversold_region = quantum_osc < oversold_level
+bullish_entry = bullish_crossover and in_oversold_region and strong_momentum and volume_confirmed
+
+// Bearish: Quantum oscillator crosses below signal line in overbought region
+bearish_crossover = ta.crossunder(quantum_osc, signal_line)
+in_overbought_region = quantum_osc > overbought_level
+bearish_entry = bearish_crossover and in_overbought_region and strong_momentum and volume_confirmed
+
+// === EXIT CONDITIONS ===
+// Exit long when oscillator reaches overbought or crosses below signal
+long_exit = quantum_osc > overbought_level or ta.crossunder(quantum_osc, signal_line)
+
+// Exit short when oscillator reaches oversold or crosses above signal
+short_exit = quantum_osc < oversold_level or ta.crossover(quantum_osc, signal_line)
+
+// === POSITION SIZING ===
+// Calculate position size based on risk percentage
+risk_amount = strategy.equity * (max_risk_percent / 100)
+stop_distance = atr * atr_stop_multiplier
+position_size = risk_amount / stop_distance
+
+// === STRATEGY EXECUTION ===
+if bullish_entry and strategy.position_size == 0
+    entry_price = close
+    stop_price = entry_price - (atr * atr_stop_multiplier)
+    target_price = entry_price + (atr * atr_target_multiplier)
+    
+    strategy.entry("QOscLong", strategy.long, qty=position_size, 
+                  comment="Quantum Long @ " + str.tostring(close, "#.##"))
+    
+    strategy.exit("QOscLongExit", "QOscLong", 
+                 stop=stop_price, limit=target_price,
+                 comment="TP/SL @ " + str.tostring(target_price, "#.##") + "/" + str.tostring(stop_price, "#.##"))
+    
+    // Send webhook alert for BUY signal
+    alert_msg = '{"passphrase": "quantum_signal_2025", "ticker": "' + syminfo.ticker + '", "strategy": {"order_action": "buy", "order_type": "market", "order_price": "' + str.tostring(close) + '", "order_contracts": "' + str.tostring(position_size, "#.####") + '", "type": "buy", "volume": "' + str.tostring(position_size, "#.####") + '", "pair": "' + syminfo.ticker + '", "validate": "true", "quantum_osc": "' + str.tostring(quantum_osc, "#.##") + '", "signal_line": "' + str.tostring(signal_line, "#.##") + '", "momentum": "' + str.tostring(momentum, "#.##") + '", "volume_ratio": "' + str.tostring(volume/avg_volume, "#.##") + '", "stop_loss": "' + str.tostring(stop_price) + '", "take_profit": "' + str.tostring(target_price) + '"}}'
+    
+    alert(alert_msg, alert.freq_once_per_bar)
+
+if bearish_entry and strategy.position_size == 0
+    entry_price = close
+    stop_price = entry_price + (atr * atr_stop_multiplier)
+    target_price = entry_price - (atr * atr_target_multiplier)
+    
+    strategy.entry("QOscShort", strategy.short, qty=position_size, 
+                  comment="Quantum Short @ " + str.tostring(close, "#.##"))
+    
+    strategy.exit("QOscShortExit", "QOscShort", 
+                 stop=stop_price, limit=target_price,
+                 comment="TP/SL @ " + str.tostring(target_price, "#.##") + "/" + str.tostring(stop_price, "#.##"))
+    
+    // Send webhook alert for SELL signal
+    alert_msg = '{"passphrase": "quantum_signal_2025", "ticker": "' + syminfo.ticker + '", "strategy": {"order_action": "sell", "order_type": "market", "order_price": "' + str.tostring(close) + '", "order_contracts": "' + str.tostring(position_size, "#.####") + '", "type": "sell", "volume": "' + str.tostring(position_size, "#.####") + '", "pair": "' + syminfo.ticker + '", "validate": "true", "quantum_osc": "' + str.tostring(quantum_osc, "#.##") + '", "signal_line": "' + str.tostring(signal_line, "#.##") + '", "momentum": "' + str.tostring(momentum, "#.##") + '", "volume_ratio": "' + str.tostring(volume/avg_volume, "#.##") + '", "stop_loss": "' + str.tostring(stop_price) + '", "take_profit": "' + str.tostring(target_price) + '"}}'
+    
+    alert(alert_msg, alert.freq_once_per_bar)
+
+// === MANUAL EXITS ===
+if strategy.position_size > 0 and long_exit
+    strategy.close("QOscLong", comment="Manual Exit Long")
+    alert('{"passphrase": "quantum_signal_2025", "ticker": "' + syminfo.ticker + '", "strategy": {"order_action": "close", "type": "close", "pair": "' + syminfo.ticker + '"}}', alert.freq_once_per_bar)
+
+if strategy.position_size < 0 and short_exit
+    strategy.close("QOscShort", comment="Manual Exit Short")
+    alert('{"passphrase": "quantum_signal_2025", "ticker": "' + syminfo.ticker + '", "strategy": {"order_action": "close", "type": "close", "pair": "' + syminfo.ticker + '"}}', alert.freq_once_per_bar)
+
+// === VISUALIZATION ===
+// Plot quantum oscillator and signal line
+hline(0, "Zero Line", color=color.gray, linestyle=hline.style_dashed)
+hline(overbought_level, "Overbought", color=color.red, linestyle=hline.style_dashed)
+hline(-oversold_level, "Oversold", color=color.green, linestyle=hline.style_dashed)
+
+plot(quantum_osc, "Quantum Oscillator", color=color.blue, linewidth=2)
+plot(signal_line, "Signal Line", color=color.red, linewidth=1)
+
+// Plot entry/exit signals
+plotshape(bullish_entry, title="Bullish Entry", style=shape.triangleup, 
+          location=location.bottom, color=color.green, size=size.small)
+plotshape(bearish_entry, title="Bearish Entry", style=shape.triangledown, 
+          location=location.top, color=color.red, size=size.small)
+
+// === PERFORMANCE TABLE ===
+var table performance_table = table.new(position.top_right, 3, 8, bgcolor=color.white, border_width=1)
+
+if barstate.islast
+    table.cell(performance_table, 0, 0, "Quantum Metrics", text_color=color.white, bgcolor=color.blue)
+    table.cell(performance_table, 1, 0, "Current", text_color=color.white, bgcolor=color.blue)
+    table.cell(performance_table, 2, 0, "Signal", text_color=color.white, bgcolor=color.blue)
+    
+    table.cell(performance_table, 0, 1, "Oscillator", text_color=color.black)
+    table.cell(performance_table, 1, 1, str.tostring(quantum_osc, "#.##"), 
+               text_color=(quantum_osc > 0 ? color.green : color.red))
+    table.cell(performance_table, 2, 1, 
+               (quantum_osc > overbought_level ? "OB" : quantum_osc < -oversold_level ? "OS" : "N"), 
+               text_color=color.black)
+    
+    table.cell(performance_table, 0, 2, "Signal Line", text_color=color.black)
+    table.cell(performance_table, 1, 2, str.tostring(signal_line, "#.##"), text_color=color.black)
+    table.cell(performance_table, 2, 2, 
+               (quantum_osc > signal_line ? "▲" : "▼"), 
+               text_color=(quantum_osc > signal_line ? color.green : color.red))
+    
+    table.cell(performance_table, 0, 3, "Momentum", text_color=color.black)
+    table.cell(performance_table, 1, 3, str.tostring(momentum, "#.##"), 
+               text_color=(momentum > 0 ? color.green : color.red))
+    table.cell(performance_table, 2, 3, 
+               (strong_momentum ? "✓" : "✗"), 
+               text_color=(strong_momentum ? color.green : color.red))
+    
+    table.cell(performance_table, 0, 4, "Volume", text_color=color.black)
+    table.cell(performance_table, 1, 4, str.tostring(volume/avg_volume, "#.##"), text_color=color.black)
+    table.cell(performance_table, 2, 4, 
+               (volume_confirmed ? "✓" : "✗"), 
+               text_color=(volume_confirmed ? color.green : color.red))
+    
+    table.cell(performance_table, 0, 5, "Total Trades", text_color=color.black)
+    table.cell(performance_table, 1, 5, str.tostring(strategy.closedtrades), text_color=color.black)
+    table.cell(performance_table, 2, 5, "", text_color=color.black)
+    
+    table.cell(performance_table, 0, 6, "Win Rate %", text_color=color.black)
+    win_rate = strategy.closedtrades > 0 ? strategy.wintrades/strategy.closedtrades*100 : 0
+    table.cell(performance_table, 1, 6, str.tostring(win_rate, "#.#"), 
+               text_color=(win_rate > 60 ? color.green : win_rate > 40 ? color.orange : color.red))
+    table.cell(performance_table, 2, 6, "", text_color=color.black)
+    
+    table.cell(performance_table, 0, 7, "Strategy ID", text_color=color.black)
+    table.cell(performance_table, 1, 7, strategy_id, text_color=color.blue)
+    table.cell(performance_table, 2, 7, "", text_color=color.black)

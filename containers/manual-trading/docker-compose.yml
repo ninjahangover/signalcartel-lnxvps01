@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  manual-trading:
+    container_name: signalcartel-manual-trading
+    build:
+      context: ../..
+      dockerfile: containers/manual-trading/Dockerfile
+    environment:
+      - NODE_ENV=production
+      - NODE_OPTIONS=--max-old-space-size=1024
+      - ALPACA_API_KEY=${ALPACA_API_KEY}
+      - ALPACA_SECRET_KEY=${ALPACA_SECRET_KEY}
+      - ALPACA_BASE_URL=${ALPACA_BASE_URL}
+      - KRAKEN_WEBHOOK_URL=https://kraken.circuitcartel.com/webhook
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+    volumes:
+      - ../../logs:/app/logs
+      - ../../.env.local:/app/.env.local:ro
+      - ../../prisma:/app/prisma
+      - manual-trading-data:/app/data
+      - trade-history:/app/history
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          memory: 512M
+    networks:
+      - signalcartel-network
+
+volumes:
+  manual-trading-data:
+    driver: local
+  trade-history:
+    driver: local
+
+networks:
+  signalcartel-network:
+    external: true
+    name: signalcartel_signalcartel-network

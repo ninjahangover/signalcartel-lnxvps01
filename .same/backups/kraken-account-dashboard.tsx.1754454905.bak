@@ -1,0 +1,277 @@
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import { Card } from './ui/card';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import krakenApiService from '../lib/kraken-api-service';
+import marketDataService from '../lib/market-data-service';
+
+interface KrakenAccountDashboardProps {
+  isConnected: boolean;
+}
+
+export default function KrakenAccountDashboard({ isConnected }: KrakenAccountDashboardProps) {
+  const [accountData, setAccountData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isConnected) {
+      fetchAccountData();
+    } else {
+      setAccountData(null);
+      setError(null);
+    }
+  }, [isConnected]);
+
+  const fetchAccountData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log('📊 Fetching account data...');
+      const data = await krakenApiService.getAccountInfo();
+      setAccountData(data);
+      console.log('✅ Account data fetched successfully');
+      console.log('🔍 RAW BALANCE DATA FROM KRAKEN:', data.balance);
+
+      // Extract user's assets and start smart market data polling
+      if (data.balance) {
+        const userAssets = Object.keys(data.balance).filter(asset => {
+          const balance = parseFloat(data.balance[asset]);
+          return balance > 0; // Only include assets with positive balance
+        });
+
+        // ALWAYS include Bitcoin even if balance is 0 (for price tracking)
+        if (!userAssets.some(asset => ['XXBT', 'XBT', 'BTC'].includes(asset))) {
+          userAssets.push('XXBT'); // Add Bitcoin
+        }
+
+        console.log('💰 User assets with balance (+ Bitcoin guaranteed):', userAssets);
+
+        // Start market data polling for user's assets (always includes Bitcoin now)
+        marketDataService.startPolling(userAssets);
+      } else {
+        // No balance data - just poll Bitcoin and major pairs
+        console.log('📊 No balance data, polling default pairs including Bitcoin');
+        marketDataService.startPolling();
+      }
+    } catch (err) {
+      console.error('❌ Failed to fetch account data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch account data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getAssetPrice = (asset: string): number => {
+    // Try to get real price from market data service first
+    const pairMap: { [key: string]: string } = {
+      'XXBT': 'XBTUSD',
+      'XETH': 'ETHUSD',
+      'XXRP': 'XRPUSD',
+      'XLTC': 'LTCUSD',
+      'XDOGE': 'DOGEUSD',
+      'ZUSD': 'USD'
+    };
+
+    const tradingPair = pairMap[asset];
+    if (tradingPair && tradingPair !== 'USD') {
+      const marketData = marketDataService.getMarketData(tradingPair);
+      if (marketData && marketData.price > 0) {
+        console.log(`💰 Using REAL price for ${asset}: $${marketData.price}`);
+        return marketData.price;
+      }
+    }
+
+    // USD is always 1
+    if (asset === 'ZUSD' || asset === 'USD') {
+      return 1;
+    }
+
+    // Fallback to approximate current prices if no market data available
+    const fallbackPrices: { [key: string]: number } = {
+      'XXBT': 43500, // Approximate current BTC price
+      'XETH': 2700,  // Approximate current ETH price
+      'XXRP': 0.62,  // Approximate current XRP price
+      'XLTC': 76,    // Approximate current LTC price
+      'XDOGE': 0.08  // Approximate current DOGE price
+    };
+
+    const fallbackPrice = fallbackPrices[asset] || 0;
+    if (fallbackPrice > 0) {
+      console.log(`⚠️ Using FALLBACK price for ${asset}: $${fallbackPrice} (no real market data)`);
+    }
+    return fallbackPrice;
+  };
+
+  const getTotalPortfolioValue = (): number => {
+    if (!accountData?.balance) {
+      console.log('❌ No account balance data available');
+      return 0;
+    }
+
+    let total = 0;
+    console.log('💰 Calculating REAL portfolio value...');
+    console.log('🔍 Account balance data:', accountData.balance);
+
+    for (const [asset, amount] of Object.entries(accountData.balance)) {
+      const numericAmount = parseFloat(amount as string);
+      const price = getAssetPrice(asset);
+      const value = numericAmount * price;
+
+      if (numericAmount > 0) {
+        console.log(`📊 ${asset}: ${numericAmount} × $${price} = $${value.toFixed(2)}`);
+        total += value;
+      } else {
+        console.log(`⚪ ${asset}: ${numericAmount} (zero balance, skipping)`);
+      }
+    }
+
+    console.log(`🎯 TOTAL PORTFOLIO VALUE: $${total.toFixed(2)}`);
+    return total;
+  };
+
+  const formatCurrency = (amount: number) => {
+    return amount.toLocaleString('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2
+    });
+  };
+
+  if (!isConnected) {
+    return (
+      <Card className="p-8">
+        <div className="text-center text-gray-500">
+          <h3 className="text-lg font-semibold mb-2">Account Dashboard</h3>
+          <p>Connect to your Kraken account to view portfolio and trading data</p>
+        </div>
+      </Card>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Card className="p-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading account data...</p>
+        </div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="p-8">
+        <div className="text-center text-red-600">
+          <h3 className="text-lg font-semibold mb-2">Error</h3>
+          <p>{error}</p>
+          <Button onClick={fetchAccountData} className="mt-4">Retry</Button>
+        </div>
+      </Card>
+    );
+  }
+
+  const realPortfolioValue = getTotalPortfolioValue();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Account Overview</h2>
+          <p className="text-gray-600">Real-time account data from Kraken API</p>
+        </div>
+      </div>
+
+      {/* Portfolio Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <Card className="p-4 border-blue-200 bg-blue-50">
+          <h3 className="text-sm font-medium text-blue-700 mb-1">Real Account Value</h3>
+          <p className="text-2xl font-bold text-blue-900">{formatCurrency(realPortfolioValue)}</p>
+          <p className="text-sm text-blue-600">Live from Kraken API</p>
+        </Card>
+
+        <Card className="p-4 border-green-200 bg-green-50">
+          <h3 className="text-sm font-medium text-green-700 mb-1">Available Balance</h3>
+          <p className="text-2xl font-bold text-green-900">
+            {accountData?.balance?.ZUSD ? formatCurrency(parseFloat(accountData.balance.ZUSD)) : '$0.00'}
+          </p>
+          <p className="text-sm text-green-600">USD Available</p>
+        </Card>
+
+        <Card className="p-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-1">Total Assets</h3>
+          <p className="text-2xl font-bold text-gray-900">
+            {accountData?.balance ? Object.keys(accountData.balance).filter(asset => parseFloat(accountData.balance[asset]) > 0).length : 0}
+          </p>
+          <p className="text-sm text-gray-500">Holdings</p>
+        </Card>
+      </div>
+
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="balances" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="balances">Balances</TabsTrigger>
+          <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="balances">
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Real Account Balances</h3>
+            <div className="space-y-3">
+              {accountData?.balance && Object.entries(accountData.balance).map(([asset, amount]) => {
+                const numericAmount = parseFloat(amount as string);
+                const price = getAssetPrice(asset);
+                const value = numericAmount * price;
+
+                if (numericAmount <= 0) return null;
+
+                return (
+                  <div key={asset} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-bold text-blue-600">
+                          {asset.replace('X', '').replace('Z', '')}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium">{asset.replace('X', '').replace('Z', '')}</p>
+                        <p className="text-sm text-gray-600">{numericAmount.toFixed(8)}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">{formatCurrency(value)}</p>
+                      <p className="text-sm text-gray-600">{formatCurrency(price)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="orders">
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Open Orders</h3>
+            <div className="text-center py-8">
+              <p className="text-gray-600">No open orders</p>
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="history">
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+            <div className="text-center py-8">
+              <p className="text-gray-600">Trading history will appear here</p>
+            </div>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

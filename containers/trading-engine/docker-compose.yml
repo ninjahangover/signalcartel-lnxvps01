@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  trading-engine:
+    container_name: signalcartel-trading
+    build:
+      context: ../..
+      dockerfile: containers/trading-engine/Dockerfile
+    environment:
+      - NODE_ENV=production
+      - NODE_OPTIONS=--max-old-space-size=2048
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - ALPACA_PAPER_API_KEY=${ALPACA_PAPER_API_KEY}
+      - ALPACA_PAPER_API_SECRET=${ALPACA_PAPER_API_SECRET}
+    volumes:
+      - ../../logs:/app/logs
+      - ../../.env.local:/app/.env.local:ro
+      - ../../prisma:/app/prisma
+      - ../../strategies:/app/strategies:ro
+      - ../../src/lib:/app/src/lib:ro
+      - ai-models:/app/models
+      - markov-data:/app/markov-chains
+      - strategy-learning:/app/strategy-learning
+      - neural-networks:/app/neural-networks
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "strategy-execution-engine"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          memory: 1G
+    networks:
+      - signalcartel-network
+    # Redis dependency removed - using shared Redis from database container
+
+volumes:
+  ai-models:
+    driver: local
+  markov-data:
+    driver: local
+  strategy-learning:
+    driver: local
+  neural-networks:
+    driver: local
+
+networks:
+  signalcartel-network:
+    external: true
+    name: signalcartel_signalcartel-network

@@ -1,0 +1,125 @@
+// Market Data Schema Extension
+// Add these models to your existing schema.prisma file
+
+model MarketData {
+  id          String   @id @default(cuid())
+  symbol      String
+  timestamp   DateTime @default(now())
+  
+  // Price data
+  open        Float
+  high        Float
+  low         Float
+  close       Float
+  volume      Float
+  
+  // Technical indicators
+  rsi         Float?
+  macd        Float?
+  macdSignal  Float?
+  macdHist    Float?
+  ema20       Float?
+  ema50       Float?
+  sma200      Float?
+  
+  // Market metrics
+  volatility  Float?
+  momentum    Float?
+  trend       String?  // BULLISH, BEARISH, SIDEWAYS
+  
+  // Support/Resistance
+  support     Float?
+  resistance  Float?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([symbol, timestamp])
+  @@index([symbol, createdAt])
+}
+
+model TradingSignal {
+  id            String   @id @default(cuid())
+  symbol        String
+  signalType    String   // BUY, SELL, HOLD
+  triggerPrice  Float
+  currentPrice  Float
+  confidence    Float
+  
+  // Signal details
+  strategy      String   // RSI_OVERSOLD, MACD_CROSS, SUPPORT_BOUNCE, etc
+  reason        String
+  
+  // Execution
+  executed      Boolean  @default(false)
+  executedAt    DateTime?
+  executionPrice Float?
+  
+  // Performance
+  outcome       String?  // WIN, LOSS, PENDING
+  pnl           Float?
+  pnlPercent    Float?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([symbol, createdAt])
+  @@index([executed, createdAt])
+}
+
+model StrategyPerformance {
+  id            String   @id @default(cuid())
+  strategyName  String
+  symbol        String
+  
+  // Performance metrics
+  totalTrades   Int      @default(0)
+  winningTrades Int      @default(0)
+  losingTrades  Int      @default(0)
+  winRate       Float    @default(0)
+  
+  // Financial metrics
+  totalPnl      Float    @default(0)
+  avgWin        Float    @default(0)
+  avgLoss       Float    @default(0)
+  profitFactor  Float    @default(0)
+  sharpeRatio   Float    @default(0)
+  maxDrawdown   Float    @default(0)
+  
+  // Time metrics
+  avgHoldTime   Int?     // in minutes
+  bestTrade     Float?
+  worstTrade    Float?
+  
+  lastUpdated   DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  
+  @@unique([strategyName, symbol])
+  @@index([strategyName])
+  @@index([symbol])
+}
+
+model MarketDataCollection {
+  id            String   @id @default(cuid())
+  symbol        String
+  status        String   // ACTIVE, PAUSED, ERROR
+  
+  // Collection stats
+  dataPoints    Int      @default(0)
+  oldestData    DateTime?
+  newestData    DateTime?
+  
+  // Quality metrics
+  completeness  Float    @default(0) // Percentage of expected data points
+  lastError     String?
+  errorCount    Int      @default(0)
+  
+  // Configuration
+  interval      Int      @default(60) // seconds between collections
+  enabled       Boolean  @default(true)
+  
+  lastCollected DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@unique([symbol])
+}

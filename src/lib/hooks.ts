@@ -1,0 +1,129 @@
+import { useState, useEffect } from 'react';
+import StrategyManager, { Strategy, OptimizationState, LiveTradingState } from './strategy-manager';
+
+// Hook for strategy synchronization
+export function useStrategySync() {
+  const [strategies, setStrategies] = useState<Strategy[]>([]);
+
+  useEffect(() => {
+    const manager = StrategyManager.getInstance();
+
+    const updateStrategies = () => {
+      setStrategies(manager.getStrategies());
+    };
+
+    // Initial load
+    updateStrategies();
+
+    // Subscribe to changes
+    const unsubscribe = manager.subscribe(updateStrategies);
+
+    return unsubscribe;
+  }, []);
+
+  const updateStrategy = (id: string, updates: Partial<Strategy>) => {
+    const manager = StrategyManager.getInstance();
+    manager.updateStrategy(id, updates);
+  };
+
+  return { strategies, updateStrategy };
+}
+
+// Hook for optimization synchronization
+export function useOptimizationSync() {
+  const [optimizationState, setOptimizationState] = useState<OptimizationState>({
+    isRunning: false,
+    currentIteration: 0,
+    totalIterations: 100,
+    bestParameters: {},
+    currentPerformance: 0,
+    history: []
+  });
+
+  useEffect(() => {
+    const manager = StrategyManager.getInstance();
+
+    const updateOptimization = () => {
+      setOptimizationState(manager.getOptimizationState());
+    };
+
+    // Initial load
+    updateOptimization();
+
+    // Subscribe to changes
+    const unsubscribe = manager.subscribe(updateOptimization);
+
+    return unsubscribe;
+  }, []);
+
+  const startOptimization = (strategyId: string) => {
+    const manager = StrategyManager.getInstance();
+    manager.startOptimization(strategyId);
+  };
+
+  const stopOptimization = () => {
+    const manager = StrategyManager.getInstance();
+    manager.stopOptimization();
+  };
+
+  return { optimizationState, startOptimization, stopOptimization };
+}
+
+// Hook for live trading synchronization
+export function useLiveTradingSync() {
+  const [liveTradingState, setLiveTradingState] = useState<LiveTradingState>({
+    isActive: false,
+    activeStrategies: new Set(),
+    totalTrades: 0,
+    totalProfit: 0,
+    riskLevel: 'medium',
+    lastActivity: null
+  });
+
+  useEffect(() => {
+    const manager = StrategyManager.getInstance();
+
+    const updateLiveTrading = () => {
+      setLiveTradingState(manager.getLiveTradingState());
+    };
+
+    // Initial load
+    updateLiveTrading();
+
+    // Subscribe to changes
+    const unsubscribe = manager.subscribe(updateLiveTrading);
+
+    return unsubscribe;
+  }, []);
+
+  const startLiveTrading = () => {
+    const manager = StrategyManager.getInstance();
+    manager.startLiveTrading();
+  };
+
+  const stopLiveTrading = () => {
+    const manager = StrategyManager.getInstance();
+    manager.stopLiveTrading();
+  };
+
+  const toggleStrategy = (strategyId: string) => {
+    const manager = StrategyManager.getInstance();
+    manager.toggleStrategyInLiveTrading(strategyId);
+  };
+
+  return {
+    liveTradingState,
+    startLiveTrading,
+    stopLiveTrading,
+    toggleStrategy
+  };
+}
+
+// Re-export Pine Script hook
+export { usePineScript } from './hooks/use-pine-script';
+
+// Re-export Strategy Execution hook
+export { useStrategyExecution } from './hooks/use-strategy-execution';
+
+// Re-export Strategy Optimizer hook
+export { useStrategyOptimizer } from './hooks/use-strategy-optimizer';

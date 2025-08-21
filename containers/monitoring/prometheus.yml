@@ -1,0 +1,31 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Scrape Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Scrape Node.js application metrics
+  - job_name: 'nodejs-app'
+    static_configs:
+      - targets: 
+        - 'website:3001'
+        - 'trading-engine:9091'
+        - 'market-data:9092'
+        - 'monitoring:9093'
+    metrics_path: '/metrics'
+
+  # Scrape Redis metrics (disabled - causing false security warnings)
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets:
+  #       - 'signalcartel-redis:6379'
+  #       - 'signalcartel-market-redis:6379'
+
+  # Scrape PostgreSQL metrics (if using postgres_exporter)
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['database:9187']

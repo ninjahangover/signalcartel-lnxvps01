@@ -1,0 +1,208 @@
+//@version=5
+strategy("Claude's Quantum Oscillator - Multi-Signal Strategy", shorttitle="Quantum-Osc", overlay=true, 
+         default_qty_type=strategy.percent_of_equity, default_qty_value=2)
+
+// === CLAUDE'S QUANTUM OSCILLATOR STRATEGY ===
+// My secret weapon: Multi-timeframe confluence with volume and momentum
+// Goal: Beat both manual and automated strategies through adaptive signals
+
+// === STRATEGY PARAMETERS ===
+rsi_period = input.int(8, title="RSI Period", minval=3, maxval=21, group="Quantum Core")
+volume_multiplier = input.float(1.5, title="Volume Multiplier", minval=1.0, maxval=3.0, step=0.1, group="Quantum Core")
+momentum_period = input.int(12, title="Momentum Period", minval=5, maxval=25, group="Quantum Core")
+quantum_oscillator = input.int(21, title="Quantum Oscillator", minval=10, maxval=50, group="Quantum Core")
+
+// Signal levels
+oversold_level = input.int(25, title="Oversold Level", minval=15, maxval=35, group="Signal Levels")
+overbought_level = input.int(75, title="Overbought Level", minval=65, maxval=85, group="Signal Levels")
+oversold_exit = input.int(55, title="Oversold Exit", minval=45, maxval=65, group="Signal Levels")
+overbought_exit = input.int(45, title="Overbought Exit", minval=35, maxval=55, group="Signal Levels")
+
+// Risk management
+atr_stop_multiplier = input.float(1.8, title="ATR Stop Loss", minval=1.0, maxval=3.0, step=0.1, group="Risk Management")
+atr_profit_multiplier = input.float(4.5, title="ATR Take Profit", minval=2.0, maxval=8.0, step=0.5, group="Risk Management")
+volatility_filter = input.float(0.015, title="Volatility Filter", minval=0.005, maxval=0.03, step=0.001, group="Risk Management")
+confluence_required = input.int(3, title="Confluence Required", minval=2, maxval=5, group="Risk Management")
+
+// === WEBHOOK SETTINGS ===
+webhook_url = "https://kraken.circuitcartel.com/webhook/strategy/claude-quantum-oscillator-001"
+strategy_id = "claude-quantum-oscillator-001"
+
+// === QUANTUM OSCILLATOR CALCULATION ===
+// My secret sauce: Multi-layered momentum analysis
+rsi = ta.rsi(close, rsi_period)
+rsi_smooth = ta.ema(rsi, 3)
+
+// Volume-weighted price momentum
+typical_price = (high + low + close) / 3
+volume_weighted_momentum = ta.sma(typical_price * volume, momentum_period) / ta.sma(volume, momentum_period)
+price_momentum = (close - volume_weighted_momentum) / volume_weighted_momentum * 100
+
+// Multi-timeframe quantum oscillator
+quantum_base = ta.ema(close, quantum_oscillator)
+quantum_fast = ta.ema(close, math.round(quantum_oscillator * 0.5))
+quantum_slow = ta.ema(close, math.round(quantum_oscillator * 1.5))
+quantum_signal = (quantum_fast - quantum_base) / quantum_base * 100
+quantum_trend = (quantum_base - quantum_slow) / quantum_slow * 100
+
+// === CONFLUENCE FACTORS ===
+// Factor 1: RSI in optimal range
+factor_rsi = (rsi_smooth <= oversold_level and rsi_smooth >= 15) or (rsi_smooth >= overbought_level and rsi_smooth <= 85)
+
+// Factor 2: Volume confirmation
+avg_volume = ta.sma(volume, 20)
+factor_volume = volume > avg_volume * volume_multiplier
+
+// Factor 3: Price momentum alignment
+factor_momentum_long = price_momentum > 0 and quantum_signal > 0
+factor_momentum_short = price_momentum < 0 and quantum_signal < 0
+
+// Factor 4: Quantum trend confirmation
+factor_quantum_long = quantum_trend > 0.1
+factor_quantum_short = quantum_trend < -0.1
+
+// Factor 5: Volatility check (market not too chaotic)
+atr = ta.atr(14)
+current_volatility = atr / close
+factor_volatility = current_volatility <= volatility_filter
+
+// === ENTRY CONDITIONS ===
+// Long entry: Multiple factors must align (my confluence approach)
+long_factors = 0
+long_factors += factor_rsi and rsi_smooth <= oversold_level ? 1 : 0
+long_factors += factor_volume ? 1 : 0
+long_factors += factor_momentum_long ? 1 : 0
+long_factors += factor_quantum_long ? 1 : 0
+long_factors += factor_volatility ? 1 : 0
+
+// Short entry: Multiple factors must align
+short_factors = 0
+short_factors += factor_rsi and rsi_smooth >= overbought_level ? 1 : 0
+short_factors += factor_volume ? 1 : 0
+short_factors += factor_momentum_short ? 1 : 0
+short_factors += factor_quantum_short ? 1 : 0
+short_factors += factor_volatility ? 1 : 0
+
+// Final entry signals
+long_condition = long_factors >= confluence_required and close > ta.sma(close, 50)
+short_condition = short_factors >= confluence_required and close < ta.sma(close, 50)
+
+// === EXIT CONDITIONS ===
+// Dynamic exits based on momentum reversal
+long_exit = rsi_smooth >= oversold_exit or quantum_signal < -0.5 or price_momentum < -1.0
+short_exit = rsi_smooth <= overbought_exit or quantum_signal > 0.5 or price_momentum > 1.0
+
+// === STRATEGY EXECUTION ===
+if long_condition and strategy.position_size == 0
+    strategy.entry("Quantum Long", strategy.long, 
+                  comment="Quantum Long @ " + str.tostring(close, "#.##"))
+    
+    // Send webhook alert for BUY signal
+    alert('{"passphrase": "sdfqoei1898498", "ticker": "' + syminfo.ticker + '", "strategy": {"order_action": "buy", "order_type": "limit", "order_price": "' + str.tostring(close) + '", "order_contracts": "0.02", "type": "buy", "volume": "0.02", "pair": "' + syminfo.ticker + '", "validate": "false", "close": {"order_type": "limit", "price": "' + str.tostring(close) + '"}, "stop_loss": "' + str.tostring(close * (1 - atr_stop_multiplier * current_volatility)) + '", "quantum_signal": "' + str.tostring(quantum_signal) + '", "confluence_count": "' + str.tostring(long_factors) + '"}}', 
+          alert.freq_once_per_bar)
+
+if short_condition and strategy.position_size == 0
+    strategy.entry("Quantum Short", strategy.short, 
+                  comment="Quantum Short @ " + str.tostring(close, "#.##"))
+    
+    // Send webhook alert for SELL signal
+    alert('{"passphrase": "sdfqoei1898498", "ticker": "' + syminfo.ticker + '", "strategy": {"order_action": "sell", "order_type": "limit", "order_price": "' + str.tostring(close) + '", "order_contracts": "0.02", "type": "sell", "volume": "0.02", "pair": "' + syminfo.ticker + '", "validate": "false", "close": {"order_type": "limit", "price": "' + str.tostring(close) + '"}, "stop_loss": "' + str.tostring(close * (1 + atr_stop_multiplier * current_volatility)) + '", "quantum_signal": "' + str.tostring(quantum_signal) + '", "confluence_count": "' + str.tostring(short_factors) + '"}}', 
+          alert.freq_once_per_bar)
+
+// === STOP LOSS & TAKE PROFIT ===
+if strategy.position_size > 0
+    stop_loss_level = strategy.position_avg_price - (atr * atr_stop_multiplier)
+    take_profit_level = strategy.position_avg_price + (atr * atr_profit_multiplier)
+    strategy.exit("Exit Long", "Quantum Long", stop=stop_loss_level, limit=take_profit_level)
+
+if strategy.position_size < 0
+    stop_loss_level = strategy.position_avg_price + (atr * atr_stop_multiplier)
+    take_profit_level = strategy.position_avg_price - (atr * atr_profit_multiplier)
+    strategy.exit("Exit Short", "Quantum Short", stop=stop_loss_level, limit=take_profit_level)
+
+// === DYNAMIC EXITS ===
+if strategy.position_size > 0 and long_exit
+    strategy.close("Quantum Long", comment="Dynamic Exit Long @ " + str.tostring(close, "#.##"))
+    
+    // Send webhook alert for position CLOSE
+    alert('{"passphrase": "sdfqoei1898498", "ticker": "' + syminfo.ticker + '", "strategy": {"order_action": "close", "order_type": "limit", "order_price": "' + str.tostring(close) + '", "order_contracts": "0", "type": "close", "volume": "0", "pair": "' + syminfo.ticker + '", "validate": "false", "close": {"order_type": "limit", "price": "' + str.tostring(close) + '"}, "stop_loss": "0"}}', 
+          alert.freq_once_per_bar)
+
+if strategy.position_size < 0 and short_exit
+    strategy.close("Quantum Short", comment="Dynamic Exit Short @ " + str.tostring(close, "#.##"))
+    
+    // Send webhook alert for position CLOSE
+    alert('{"passphrase": "sdfqoei1898498", "ticker": "' + syminfo.ticker + '", "strategy": {"order_action": "close", "order_type": "limit", "order_price": "' + str.tostring(close) + '", "order_contracts": "0", "type": "close", "volume": "0", "pair": "' + syminfo.ticker + '", "validate": "false", "close": {"order_type": "limit", "price": "' + str.tostring(close) + '"}, "stop_loss": "0"}}', 
+          alert.freq_once_per_bar)
+
+// === VISUALIZATION ===
+// Plot quantum oscillator
+hline(0, "Zero Line", color=color.gray, linestyle=hline.style_dashed)
+plot(quantum_signal, "Quantum Signal", color=(quantum_signal > 0 ? color.green : color.red), 
+     linewidth=2, style=plot.style_line)
+plot(quantum_trend, "Quantum Trend", color=color.blue, linewidth=1, style=plot.style_line)
+
+// Plot confluence levels
+hline(confluence_required, "Confluence Required", color=color.orange, linestyle=hline.style_dotted)
+
+// Plot RSI levels
+hline(oversold_level, "Oversold", color=color.green, linestyle=hline.style_dashed)
+hline(overbought_level, "Overbought", color=color.red, linestyle=hline.style_dashed)
+
+// Plot entry/exit signals
+plotshape(long_condition, title="Quantum Long Entry", style=shape.triangleup, 
+          location=location.belowbar, color=color.lime, size=size.normal)
+plotshape(short_condition, title="Quantum Short Entry", style=shape.triangledown, 
+          location=location.abovebar, color=color.red, size=size.normal)
+
+// === PERFORMANCE TRACKING ===
+// Display key metrics on chart
+var table performance_table = table.new(position.top_right, 2, 9, bgcolor=color.white, 
+                                       border_width=1)
+
+if barstate.islast
+    table.cell(performance_table, 0, 0, "Quantum Metrics", text_color=color.black, bgcolor=color.gray)
+    table.cell(performance_table, 1, 0, "Value", text_color=color.black, bgcolor=color.gray)
+    table.cell(performance_table, 0, 1, "Total Trades", text_color=color.black)
+    table.cell(performance_table, 1, 1, str.tostring(strategy.closedtrades), text_color=color.black)
+    table.cell(performance_table, 0, 2, "Win Rate %", text_color=color.black)
+    table.cell(performance_table, 1, 2, str.tostring(strategy.wintrades/strategy.closedtrades*100, "#.#"), 
+               text_color=color.black)
+    table.cell(performance_table, 0, 3, "Profit Factor", text_color=color.black)
+    table.cell(performance_table, 1, 3, str.tostring(strategy.grossprofit/strategy.grossloss, "#.##"), 
+               text_color=color.black)
+    table.cell(performance_table, 0, 4, "Quantum Signal", text_color=color.black)
+    table.cell(performance_table, 1, 4, str.tostring(quantum_signal, "#.##"), 
+               text_color=(quantum_signal > 0 ? color.green : color.red))
+    table.cell(performance_table, 0, 5, "Long Confluence", text_color=color.black)
+    table.cell(performance_table, 1, 5, str.tostring(long_factors) + "/" + str.tostring(confluence_required), 
+               text_color=(long_factors >= confluence_required ? color.green : color.gray))
+    table.cell(performance_table, 0, 6, "Short Confluence", text_color=color.black)
+    table.cell(performance_table, 1, 6, str.tostring(short_factors) + "/" + str.tostring(confluence_required), 
+               text_color=(short_factors >= confluence_required ? color.red : color.gray))
+    table.cell(performance_table, 0, 7, "Volatility", text_color=color.black)
+    table.cell(performance_table, 1, 7, str.tostring(current_volatility * 100, "#.##") + "%", 
+               text_color=(current_volatility <= volatility_filter ? color.green : color.orange))
+    table.cell(performance_table, 0, 8, "Strategy ID", text_color=color.black)
+    table.cell(performance_table, 1, 8, strategy_id, text_color=color.purple)
+
+// === CLAUDE'S QUANTUM STRATEGY NOTES ===
+// My competitive advantage:
+// 1. Multi-factor confluence (requires 3+ signals to align)
+// 2. Volume-weighted momentum (not just price action)
+// 3. Dynamic quantum oscillator (adapts to market cycles)
+// 4. Volatility filtering (avoids chaotic markets)
+// 5. Smart position sizing (2% aggressive but controlled)
+//
+// Strategy Philosophy:
+// - Quality over quantity (fewer but better trades)
+// - Multi-timeframe analysis (short, medium, long)
+// - Volume confirmation (institutions moving)
+// - Dynamic risk management (adapts to volatility)
+//
+// Webhook URL: https://kraken.circuitcartel.com/webhook/strategy/claude-quantum-oscillator-001
+// Strategy ID: claude-quantum-oscillator-001
+//
+// Competition mode: ACTIVE 🎯
+// Target: Beat both manual and automated strategies
+// Secret weapon: Confluence-based adaptive signals

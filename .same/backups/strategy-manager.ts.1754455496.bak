@@ -1,0 +1,255 @@
+// Centralized strategy management singleton
+interface Strategy {
+  id: string;
+  name: string;
+  type: 'RSI_PULLBACK' | 'FIBONACCI_RETRACEMENT' | 'AI_MOMENTUM';
+  status: 'active' | 'paused' | 'stopped';
+  config: Record<string, number | string | boolean | number[]>;
+  performance: {
+    totalTrades: number;
+    winRate: number;
+    profitLoss: number;
+    sharpeRatio: number;
+  };
+  lastUpdated: Date;
+}
+
+interface OptimizationState {
+  isRunning: boolean;
+  currentIteration: number;
+  totalIterations: number;
+  bestParameters: Record<string, number | string | boolean>;
+  currentPerformance: number;
+  history: Array<{
+    iteration: number;
+    parameters: Record<string, number | string | boolean>;
+    performance: number;
+    timestamp: Date;
+  }>;
+}
+
+interface LiveTradingState {
+  isActive: boolean;
+  activeStrategies: Set<string>;
+  totalTrades: number;
+  totalProfit: number;
+  riskLevel: 'low' | 'medium' | 'high';
+  lastActivity: Date | null;
+}
+
+class StrategyManager {
+  private static instance: StrategyManager;
+  private strategies: Map<string, Strategy> = new Map();
+  private optimizationState: OptimizationState;
+  private liveTradingState: LiveTradingState;
+  private listeners: Set<() => void> = new Set();
+
+  private constructor() {
+    this.optimizationState = {
+      isRunning: false,
+      currentIteration: 0,
+      totalIterations: 100,
+      bestParameters: {},
+      currentPerformance: 0,
+      history: []
+    };
+
+    this.liveTradingState = {
+      isActive: false,
+      activeStrategies: new Set(),
+      totalTrades: 0,
+      totalProfit: 0,
+      riskLevel: 'medium',
+      lastActivity: null
+    };
+
+    // Initialize demo strategies
+    this.initializeDemoStrategies();
+  }
+
+  static getInstance(): StrategyManager {
+    if (!StrategyManager.instance) {
+      StrategyManager.instance = new StrategyManager();
+    }
+    return StrategyManager.instance;
+  }
+
+  private initializeDemoStrategies() {
+    const demoStrategies: Strategy[] = [
+      {
+        id: 'rsi-pullback-001',
+        name: 'RSI Pullback Pro',
+        type: 'RSI_PULLBACK',
+        status: 'active',
+        config: {
+          rsiPeriod: 14,
+          oversoldLevel: 30,
+          overboughtLevel: 70,
+          confirmationPeriod: 3
+        },
+        performance: {
+          totalTrades: 847,
+          winRate: 0.73,
+          profitLoss: 23847.92,
+          sharpeRatio: 1.84
+        },
+        lastUpdated: new Date()
+      },
+      {
+        id: 'fibonacci-001',
+        name: 'Fibonacci Master',
+        type: 'FIBONACCI_RETRACEMENT',
+        status: 'active',
+        config: {
+          retracementLevels: [0.236, 0.382, 0.618, 0.786],
+          trendStrength: 0.8,
+          confirmationCandles: 2
+        },
+        performance: {
+          totalTrades: 623,
+          winRate: 0.68,
+          profitLoss: 18294.73,
+          sharpeRatio: 1.67
+        },
+        lastUpdated: new Date()
+      },
+      {
+        id: 'ai-momentum-001',
+        name: 'AI Momentum Elite',
+        type: 'AI_MOMENTUM',
+        status: 'paused',
+        config: {
+          learningRate: 0.001,
+          hiddenLayers: [64, 32, 16],
+          lookbackPeriod: 50,
+          predictionHorizon: 5
+        },
+        performance: {
+          totalTrades: 1243,
+          winRate: 0.76,
+          profitLoss: 34829.14,
+          sharpeRatio: 2.12
+        },
+        lastUpdated: new Date()
+      }
+    ];
+
+    demoStrategies.forEach(strategy => {
+      this.strategies.set(strategy.id, strategy);
+    });
+  }
+
+  // Strategy management
+  getStrategies(): Strategy[] {
+    return Array.from(this.strategies.values());
+  }
+
+  getStrategy(id: string): Strategy | undefined {
+    return this.strategies.get(id);
+  }
+
+  updateStrategy(id: string, updates: Partial<Strategy>): void {
+    const strategy = this.strategies.get(id);
+    if (strategy) {
+      this.strategies.set(id, { ...strategy, ...updates, lastUpdated: new Date() });
+      this.notifyListeners();
+    }
+  }
+
+  // Optimization state management
+  getOptimizationState(): OptimizationState {
+    return { ...this.optimizationState };
+  }
+
+  startOptimization(strategyId: string): void {
+    this.optimizationState.isRunning = true;
+    this.optimizationState.currentIteration = 0;
+    this.optimizationState.history = [];
+    this.notifyListeners();
+
+    // Simulate optimization process
+    this.simulateOptimization();
+  }
+
+  stopOptimization(): void {
+    this.optimizationState.isRunning = false;
+    this.notifyListeners();
+  }
+
+  private simulateOptimization(): void {
+    if (!this.optimizationState.isRunning) return;
+
+    const interval = setInterval(() => {
+      if (this.optimizationState.currentIteration >= this.optimizationState.totalIterations) {
+        this.optimizationState.isRunning = false;
+        clearInterval(interval);
+        this.notifyListeners();
+        return;
+      }
+
+      const randomParams = {
+        param1: Math.random() * 100,
+        param2: Math.random() * 50,
+        param3: Math.random() * 200
+      };
+
+      const performance = Math.random() * 100;
+
+      this.optimizationState.currentIteration++;
+      this.optimizationState.currentPerformance = performance;
+
+      if (performance > (this.optimizationState.bestParameters.performance as number) || !this.optimizationState.bestParameters.performance) {
+        this.optimizationState.bestParameters = { ...randomParams, performance };
+      }
+
+      this.optimizationState.history.push({
+        iteration: this.optimizationState.currentIteration,
+        parameters: randomParams,
+        performance,
+        timestamp: new Date()
+      });
+
+      this.notifyListeners();
+    }, 200);
+  }
+
+  // Live trading state management
+  getLiveTradingState(): LiveTradingState {
+    return { ...this.liveTradingState };
+  }
+
+  startLiveTrading(): void {
+    this.liveTradingState.isActive = true;
+    this.liveTradingState.lastActivity = new Date();
+    this.notifyListeners();
+  }
+
+  stopLiveTrading(): void {
+    this.liveTradingState.isActive = false;
+    this.liveTradingState.activeStrategies.clear();
+    this.notifyListeners();
+  }
+
+  toggleStrategyInLiveTrading(strategyId: string): void {
+    if (this.liveTradingState.activeStrategies.has(strategyId)) {
+      this.liveTradingState.activeStrategies.delete(strategyId);
+    } else {
+      this.liveTradingState.activeStrategies.add(strategyId);
+    }
+    this.liveTradingState.lastActivity = new Date();
+    this.notifyListeners();
+  }
+
+  // Event system
+  subscribe(callback: () => void): () => void {
+    this.listeners.add(callback);
+    return () => this.listeners.delete(callback);
+  }
+
+  private notifyListeners(): void {
+    this.listeners.forEach(callback => callback());
+  }
+}
+
+export default StrategyManager;
+export type { Strategy, OptimizationState, LiveTradingState };

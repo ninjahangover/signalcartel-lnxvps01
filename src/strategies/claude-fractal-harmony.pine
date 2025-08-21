@@ -1,0 +1,306 @@
+//@version=5
+strategy("Claude Fractal Harmony - Next-Gen AI", 
+         shorttitle="CFH-AI", overlay=true, 
+         default_qty_type=strategy.percent_of_equity, default_qty_value=4,
+         pyramiding=0, initial_capital=50000, commission_type=strategy.commission.percent, commission_value=0.1)
+
+// === FRACTAL HARMONY PARAMETERS ===
+// This strategy uses fractal geometry, harmonic analysis, and quantum-inspired oscillations
+fibonacci_depth = input.int(21, title="Fibonacci Fractal Depth", minval=8, maxval=100, group="Fractal Settings")
+harmonic_resonance = input.float(1.618, title="Golden Ratio Resonance", minval=1.0, maxval=3.0, group="Harmonic Settings")
+quantum_cycles = input.int(7, title="Quantum Cycle Count", minval=3, maxval=21, group="Quantum Settings")
+chaos_threshold = input.float(0.618, title="Chaos Threshold", minval=0.1, maxval=1.0, group="Chaos Theory")
+
+// === ADVANCED AI PARAMETERS ===
+consciousness_depth = input.int(13, title="AI Consciousness Depth", minval=5, maxval=55, group="AI Consciousness")
+pattern_recognition = input.float(0.786, title="Pattern Recognition Sensitivity", minval=0.1, maxval=1.0, group="Pattern AI")
+market_sentiment_weight = input.float(2.618, title="Sentiment Amplification", minval=1.0, maxval=5.0, group="Sentiment AI")
+temporal_distortion = input.float(0.382, title="Time Distortion Factor", minval=0.1, maxval=1.0, group="Time AI")
+
+// === WEBHOOK CONFIGURATION ===
+webhook_url = "https://kraken.circuitcartel.com/webhook/strategy/claude-fractal-harmony-001"
+strategy_id = "claude-fractal-harmony-001"
+
+// === FRACTAL CALCULATIONS ===
+// Multi-dimensional fractal analysis
+fractal_high = ta.pivothigh(high, fibonacci_depth, fibonacci_depth)
+fractal_low = ta.pivotlow(low, fibonacci_depth, fibonacci_depth)
+
+// Golden ratio price levels using dynamic Fibonacci
+var float[] fib_levels = array.new<float>()
+if not na(fractal_high) and not na(fractal_low)
+    price_range = fractal_high - fractal_low
+    array.clear(fib_levels)
+    array.push(fib_levels, fractal_low + price_range * 0.236)
+    array.push(fib_levels, fractal_low + price_range * 0.382)
+    array.push(fib_levels, fractal_low + price_range * 0.618)
+    array.push(fib_levels, fractal_low + price_range * 0.786)
+
+// === HARMONIC OSCILLATOR ===
+// Quantum-inspired harmonic analysis
+harmonic_osc = 0.0
+for i = 1 to quantum_cycles
+    cycle_freq = i * harmonic_resonance
+    harmonic_component = math.sin(bar_index * 2 * math.pi / (fibonacci_depth * cycle_freq))
+    harmonic_osc += harmonic_component / i
+
+// Normalize harmonic oscillator
+harmonic_normalized = ta.stoch(harmonic_osc, harmonic_osc, harmonic_osc, consciousness_depth)
+
+// === CHAOS THEORY ANALYSIS ===
+// Strange attractor simulation for market behavior prediction
+var float chaos_x = 0.1
+var float chaos_y = 0.1
+var float chaos_z = 0.1
+
+// Lorenz attractor equations adapted for market data
+price_change = ta.change(close)
+volume_change = ta.change(volume)
+sigma = 10.0
+rho = 28.0
+beta = 8.0/3.0
+
+chaos_dx = sigma * (price_change - chaos_x)
+chaos_dy = chaos_x * (rho - chaos_z) - price_change
+chaos_dz = chaos_x * price_change - beta * chaos_z
+
+chaos_x := chaos_x + chaos_dx * 0.01
+chaos_y := chaos_y + chaos_dy * 0.01
+chaos_z := chaos_z + chaos_dz * 0.01
+
+chaos_magnitude = math.sqrt(chaos_x*chaos_x + chaos_y*chaos_y + chaos_z*chaos_z)
+chaos_signal = (chaos_magnitude - ta.sma(chaos_magnitude, consciousness_depth)) / ta.stdev(chaos_magnitude, consciousness_depth)
+
+// === NEURAL PATTERN RECOGNITION ===
+// Advanced pattern recognition using convolution-like operations
+pattern_matrix = array.new<float>()
+for i = 0 to consciousness_depth - 1
+    price_normalized = (close[i] - ta.lowest(low, consciousness_depth)) / (ta.highest(high, consciousness_depth) - ta.lowest(low, consciousness_depth))
+    array.push(pattern_matrix, price_normalized)
+
+// Detect ascending triangle pattern
+ascending_triangle = 0.0
+if array.size(pattern_matrix) >= consciousness_depth
+    resistance_level = ta.highest(high, consciousness_depth)
+    support_slope = ta.linreg(low, consciousness_depth, 0)
+    
+    resistance_touches = 0
+    for i = 0 to consciousness_depth - 1
+        if math.abs(high[i] - resistance_level) / resistance_level < 0.01
+            resistance_touches += 1
+    
+    ascending_triangle := resistance_touches >= 2 and support_slope > 0 ? 1.0 : 0.0
+
+// === QUANTUM ENTANGLEMENT SIMULATION ===
+// Simulating quantum entanglement between price and volume
+entanglement_coefficient = ta.correlation(close, volume, consciousness_depth)
+quantum_state = math.sin(entanglement_coefficient * math.pi) * harmonic_normalized / 100
+
+// Superposition of multiple market states
+bull_state = ta.ema(close, 13) > ta.ema(close, 21) ? 1.0 : 0.0
+bear_state = ta.ema(close, 13) < ta.ema(close, 21) ? 1.0 : 0.0
+neutral_state = 1.0 - bull_state - bear_state
+
+market_superposition = bull_state * 1.0 + bear_state * (-1.0) + neutral_state * quantum_state
+
+// === TEMPORAL DIMENSION ANALYSIS ===
+// Time-based pattern recognition across multiple timeframes
+temporal_resonance = 0.0
+for timeframe_mult in array.from(1, 3, 5, 8, 13, 21)
+    tf_price = request.security(syminfo.tickerid, str.tostring(timeframe.period * timeframe_mult), close)
+    tf_momentum = ta.mom(tf_price, fibonacci_depth)
+    temporal_resonance += tf_momentum / timeframe_mult
+
+temporal_signal = temporal_resonance * temporal_distortion
+
+// === CONSCIOUSNESS-INSPIRED DECISION MATRIX ===
+// Simulating intuitive decision-making process
+intuition_factors = array.from(
+    harmonic_normalized / 100,
+    chaos_signal,
+    ascending_triangle,
+    quantum_state,
+    market_superposition,
+    temporal_signal / close * 1000
+)
+
+// Weighted consciousness decision
+consciousness_weights = array.from(0.2, 0.15, 0.25, 0.1, 0.2, 0.1)
+consciousness_signal = 0.0
+for i = 0 to array.size(intuition_factors) - 1
+    consciousness_signal += array.get(intuition_factors, i) * array.get(consciousness_weights, i)
+
+// Final AI confidence calculation
+ai_confidence = math.abs(consciousness_signal)
+market_regime = chaos_magnitude > chaos_threshold ? "chaos" : harmonic_normalized > 70 ? "harmony" : "transition"
+
+// Regime-based confidence adjustment
+regime_multiplier = market_regime == "harmony" ? 1.3 : market_regime == "chaos" ? 0.7 : 1.0
+final_confidence = ai_confidence * regime_multiplier * pattern_recognition
+
+// === ENTRY CONDITIONS ===
+// Multi-dimensional signal convergence
+bullish_convergence = consciousness_signal > 0.3 and 
+                     final_confidence > 0.5 and 
+                     ascending_triangle > 0.5 and
+                     market_superposition > 0.2 and
+                     harmonic_normalized < 80
+
+bearish_convergence = consciousness_signal < -0.3 and 
+                     final_confidence > 0.5 and 
+                     ascending_triangle < 0.5 and
+                     market_superposition < -0.2 and
+                     harmonic_normalized > 20
+
+// Volume confirmation using quantum entanglement
+volume_quantum_confirm = math.abs(entanglement_coefficient) > 0.3
+
+bullish_entry = bullish_convergence and volume_quantum_confirm
+bearish_entry = bearish_convergence and volume_quantum_confirm
+
+// === POSITION SIZING WITH FRACTAL RISK ===
+// Dynamic position sizing based on fractal dimension
+fractal_dimension = 1 + math.abs(chaos_signal) * 0.5
+risk_fraction = 0.02 / fractal_dimension // Lower risk in higher chaos
+position_size = strategy.equity * risk_fraction / close
+
+// === STRATEGY EXECUTION ===
+if bullish_entry and strategy.position_size == 0
+    entry_price = close
+    
+    // Fibonacci-based stops and targets
+    nearest_fib = array.size(fib_levels) > 0 ? array.get(fib_levels, 0) : close * 0.99
+    stop_price = math.min(nearest_fib, close * (1 - 0.02 * fractal_dimension))
+    target_price = close * (1 + harmonic_resonance * 0.01 * final_confidence)
+    
+    strategy.entry("FractalLong", strategy.long, qty=position_size,
+                  comment="🌀 Fractal Long @ " + str.tostring(close, "#.##") + " (AI: " + str.tostring(final_confidence*100, "#") + "%)")
+    
+    strategy.exit("FractalLongExit", "FractalLong",
+                 stop=stop_price, limit=target_price,
+                 comment="🎯 Fractal Exit")
+    
+    // Advanced webhook with AI metrics
+    alert_msg = '{"passphrase": "fractal_harmony_2025", "ticker": "' + syminfo.ticker + '", "strategy": {"order_action": "buy", "order_type": "market", "order_price": "' + str.tostring(close) + '", "order_contracts": "' + str.tostring(position_size, "#.####") + '", "type": "buy", "volume": "' + str.tostring(position_size, "#.####") + '", "pair": "' + syminfo.ticker + '", "validate": "true", "ai_confidence": "' + str.tostring(final_confidence, "#.###") + '", "consciousness_signal": "' + str.tostring(consciousness_signal, "#.###") + '", "fractal_dimension": "' + str.tostring(fractal_dimension, "#.##") + '", "market_regime": "' + market_regime + '", "quantum_entanglement": "' + str.tostring(entanglement_coefficient, "#.###") + '", "harmonic_resonance": "' + str.tostring(harmonic_normalized, "#.#") + '", "chaos_magnitude": "' + str.tostring(chaos_magnitude, "#.###") + '", "pattern_recognition": "' + str.tostring(ascending_triangle, "#.##") + '", "stop_loss": "' + str.tostring(stop_price) + '", "take_profit": "' + str.tostring(target_price) + '"}}'
+    
+    alert(alert_msg, alert.freq_once_per_bar)
+
+if bearish_entry and strategy.position_size == 0
+    entry_price = close
+    
+    nearest_fib = array.size(fib_levels) > 0 ? array.get(fib_levels, array.size(fib_levels)-1) : close * 1.01
+    stop_price = math.max(nearest_fib, close * (1 + 0.02 * fractal_dimension))
+    target_price = close * (1 - harmonic_resonance * 0.01 * final_confidence)
+    
+    strategy.entry("FractalShort", strategy.short, qty=position_size,
+                  comment="🌀 Fractal Short @ " + str.tostring(close, "#.##") + " (AI: " + str.tostring(final_confidence*100, "#") + "%)")
+    
+    strategy.exit("FractalShortExit", "FractalShort",
+                 stop=stop_price, limit=target_price,
+                 comment="🎯 Fractal Exit")
+    
+    alert_msg = '{"passphrase": "fractal_harmony_2025", "ticker": "' + syminfo.ticker + '", "strategy": {"order_action": "sell", "order_type": "market", "order_price": "' + str.tostring(close) + '", "order_contracts": "' + str.tostring(position_size, "#.####") + '", "type": "sell", "volume": "' + str.tostring(position_size, "#.####") + '", "pair": "' + syminfo.ticker + '", "validate": "true", "ai_confidence": "' + str.tostring(final_confidence, "#.###") + '", "consciousness_signal": "' + str.tostring(consciousness_signal, "#.###") + '", "fractal_dimension": "' + str.tostring(fractal_dimension, "#.##") + '", "market_regime": "' + market_regime + '", "quantum_entanglement": "' + str.tostring(entanglement_coefficient, "#.###") + '", "harmonic_resonance": "' + str.tostring(harmonic_normalized, "#.#") + '", "chaos_magnitude": "' + str.tostring(chaos_magnitude, "#.###") + '", "pattern_recognition": "' + str.tostring(ascending_triangle, "#.##") + '", "stop_loss": "' + str.tostring(stop_price) + '", "take_profit": "' + str.tostring(target_price) + '"}}'
+    
+    alert(alert_msg, alert.freq_once_per_bar)
+
+// === VISUALIZATION ===
+// Plot Fibonacci levels
+if array.size(fib_levels) > 0
+    for i = 0 to array.size(fib_levels) - 1
+        fib_level = array.get(fib_levels, i)
+        line.new(bar_index-1, fib_level, bar_index+10, fib_level, 
+                color=color.yellow, style=line.style_dashed, width=1)
+
+// Plot consciousness signal
+hline(0, "Consciousness Zero", color=color.gray)
+plot(consciousness_signal, "🧠 AI Consciousness", color=color.purple, linewidth=2)
+plot(final_confidence, "🎯 AI Confidence", color=color.orange, linewidth=1)
+
+// Plot harmonic resonance
+plot(harmonic_normalized/100, "🌊 Harmonic Wave", color=color.blue, linewidth=1)
+
+// Plot entry signals with enhanced visuals
+plotshape(bullish_entry, title="🚀 Fractal Long", style=shape.rocket,
+          location=location.belowbar, color=color.lime, size=size.large,
+          text="🌀 FRACTAL\n" + str.tostring(final_confidence*100, "#") + "%\n" + market_regime)
+
+plotshape(bearish_entry, title="💥 Fractal Short", style=shape.rocket,
+          location=location.abovebar, color=color.red, size=size.large,
+          text="🌀 FRACTAL\n" + str.tostring(final_confidence*100, "#") + "%\n" + market_regime)
+
+// === ADVANCED AI DASHBOARD ===
+var table ai_dashboard = table.new(position.top_left, 4, 10, bgcolor=color.black, border_width=2,
+                                   border_color=color.purple, frame_color=color.purple, frame_width=3)
+
+if barstate.islast
+    // Header
+    table.cell(ai_dashboard, 0, 0, "🤖 CLAUDE FRACTAL HARMONY AI", text_color=color.white, bgcolor=color.purple, text_size=size.small)
+    table.cell(ai_dashboard, 1, 0, "VALUE", text_color=color.white, bgcolor=color.purple, text_size=size.small)
+    table.cell(ai_dashboard, 2, 0, "STATUS", text_color=color.white, bgcolor=color.purple, text_size=size.small)
+    table.cell(ai_dashboard, 3, 0, "SIGNAL", text_color=color.white, bgcolor=color.purple, text_size=size.small)
+    
+    // AI Consciousness
+    table.cell(ai_dashboard, 0, 1, "🧠 Consciousness", text_color=color.white, text_size=size.tiny)
+    table.cell(ai_dashboard, 1, 1, str.tostring(consciousness_signal, "#.###"), 
+               text_color=(consciousness_signal > 0 ? color.lime : color.red), text_size=size.tiny)
+    table.cell(ai_dashboard, 2, 1, consciousness_signal > 0.3 ? "BULL" : consciousness_signal < -0.3 ? "BEAR" : "NEUTRAL", 
+               text_color=color.white, text_size=size.tiny)
+    table.cell(ai_dashboard, 3, 1, consciousness_signal > 0.5 ? "🚀" : consciousness_signal < -0.5 ? "💥" : "⏸️", 
+               text_color=color.yellow, text_size=size.tiny)
+    
+    // AI Confidence
+    table.cell(ai_dashboard, 0, 2, "🎯 AI Confidence", text_color=color.white, text_size=size.tiny)
+    table.cell(ai_dashboard, 1, 2, str.tostring(final_confidence*100, "#") + "%", 
+               text_color=(final_confidence > 0.5 ? color.lime : color.orange), text_size=size.tiny)
+    table.cell(ai_dashboard, 2, 2, final_confidence > 0.7 ? "HIGH" : final_confidence > 0.4 ? "MED" : "LOW", 
+               text_color=color.white, text_size=size.tiny)
+    table.cell(ai_dashboard, 3, 2, final_confidence > 0.5 ? "✅" : "⚠️", text_color=color.yellow, text_size=size.tiny)
+    
+    // Market Regime
+    table.cell(ai_dashboard, 0, 3, "🌊 Market Regime", text_color=color.white, text_size=size.tiny)
+    table.cell(ai_dashboard, 1, 3, market_regime, text_color=color.aqua, text_size=size.tiny)
+    table.cell(ai_dashboard, 2, 3, str.tostring(regime_multiplier, "#.#") + "x", text_color=color.white, text_size=size.tiny)
+    table.cell(ai_dashboard, 3, 3, market_regime == "harmony" ? "🎵" : market_regime == "chaos" ? "🌪️" : "🔄", 
+               text_color=color.yellow, text_size=size.tiny)
+    
+    // Fractal Dimension
+    table.cell(ai_dashboard, 0, 4, "🌀 Fractal Dim", text_color=color.white, text_size=size.tiny)
+    table.cell(ai_dashboard, 1, 4, str.tostring(fractal_dimension, "#.##"), text_color=color.fuchsia, text_size=size.tiny)
+    table.cell(ai_dashboard, 2, 4, fractal_dimension > 1.5 ? "COMPLEX" : "SIMPLE", text_color=color.white, text_size=size.tiny)
+    table.cell(ai_dashboard, 3, 4, "📐", text_color=color.yellow, text_size=size.tiny)
+    
+    // Quantum Entanglement
+    table.cell(ai_dashboard, 0, 5, "⚛️ Quantum Sync", text_color=color.white, text_size=size.tiny)
+    table.cell(ai_dashboard, 1, 5, str.tostring(entanglement_coefficient, "#.###"), 
+               text_color=(math.abs(entanglement_coefficient) > 0.5 ? color.lime : color.orange), text_size=size.tiny)
+    table.cell(ai_dashboard, 2, 5, math.abs(entanglement_coefficient) > 0.5 ? "STRONG" : "WEAK", 
+               text_color=color.white, text_size=size.tiny)
+    table.cell(ai_dashboard, 3, 5, math.abs(entanglement_coefficient) > 0.3 ? "🔗" : "💫", 
+               text_color=color.yellow, text_size=size.tiny)
+    
+    // Harmonic Resonance
+    table.cell(ai_dashboard, 0, 6, "🎵 Harmonic", text_color=color.white, text_size=size.tiny)
+    table.cell(ai_dashboard, 1, 6, str.tostring(harmonic_normalized, "#.#"), text_color=color.blue, text_size=size.tiny)
+    table.cell(ai_dashboard, 2, 6, harmonic_normalized > 70 ? "OB" : harmonic_normalized < 30 ? "OS" : "BAL", 
+               text_color=color.white, text_size=size.tiny)
+    table.cell(ai_dashboard, 3, 6, "🎼", text_color=color.yellow, text_size=size.tiny)
+    
+    // Pattern Recognition
+    table.cell(ai_dashboard, 0, 7, "🔍 Patterns", text_color=color.white, text_size=size.tiny)
+    table.cell(ai_dashboard, 1, 7, str.tostring(ascending_triangle, "#.##"), text_color=color.teal, text_size=size.tiny)
+    table.cell(ai_dashboard, 2, 7, ascending_triangle > 0.5 ? "DETECTED" : "NONE", text_color=color.white, text_size=size.tiny)
+    table.cell(ai_dashboard, 3, 7, ascending_triangle > 0.5 ? "📈" : "📊", text_color=color.yellow, text_size=size.tiny)
+    
+    // Performance
+    table.cell(ai_dashboard, 0, 8, "📊 Performance", text_color=color.white, text_size=size.tiny)
+    win_rate = strategy.closedtrades > 0 ? strategy.wintrades/strategy.closedtrades*100 : 0
+    table.cell(ai_dashboard, 1, 8, str.tostring(win_rate, "#.#") + "%", 
+               text_color=(win_rate > 60 ? color.lime : win_rate > 40 ? color.orange : color.red), text_size=size.tiny)
+    table.cell(ai_dashboard, 2, 8, str.tostring(strategy.closedtrades) + " trades", text_color=color.white, text_size=size.tiny)
+    table.cell(ai_dashboard, 3, 8, win_rate > 60 ? "🏆" : "📈", text_color=color.yellow, text_size=size.tiny)
+    
+    // Strategy ID
+    table.cell(ai_dashboard, 0, 9, "🆔 Strategy", text_color=color.white, text_size=size.tiny)
+    table.cell(ai_dashboard, 1, 9, strategy_id, text_color=color.blue, text_size=size.tiny)
+    table.cell(ai_dashboard, 2, 9, "ACTIVE", text_color=color.lime, text_size=size.tiny)
+    table.cell(ai_dashboard, 3, 9, "🤖", text_color=color.yellow, text_size=size.tiny)

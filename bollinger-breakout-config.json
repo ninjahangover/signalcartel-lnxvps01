@@ -1,0 +1,30 @@
+{
+  "strategyType": "BOLLINGER_BREAKOUT_ENHANCED",
+  "symbol": "BTC/USD",
+  "config": {
+    "smaLength": 50,
+    "stdLength": 50,
+    "ubOffset": 1.5,
+    "lbOffset": 1.5,
+    "maxRiskPerTrade": 10.0,
+    "stopLossATRMultiplier": 2.0,
+    "takeProfitATRMultiplier": 3.0,
+    "useRSIFilter": false,
+    "rsiPeriod": 14,
+    "rsiOverbought": 70,
+    "rsiOversold": 30,
+    "useVolFilter": false,
+    "volSMALength": 20,
+    "trendStrengthPeriod": 100
+  },
+  "description": "Aggressive Bollinger Breakout settings for frequent signals",
+  "notes": [
+    "Shorter periods (50 vs 350) for faster band calculation",
+    "Narrow band offset (1.5 vs 2.5) for easier breakouts",
+    "Higher risk per trade ($10 vs $5)",
+    "RSI filter disabled for more signals",
+    "Volume filter disabled for easier entry",
+    "Shorter trend filter (100 vs 200) for responsiveness",
+    "Good risk/reward ratio (2:3)"
+  ]
+}

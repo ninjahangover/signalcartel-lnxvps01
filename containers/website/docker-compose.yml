@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  website:
+    container_name: signalcartel-website
+    build:
+      context: ../..
+      dockerfile: containers/website/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - NEXTAUTH_URL=https://dev.signalcartel.io
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-development-secret}
+    volumes:
+      - ../../logs:/app/logs
+      - ../../.env.local:/app/.env.local:ro
+      - ../../prisma:/app/prisma:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          memory: 512M
+    networks:
+      - signalcartel-network
+
+networks:
+  signalcartel-network:
+    external: true
+    name: signalcartel_signalcartel-network

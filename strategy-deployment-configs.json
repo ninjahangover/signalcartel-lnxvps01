@@ -1,0 +1,137 @@
+{
+  "deployment": {
+    "environment": "paper_trading",
+    "exchange": "alpaca",
+    "baseCurrency": "USD",
+    "initialCapital": 1000,
+    "maxConcurrentStrategies": 4
+  },
+  
+  "strategies": [
+    {
+      "id": "rsi-pullback-001",
+      "name": "Enhanced RSI Pull-Back Pro",
+      "type": "ENHANCED_RSI_PULLBACK",
+      "symbol": "BTC/USD",
+      "active": true,
+      "config": {
+        "lookback": 2,
+        "lowerBarrier": 43,
+        "lowerThreshold": 65,
+        "upperBarrier": 45,
+        "upperThreshold": 72,
+        "maLength": 70,
+        "atrMultSL": 11,
+        "atrMultTP": 2,
+        "initialCapital": 250,
+        "tradePercentage": 20
+      },
+      "riskLimits": {
+        "maxPositionSize": 0.05,
+        "maxDailyLoss": 50,
+        "maxDrawdown": 100
+      }
+    },
+    
+    {
+      "id": "quantum-oscillator-001",
+      "name": "Claude Quantum Oscillator",
+      "type": "CLAUDE_QUANTUM_OSCILLATOR", 
+      "symbol": "ETH/USD",
+      "active": true,
+      "config": {
+        "fastPeriod": 3,
+        "slowPeriod": 8,
+        "signalPeriod": 3,
+        "overboughtLevel": 60,
+        "oversoldLevel": 40,
+        "momentumThreshold": 0.8,
+        "volumeMultiplier": 1.1,
+        "stopLoss": 2.5,
+        "takeProfit": 3.0
+      },
+      "riskLimits": {
+        "maxPositionSize": 0.03,
+        "maxDailyLoss": 40,
+        "maxDrawdown": 80
+      }
+    },
+    
+    {
+      "id": "neural-network-001",
+      "name": "Stratus Core Neural",
+      "type": "STRATUS_CORE_NEURAL",
+      "symbol": "SOL/USD", 
+      "active": true,
+      "config": {
+        "neuralLayers": 2,
+        "learningRate": 0.05,
+        "lookbackWindow": 10,
+        "confidenceThreshold": 0.4,
+        "adaptationPeriod": 20,
+        "riskMultiplier": 1.5,
+        "stopLoss": 3.0,
+        "takeProfit": 4.0
+      },
+      "riskLimits": {
+        "maxPositionSize": 0.04,
+        "maxDailyLoss": 45,
+        "maxDrawdown": 90
+      }
+    },
+    
+    {
+      "id": "bollinger-breakout-001",
+      "name": "Bollinger Breakout Enhanced",
+      "type": "BOLLINGER_BREAKOUT_ENHANCED",
+      "symbol": "AVAX/USD",
+      "active": true,
+      "config": {
+        "smaLength": 50,
+        "stdLength": 50,
+        "ubOffset": 1.5,
+        "lbOffset": 1.5,
+        "maxRiskPerTrade": 10.0,
+        "stopLossATRMultiplier": 2.0,
+        "takeProfitATRMultiplier": 3.0,
+        "useRSIFilter": false,
+        "useVolFilter": false,
+        "trendStrengthPeriod": 100
+      },
+      "riskLimits": {
+        "maxPositionSize": 0.06,
+        "maxDailyLoss": 60,
+        "maxDrawdown": 120
+      }
+    }
+  ],
+  
+  "executionSettings": {
+    "paperTrading": true,
+    "realTimeData": true,
+    "signalFrequency": "1m",
+    "maxOrdersPerMinute": 10,
+    "orderTimeout": 30000,
+    "retryAttempts": 3
+  },
+  
+  "notifications": {
+    "tradeExecutions": true,
+    "signalGeneration": true,
+    "errorAlerts": true,
+    "dailySummary": true
+  },
+  
+  "optimization": {
+    "enabled": true,
+    "minTradesBeforeOptimization": 5,
+    "optimizationFrequency": "daily",
+    "performanceThreshold": 0.6,
+    "adaptiveParameters": [
+      "stopLoss",
+      "takeProfit", 
+      "confidenceThreshold",
+      "riskMultiplier"
+    ]
+  }
+}

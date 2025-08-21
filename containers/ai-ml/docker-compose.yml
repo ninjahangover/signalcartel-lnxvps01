@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  ai-ml-engine:
+    container_name: signalcartel-ai-ml
+    build:
+      context: ../..
+      dockerfile: containers/ai-ml/Dockerfile
+    environment:
+      - NODE_ENV=production
+      - NODE_OPTIONS=--max-old-space-size=4096
+      - PYTHON_PATH=/app/python
+      - TF_CPP_MIN_LOG_LEVEL=2
+      - ALPACA_PAPER_API_KEY=${ALPACA_PAPER_API_KEY}
+      - ALPACA_PAPER_API_SECRET=${ALPACA_PAPER_API_SECRET}
+    volumes:
+      - ../../logs:/app/logs
+      - ../../.env.local:/app/.env.local:ro
+      - ../../src/lib:/app/src/lib:ro
+      - ai-models:/app/models
+      - markov-chains:/app/markov-chains
+      - neural-networks:/app/neural-networks
+      - training-data:/app/training-data
+      - model-checkpoints:/app/checkpoints
+      - feature-engineering:/app/features
+      - prediction-cache:/app/predictions
+      - learning-metrics:/app/metrics
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "ai-optimization-engine"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 90s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+        reservations:
+          memory: 2G
+    networks:
+      - signalcartel-network
+    # No service dependencies - SQLite is file-based
+
+  # TensorFlow/PyTorch Model Server
+  model-server:
+    image: tensorflow/serving:2.13.0
+    container_name: signalcartel-model-server
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+      - "8500:8500"
+    volumes:
+      - ai-models:/models
+    environment:
+      - MODEL_NAME=trading_predictor
+    networks:
+      - signalcartel-network
+
+  # Jupyter Lab for ML Development (optional)
+  jupyter-lab:
+    image: jupyter/tensorflow-notebook:latest
+    container_name: signalcartel-jupyter
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    volumes:
+      - ai-models:/home/jovyan/models
+      - training-data:/home/jovyan/data
+      - jupyter-workspace:/home/jovyan/work
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=${JUPYTER_TOKEN:-signalcartel}
+    networks:
+      - signalcartel-network
+    profiles:
+      - development
+
+volumes:
+  ai-models:
+    driver: local
+  markov-chains:
+    driver: local
+  neural-networks:
+    driver: local
+  training-data:
+    driver: local
+  model-checkpoints:
+    driver: local
+  feature-engineering:
+    driver: local
+  prediction-cache:
+    driver: local
+  learning-metrics:
+    driver: local
+  jupyter-workspace:
+    driver: local
+
+networks:
+  signalcartel-network:
+    external: true
+    name: signalcartel_signalcartel-network

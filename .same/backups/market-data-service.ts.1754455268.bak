@@ -1,0 +1,226 @@
+export interface MarketData {
+  symbol: string;
+  price: number;
+  bid: number;
+  ask: number;
+  volume: number;
+  high24h: number;
+  low24h: number;
+  change24h: number;
+  changePercent: number;
+  timestamp: number;
+}
+
+export interface TickerData {
+  [symbol: string]: {
+    a: [string, string, string];
+    b: [string, string, string];
+    c: [string, string];
+    v: [string, string];
+    p: [string, string];
+    t: [number, number];
+    l: [string, string];
+    h: [string, string];
+    o: string;
+  };
+}
+
+type MarketDataCallback = (data: MarketData) => void;
+
+class MarketDataService {
+  private static instance: MarketDataService;
+  private subscribers: Map<string, Set<MarketDataCallback>> = new Map();
+  private marketData: Map<string, MarketData> = new Map();
+  private isPolling = false;
+  private pollingInterval: NodeJS.Timeout | null = null;
+  private lastRequestTime = 0;
+  private readonly REQUEST_INTERVAL = 3000;
+  private userAssets: string[] = [];
+
+  private constructor() {}
+
+  static getInstance(): MarketDataService {
+    if (!MarketDataService.instance) {
+      MarketDataService.instance = new MarketDataService();
+    }
+    return MarketDataService.instance;
+  }
+
+  subscribe(symbol: string, callback: MarketDataCallback): () => void {
+    if (!this.subscribers.has(symbol)) {
+      this.subscribers.set(symbol, new Set());
+    }
+    this.subscribers.get(symbol)!.add(callback);
+
+    const cachedData = this.marketData.get(symbol);
+    if (cachedData) {
+      callback(cachedData);
+    }
+
+    return () => {
+      const callbacks = this.subscribers.get(symbol);
+      if (callbacks) {
+        callbacks.delete(callback);
+        if (callbacks.size === 0) {
+          this.subscribers.delete(symbol);
+        }
+      }
+    };
+  }
+
+  startPolling(assets?: string[]): void {
+    console.log('🚀 Starting market data polling...');
+
+    if (assets && assets.length > 0) {
+      this.userAssets = [...assets];
+    } else {
+      this.userAssets = ['XXBT', 'XETH', 'XXRP', 'XLTC'];
+    }
+
+    const bitcoinSymbols = ['XXBT', 'XBT', 'BTC'];
+    const hasBitcoin = this.userAssets.some(asset => bitcoinSymbols.includes(asset));
+    if (!hasBitcoin) {
+      this.userAssets.unshift('XXBT');
+    }
+
+    if (this.isPolling) {
+      this.stopPolling();
+    }
+
+    this.isPolling = true;
+    this.pollingInterval = setInterval(() => {
+      this.fetchMarketData();
+    }, this.REQUEST_INTERVAL);
+
+    this.fetchMarketData();
+  }
+
+  stopPolling(): void {
+    this.isPolling = false;
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
+  }
+
+  private async fetchMarketData(): Promise<void> {
+    if (!this.isPolling) return;
+
+    const now = Date.now();
+    const timeSinceLastRequest = now - this.lastRequestTime;
+    if (timeSinceLastRequest < this.REQUEST_INTERVAL) {
+      return;
+    }
+
+    try {
+      this.lastRequestTime = now;
+
+      const pairs = this.userAssets.map(asset => {
+        if (asset === 'XXBT' || asset === 'XBT') return 'XBTUSD';
+        if (asset === 'XETH' || asset === 'ETH') return 'ETHUSD';
+        if (asset === 'XXRP' || asset === 'XRP') return 'XRPUSD';
+        if (asset === 'XLTC' || asset === 'LTC') return 'LTCUSD';
+        if (asset === 'XDOGE' || asset === 'DOGE') return 'DOGEUSD';
+        if (asset === 'ZUSD' || asset === 'USD') return null;
+        return `${asset}USD`;
+      }).filter(pair => pair !== null);
+
+      if (pairs.length === 0) {
+        pairs.push('XBTUSD', 'ETHUSD');
+      }
+
+      const response = await fetch('/api/kraken-proxy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          endpoint: 'Ticker',
+          params: {
+            pair: pairs.join(',')
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.error && data.error.length > 0) {
+        throw new Error(`Kraken API error: ${data.error.join(', ')}`);
+      }
+
+      if (data.result) {
+        this.processTickerData(data.result);
+      }
+    } catch (error) {
+      console.error('Failed to fetch market data:', error);
+    }
+  }
+
+  private processTickerData(tickerData: TickerData): void {
+    for (const [pair, ticker] of Object.entries(tickerData)) {
+      try {
+        const lastPrice = parseFloat(ticker.c[0]);
+        const bid = parseFloat(ticker.b[0]);
+        const ask = parseFloat(ticker.a[0]);
+        const volume = parseFloat(ticker.v[1]);
+        const high24h = parseFloat(ticker.h[1]);
+        const low24h = parseFloat(ticker.l[1]);
+        const openPrice = parseFloat(ticker.o);
+
+        const change24h = lastPrice - openPrice;
+        const changePercent = ((change24h / openPrice) * 100);
+
+        const marketData: MarketData = {
+          symbol: pair,
+          price: lastPrice,
+          bid,
+          ask,
+          volume,
+          high24h,
+          low24h,
+          change24h,
+          changePercent,
+          timestamp: Date.now()
+        };
+
+        this.marketData.set(pair, marketData);
+
+        const callbacks = this.subscribers.get(pair);
+        if (callbacks) {
+          callbacks.forEach(callback => {
+            try {
+              callback(marketData);
+            } catch (error) {
+              console.error('Error in market data callback:', error);
+            }
+          });
+        }
+      } catch (error) {
+        console.error(`Error processing ticker data for ${pair}:`, error);
+      }
+    }
+  }
+
+  getMarketData(symbol: string): MarketData | null {
+    return this.marketData.get(symbol) || null;
+  }
+
+  getAllMarketData(): Map<string, MarketData> {
+    return new Map(this.marketData);
+  }
+
+  isPollingActive(): boolean {
+    return this.isPolling;
+  }
+
+  getUserAssets(): string[] {
+    return [...this.userAssets];
+  }
+}
+
+const marketDataService = MarketDataService.getInstance();
+export default marketDataService;
+export { MarketDataService };

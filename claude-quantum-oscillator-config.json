@@ -1,0 +1,23 @@
+{
+  "strategyType": "CLAUDE_QUANTUM_OSCILLATOR",
+  "symbol": "BTC/USD",
+  "config": {
+    "fastPeriod": 3,
+    "slowPeriod": 8,
+    "signalPeriod": 3,
+    "overboughtLevel": 60,
+    "oversoldLevel": 40,
+    "momentumThreshold": 0.8,
+    "volumeMultiplier": 1.1,
+    "stopLoss": 2.5,
+    "takeProfit": 3.0
+  },
+  "description": "Aggressive Quantum Oscillator settings for fast signal generation",
+  "notes": [
+    "Very fast periods (3/8/3) for quick crossovers",
+    "Narrow overbought/oversold levels (60/40) vs standard (75/25)",
+    "Low momentum threshold (0.8) for easier confirmation",
+    "Low volume multiplier (1.1) for easier volume confirmation",
+    "Moderate risk/reward ratio (2.5:3.0)"
+  ]
+}

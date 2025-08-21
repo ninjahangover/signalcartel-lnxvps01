@@ -1,0 +1,205 @@
+//@version=5
+strategy("Neural Momentum Pro - AI Enhanced", 
+         shorttitle="NMP-AI", overlay=true, 
+         default_qty_type=strategy.percent_of_equity, default_qty_value=3,
+         pyramiding=0, initial_capital=50000, commission_type=strategy.commission.percent, commission_value=0.1)
+
+// === NEURAL NETWORK PARAMETERS ===
+lookback_window = input.int(10, title="Neural Lookback Window", minval=5, maxval=50, group="Neural Settings")
+learning_rate = input.float(0.05, title="Learning Rate", minval=0.01, maxval=0.2, group="Neural Settings")
+confidence_threshold = input.float(0.4, title="Min Confidence", minval=0.1, maxval=0.9, group="Neural Settings")
+adaptation_period = input.int(20, title="Adaptation Period", minval=10, maxval=100, group="Neural Settings")
+
+// === TECHNICAL INDICATORS ===
+rsi_period = input.int(14, title="RSI Period", minval=5, maxval=50, group="Indicators")
+sma_short = input.int(20, title="SMA Short", minval=5, maxval=100, group="Indicators")
+sma_long = input.int(50, title="SMA Long", minval=20, maxval=200, group="Indicators")
+bb_period = input.int(20, title="Bollinger Period", minval=10, maxval=50, group="Indicators")
+bb_mult = input.float(2.0, title="Bollinger Multiplier", minval=1.0, maxval=3.0, group="Indicators")
+
+// === RISK MANAGEMENT ===
+max_risk_percent = input.float(1.5, title="Max Risk %", minval=0.5, maxval=5.0, group="Risk Management")
+risk_multiplier = input.float(1.5, title="Risk Multiplier", minval=1.0, maxval=3.0, group="Risk Management")
+atr_period = input.int(14, title="ATR Period", minval=5, maxval=50, group="Risk Management")
+
+// === WEBHOOK CONFIGURATION ===
+webhook_url = "https://kraken.circuitcartel.com/webhook/strategy/neural-momentum-001"
+strategy_id = "neural-momentum-001"
+
+// === TECHNICAL CALCULATIONS ===
+rsi = ta.rsi(close, rsi_period)
+sma_s = ta.sma(close, sma_short)
+sma_l = ta.sma(close, sma_long)
+[bb_upper, bb_middle, bb_lower] = ta.bb(close, bb_period, bb_mult)
+atr = ta.atr(atr_period)
+
+// Volatility calculation
+volatility = ta.stdev(ta.change(close), 20) / close
+
+// Volume analysis
+avg_volume = ta.sma(volume, 20)
+volume_ratio = volume / avg_volume
+
+// === NEURAL NETWORK SIMULATION ===
+// Simplified neural network using weighted technical indicators
+
+// Input normalization (0-1 range)
+rsi_norm = rsi / 100
+price_position = (close - bb_lower) / (bb_upper - bb_lower)
+trend_strength = math.abs(sma_s - sma_l) / close
+volume_norm = math.min(volume_ratio / 3, 1)
+
+// Neural layer weights (these would be learned in a real system)
+var float w1_rsi = 0.3
+var float w1_price = 0.25
+var float w1_trend = 0.2
+var float w1_volume = 0.25
+
+// Hidden layer calculation (sigmoid activation)
+hidden_input = w1_rsi * rsi_norm + w1_price * price_position + w1_trend * trend_strength + w1_volume * volume_norm
+hidden_output = 1 / (1 + math.exp(-hidden_input * 6 - 3)) // Sigmoid with bias
+
+// Output layer (bullish/bearish prediction)
+neural_prediction = (hidden_output - 0.5) * 2 // Scale to -1 to +1
+
+// Confidence calculation based on signal strength
+confidence = math.abs(neural_prediction)
+
+// Market regime detection
+regime = volatility > 0.02 ? "volatile" : math.abs(sma_s - sma_l) / close > 0.1 ? "trending" : "ranging"
+
+// Adaptive confidence based on market regime
+regime_multiplier = regime == "trending" ? 1.2 : regime == "volatile" ? 0.8 : 1.0
+adjusted_confidence = confidence * regime_multiplier
+
+// === ENTRY CONDITIONS ===
+// Neural bullish signal
+bullish_neural = neural_prediction > 0 and adjusted_confidence > confidence_threshold
+bullish_confirmation = close > sma_s and sma_s > sma_l and rsi < 70
+bullish_entry = bullish_neural and bullish_confirmation
+
+// Neural bearish signal
+bearish_neural = neural_prediction < 0 and adjusted_confidence > confidence_threshold
+bearish_confirmation = close < sma_s and sma_s < sma_l and rsi > 30
+bearish_entry = bearish_neural and bearish_confirmation
+
+// === EXIT CONDITIONS ===
+// Exit when neural prediction reverses or confidence drops
+long_exit = neural_prediction < 0 or adjusted_confidence < confidence_threshold * 0.5 or rsi > 80
+short_exit = neural_prediction > 0 or adjusted_confidence < confidence_threshold * 0.5 or rsi < 20
+
+// === POSITION SIZING ===
+risk_amount = strategy.equity * (max_risk_percent / 100)
+stop_distance = atr * risk_multiplier
+position_size = risk_amount / stop_distance
+
+// === STRATEGY EXECUTION ===
+if bullish_entry and strategy.position_size == 0
+    entry_price = close
+    stop_price = entry_price - stop_distance
+    target_price = entry_price + (stop_distance * 2) // 2:1 R/R
+    
+    strategy.entry("NeuralLong", strategy.long, qty=position_size,
+                  comment="Neural Long @ " + str.tostring(close, "#.##") + " (" + str.tostring(adjusted_confidence*100, "#") + "%)")
+    
+    strategy.exit("NeuralLongExit", "NeuralLong",
+                 stop=stop_price, limit=target_price,
+                 comment="Neural SL/TP")
+    
+    // Send webhook alert for BUY signal
+    alert_msg = '{"passphrase": "neural_ai_2025", "ticker": "' + syminfo.ticker + '", "strategy": {"order_action": "buy", "order_type": "market", "order_price": "' + str.tostring(close) + '", "order_contracts": "' + str.tostring(position_size, "#.####") + '", "type": "buy", "volume": "' + str.tostring(position_size, "#.####") + '", "pair": "' + syminfo.ticker + '", "validate": "true", "neural_prediction": "' + str.tostring(neural_prediction, "#.###") + '", "confidence": "' + str.tostring(adjusted_confidence, "#.###") + '", "market_regime": "' + regime + '", "rsi": "' + str.tostring(rsi, "#.#") + '", "trend_strength": "' + str.tostring(trend_strength, "#.###") + '", "stop_loss": "' + str.tostring(stop_price) + '", "take_profit": "' + str.tostring(target_price) + '"}}'
+    
+    alert(alert_msg, alert.freq_once_per_bar)
+
+if bearish_entry and strategy.position_size == 0
+    entry_price = close
+    stop_price = entry_price + stop_distance
+    target_price = entry_price - (stop_distance * 2) // 2:1 R/R
+    
+    strategy.entry("NeuralShort", strategy.short, qty=position_size,
+                  comment="Neural Short @ " + str.tostring(close, "#.##") + " (" + str.tostring(adjusted_confidence*100, "#") + "%)")
+    
+    strategy.exit("NeuralShortExit", "NeuralShort",
+                 stop=stop_price, limit=target_price,
+                 comment="Neural SL/TP")
+    
+    // Send webhook alert for SELL signal
+    alert_msg = '{"passphrase": "neural_ai_2025", "ticker": "' + syminfo.ticker + '", "strategy": {"order_action": "sell", "order_type": "market", "order_price": "' + str.tostring(close) + '", "order_contracts": "' + str.tostring(position_size, "#.####") + '", "type": "sell", "volume": "' + str.tostring(position_size, "#.####") + '", "pair": "' + syminfo.ticker + '", "validate": "true", "neural_prediction": "' + str.tostring(neural_prediction, "#.###") + '", "confidence": "' + str.tostring(adjusted_confidence, "#.###") + '", "market_regime": "' + regime + '", "rsi": "' + str.tostring(rsi, "#.#") + '", "trend_strength": "' + str.tostring(trend_strength, "#.###") + '", "stop_loss": "' + str.tostring(stop_price) + '", "take_profit": "' + str.tostring(target_price) + '"}}'
+    
+    alert(alert_msg, alert.freq_once_per_bar)
+
+// === MANUAL EXITS ===
+if strategy.position_size > 0 and long_exit
+    strategy.close("NeuralLong", comment="Neural Exit Long")
+    alert('{"passphrase": "neural_ai_2025", "ticker": "' + syminfo.ticker + '", "strategy": {"order_action": "close", "type": "close", "pair": "' + syminfo.ticker + '"}}', alert.freq_once_per_bar)
+
+if strategy.position_size < 0 and short_exit
+    strategy.close("NeuralShort", comment="Neural Exit Short")
+    alert('{"passphrase": "neural_ai_2025", "ticker": "' + syminfo.ticker + '", "strategy": {"order_action": "close", "type": "close", "pair": "' + syminfo.ticker + '"}}', alert.freq_once_per_bar)
+
+// === VISUALIZATION ===
+// Plot moving averages
+plot(sma_s, "SMA Short", color=color.blue, linewidth=1)
+plot(sma_l, "SMA Long", color=color.red, linewidth=2)
+
+// Plot Bollinger Bands
+p1 = plot(bb_upper, "BB Upper", color=color.gray)
+p2 = plot(bb_lower, "BB Lower", color=color.gray)
+fill(p1, p2, color=color.gray, transp=95)
+
+// Plot entry signals
+plotshape(bullish_entry, title="Neural Long", style=shape.triangleup,
+          location=location.belowbar, color=color.green, size=size.normal, 
+          text="AI BUY\n" + str.tostring(adjusted_confidence*100, "#") + "%")
+          
+plotshape(bearish_entry, title="Neural Short", style=shape.triangledown,
+          location=location.abovebar, color=color.red, size=size.normal,
+          text="AI SELL\n" + str.tostring(adjusted_confidence*100, "#") + "%")
+
+// === NEURAL PERFORMANCE TABLE ===
+var table neural_table = table.new(position.bottom_right, 3, 8, bgcolor=color.white, border_width=1)
+
+if barstate.islast
+    table.cell(neural_table, 0, 0, "Neural AI Metrics", text_color=color.white, bgcolor=color.purple)
+    table.cell(neural_table, 1, 0, "Value", text_color=color.white, bgcolor=color.purple)
+    table.cell(neural_table, 2, 0, "Status", text_color=color.white, bgcolor=color.purple)
+    
+    table.cell(neural_table, 0, 1, "Prediction", text_color=color.black)
+    table.cell(neural_table, 1, 1, str.tostring(neural_prediction, "#.###"), 
+               text_color=(neural_prediction > 0 ? color.green : color.red))
+    table.cell(neural_table, 2, 1, 
+               (neural_prediction > 0.3 ? "BULL" : neural_prediction < -0.3 ? "BEAR" : "NEUT"), 
+               text_color=color.black)
+    
+    table.cell(neural_table, 0, 2, "Confidence", text_color=color.black)
+    table.cell(neural_table, 1, 2, str.tostring(adjusted_confidence*100, "#") + "%", 
+               text_color=(adjusted_confidence > confidence_threshold ? color.green : color.red))
+    table.cell(neural_table, 2, 2, 
+               (adjusted_confidence > confidence_threshold ? "✓" : "✗"), 
+               text_color=(adjusted_confidence > confidence_threshold ? color.green : color.red))
+    
+    table.cell(neural_table, 0, 3, "Market Regime", text_color=color.black)
+    table.cell(neural_table, 1, 3, regime, text_color=color.black)
+    table.cell(neural_table, 2, 3, str.tostring(regime_multiplier, "#.#") + "x", text_color=color.black)
+    
+    table.cell(neural_table, 0, 4, "RSI", text_color=color.black)
+    table.cell(neural_table, 1, 4, str.tostring(rsi, "#.#"), text_color=color.black)
+    table.cell(neural_table, 2, 4, 
+               (rsi > 70 ? "OB" : rsi < 30 ? "OS" : "OK"), 
+               text_color=(rsi > 70 or rsi < 30 ? color.orange : color.green))
+    
+    table.cell(neural_table, 0, 5, "Trend Strength", text_color=color.black)
+    table.cell(neural_table, 1, 5, str.tostring(trend_strength*100, "#.#") + "%", text_color=color.black)
+    table.cell(neural_table, 2, 5, 
+               (trend_strength > 0.1 ? "STRONG" : "WEAK"), 
+               text_color=(trend_strength > 0.1 ? color.green : color.orange))
+    
+    table.cell(neural_table, 0, 6, "Win Rate", text_color=color.black)
+    win_rate = strategy.closedtrades > 0 ? strategy.wintrades/strategy.closedtrades*100 : 0
+    table.cell(neural_table, 1, 6, str.tostring(win_rate, "#.#") + "%", 
+               text_color=(win_rate > 60 ? color.green : win_rate > 40 ? color.orange : color.red))
+    table.cell(neural_table, 2, 6, str.tostring(strategy.closedtrades) + " trades", text_color=color.black)
+    
+    table.cell(neural_table, 0, 7, "Strategy ID", text_color=color.black)
+    table.cell(neural_table, 1, 7, strategy_id, text_color=color.blue)
+    table.cell(neural_table, 2, 7, "", text_color=color.black)

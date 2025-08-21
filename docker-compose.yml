@@ -1,0 +1,102 @@
+version: '3.8'
+
+# Main orchestration file for SignalCartel decoupled microservices
+# Each service has its own directory with dedicated Dockerfile and docker-compose.yml
+
+services:
+  # Database layer - starts first
+  database:
+    extends:
+      file: containers/database/docker-compose.yml
+      service: database
+    
+  redis-cache:
+    extends:
+      file: containers/database/docker-compose.yml
+      service: redis-cache
+
+  # Market data collection service
+  market-data:
+    extends:
+      file: containers/market-data/docker-compose.yml
+      service: market-data
+    depends_on:
+      database:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+
+  # Trading execution engine
+  trading-engine:
+    extends:
+      file: containers/trading-engine/docker-compose.yml
+      service: trading-engine
+    depends_on:
+      database:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      market-data:
+        condition: service_healthy
+
+  # Web interface
+  website:
+    extends:
+      file: containers/website/docker-compose.yml
+      service: website
+    depends_on:
+      database:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+
+  # Monitoring and alerting
+  monitoring:
+    extends:
+      file: containers/monitoring/docker-compose.yml
+      service: monitoring
+    depends_on:
+      - website
+      - trading-engine
+      - market-data
+
+  prometheus:
+    extends:
+      file: containers/monitoring/docker-compose.yml
+      service: prometheus
+
+  grafana:
+    extends:
+      file: containers/monitoring/docker-compose.yml
+      service: grafana
+    depends_on:
+      - prometheus
+
+  # Reverse proxy (Caddy)
+  reverse-proxy:
+    image: caddy:2-alpine
+    container_name: signalcartel-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - signalcartel-network
+    depends_on:
+      - website
+
+volumes:
+  caddy-data:
+    external: true
+  caddy-config:
+    external: true
+
+networks:
+  signalcartel-network:
+    driver: bridge
+    name: signalcartel_signalcartel-network

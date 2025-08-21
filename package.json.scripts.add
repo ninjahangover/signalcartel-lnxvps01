@@ -1,0 +1,4 @@
+# Add these to your package.json scripts section:
+
+"health-check": "npx ts-node stratus-health-check.ts",
+"test-markov": "npx ts-node test-markov-integration.ts"
