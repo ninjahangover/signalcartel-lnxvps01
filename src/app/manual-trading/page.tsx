@@ -1,4 +1,4 @@
-import { ManualTradingDashboard } from '@/components/manual-trading/ManualTradingDashboard';
+import ManualTradingDashboard from '@/components/manual-trading/ManualTradingDashboard';
 
 export default function ManualTradingPage() {
   return (
