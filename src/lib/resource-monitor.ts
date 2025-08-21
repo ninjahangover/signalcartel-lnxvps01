@@ -95,7 +95,9 @@ class ResourceMonitor {
       }
     };
     
-    this.logFile = `/home/telgkb9/depot/dev-signalcartel/logs/resource-monitor.log`;
+    // Use environment variable or fallback to relative path for container compatibility
+    const baseDir = process.env.LOG_DIR || process.cwd();
+    this.logFile = `${baseDir}/logs/resource-monitor.log`;
     this.initializeLogging();
   }
 
@@ -485,8 +487,17 @@ class ResourceMonitor {
     const path = require('path');
     const logDir = path.dirname(this.logFile);
     
-    if (!fs.existsSync(logDir)) {
-      fs.mkdirSync(logDir, { recursive: true });
+    try {
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
+      }
+    } catch (error: any) {
+      // If we can't create the log directory (e.g., in container), 
+      // fall back to console logging only
+      console.warn(`[ResourceMonitor] Cannot create log directory: ${error.message}`);
+      console.warn('[ResourceMonitor] Falling back to console logging only');
+      // Set logFile to empty to disable file logging
+      this.logFile = '';
     }
   }
 
@@ -500,9 +511,16 @@ class ResourceMonitor {
     // Console output
     console.log(logMessage);
     
-    // File output
-    const fs = require('fs');
-    fs.appendFileSync(this.logFile, logMessage + '\n');
+    // File output (only if logFile is set)
+    if (this.logFile) {
+      try {
+        const fs = require('fs');
+        fs.appendFileSync(this.logFile, logMessage + '\n');
+      } catch (error) {
+        // Silently fail file logging if there's an issue
+        // Console logging is already done above
+      }
+    }
   }
 
   /**

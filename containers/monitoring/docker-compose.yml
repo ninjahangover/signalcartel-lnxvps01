@@ -11,6 +11,7 @@ services:
       - NODE_OPTIONS=--max-old-space-size=512
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - LOG_DIR=/app
     volumes:
       - monitoring-logs:/app/logs
       - ../../.env.local:/app/.env.local:ro
