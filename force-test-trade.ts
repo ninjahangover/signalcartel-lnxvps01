@@ -42,7 +42,7 @@ async function forceTestTrade() {
       qty: 0.0001,          // Small fraction of BTC (about $10-15 worth)
       side: 'buy' as const,
       type: 'market' as const,
-      time_in_force: 'day' as const
+      time_in_force: 'gtc' as const  // Crypto requires 'gtc' (good till cancelled), not 'day'
     };
     
     console.log(`   Order: BUY ${testOrder.qty} ${testOrder.symbol} (market order)`);
@@ -93,7 +93,7 @@ async function forceTestTrade() {
           qty: testOrder.qty,
           side: 'sell',
           type: 'market',
-          timeInForce: 'day'
+          timeInForce: 'gtc'  // Crypto requires 'gtc'
         });
         
         if (closeOrder) {

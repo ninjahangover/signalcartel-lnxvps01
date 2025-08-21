@@ -83,8 +83,19 @@ For production deployment, ensure:
 2. Configure `NODE_ENV=production`
 3. Use secure credential storage (not `.env` files)
 
+## 🔍 System Verification
+
+To verify the trading system is working correctly:
+- **Quick Setup**: See [SETUP.md](SETUP.md) for installation guide
+- **Verification Guide**: See [VERIFICATION.md](VERIFICATION.md) for testing the complete pipeline
+- **Health Checks**: Run `npx tsx quick-system-check.ts`
+- **Trade Testing**: Run `npx tsx force-test-trade.ts`
+
 ## Support
 
 For issues with:
+- **Setup Problems**: Check [SETUP.md](SETUP.md)
+- **Verification Issues**: Check [VERIFICATION.md](VERIFICATION.md)
 - **Kraken API**: Check [Kraken API Documentation](https://docs.kraken.com/rest/)
+- **Alpaca API**: Check [Alpaca Documentation](https://alpaca.markets/docs/)
 - **Platform Issues**: Check console logs and network requests
