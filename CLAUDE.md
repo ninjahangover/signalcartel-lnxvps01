@@ -170,6 +170,15 @@ export ENABLE_GPU_STRATEGIES=true && timeout 30s npx tsx -r dotenv/config test-g
 python3 src/lib/gpu-accelerated-indicators.py
 ```
 
+### System Health Check
+```bash
+# Run comprehensive system health check
+npx tsx system-health-check.ts
+
+# Quick checks
+npx tsx -e "import {PrismaClient} from '@prisma/client'; const p = new PrismaClient(); p.paperTrade.findMany({where:{strategy:'QUANTUM FORGE™'},take:5,orderBy:{executedAt:'desc'}}).then(console.log)"
+```
+
 ## Development Workflow
 1. Dev server for heavy lifting (building, testing)
 2. Git push changes

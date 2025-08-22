@@ -564,6 +564,35 @@ class StrategyExecutionEngine {
           const { PrismaClient } = await import('@prisma/client');
           const prisma = new PrismaClient();
           
+          // Get or create QUANTUM FORGE™ paper trading session
+          let session = await prisma.paperTradingSession.findFirst({
+            where: {
+              strategy: 'QUANTUM FORGE™',
+              isActive: true
+            }
+          });
+          
+          if (!session) {
+            // Create QUANTUM FORGE™ session
+            session = await prisma.paperTradingSession.create({
+              data: {
+                paperAccountId: 'quantum-forge-account',
+                sessionName: 'QUANTUM FORGE™ GPU Strategies',
+                strategy: 'QUANTUM FORGE™',
+                isActive: true,
+                sessionStart: new Date(),
+                initialBalance: 10000.0, // $10K starting balance
+                currentBalance: 10000.0,
+                maxDrawdown: 0.0,
+                totalTrades: 0,
+                winningTrades: 0,
+                totalPnL: 0.0,
+                totalFees: 0.0
+              }
+            });
+            console.log(`✅ Created new QUANTUM FORGE™ session: ${session.id}`);
+          }
+          
           // Convert action to side format
           let orderSide: 'buy' | 'sell';
           if (action === 'CLOSE') {
@@ -581,10 +610,10 @@ class StrategyExecutionEngine {
           const quantity = positionValue / currentPrice;
           const tradeValue = quantity * currentPrice;
           
-          // Create QUANTUM FORGE™ paper trade directly in database
+          // Create QUANTUM FORGE™ paper trade with valid sessionId
           const trade = await prisma.paperTrade.create({
             data: {
-              sessionId: `quantum-forge-${Date.now()}`,
+              sessionId: session.id,
               symbol: symbol,
               side: orderSide,
               quantity: quantity,
