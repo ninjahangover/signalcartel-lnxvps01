@@ -336,7 +336,11 @@ export default function OverviewDashboard({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">24h Alerts</p>
-              <p className="text-2xl font-bold">{engineStatus.totalAlerts}</p>
+              <p className="text-2xl font-bold">
+                {quantumForgeStatus?.quantumForge?.last24hTrades 
+                  ?? engineStatus.totalAlerts
+                }
+              </p>
             </div>
             <Activity className="h-8 w-8 text-orange-500" />
           </div>

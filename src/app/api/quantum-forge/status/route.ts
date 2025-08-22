@@ -14,6 +14,15 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Get 24-hour trade count for alerts display
+    const last24hTrades = await prisma.paperTrade.count({
+      where: {
+        executedAt: {
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
+        }
+      }
+    });
+
     // Check market data collection
     const recentMarketData = await prisma.marketData.count({
       where: {
@@ -66,6 +75,7 @@ export async function GET(request: NextRequest) {
         isRunning: recentTrades > 0,
         lastTrade: recentTrades > 0 ? new Date() : null,
         totalTrades,
+        last24hTrades,
         winRate: Number(winRate.toFixed(1)),
         totalPnL: Number(totalPnL.toFixed(2))
       },
