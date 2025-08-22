@@ -27,7 +27,8 @@ import {
   CheckCircle,
   Clock,
   Play,
-  Square
+  Square,
+  Zap
 } from 'lucide-react';
 import PositionCleanupModal from './PositionCleanupModal';
 import { cleanTestingService, type CleanTestingSession } from '../../lib/clean-testing-service';
@@ -68,6 +69,7 @@ interface StrategyPerformance {
 
 export default function PaperTradingMonitor() {
   const [strategies, setStrategies] = useState<StrategyPerformance[]>([]);
+  const [customTradingData, setCustomTradingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -293,6 +295,30 @@ export default function PaperTradingMonitor() {
       if (fetchInterval) clearInterval(fetchInterval);
     };
   }, [autoRefresh]);
+
+  // Fetch custom trading data
+  useEffect(() => {
+    const fetchCustomData = async () => {
+      try {
+        const response = await fetch('/api/custom-paper-trading/dashboard');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setCustomTradingData(data.data);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch custom trading data:', error);
+      }
+    };
+
+    fetchCustomData();
+    
+    // Auto-refresh every 10 seconds
+    const interval = setInterval(fetchCustomData, 10000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   // Load clean testing service data and initialize paper trading on mount
   useEffect(() => {
@@ -662,6 +688,51 @@ export default function PaperTradingMonitor() {
           </div>
         )}
 
+        {/* Live Custom Trading Engine Status */}
+        {customTradingData && (
+          <div className="mt-4 p-4 bg-gradient-to-r from-gold-50 to-green-50 border border-gold-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Zap className="w-6 h-6 text-gold-600 animate-pulse" />
+                <div>
+                  <h4 className="font-semibold text-gold-800">🚀 Live Custom Trading Engine</h4>
+                  <p className="text-sm text-gold-700">
+                    Real-time data generation for LLN & Markov optimization
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-6">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-blue-700">{customTradingData.trades?.length || 0}</div>
+                  <div className="text-xs text-blue-600">Live Trades</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-green-700">
+                    {customTradingData.trades?.length > 0 ? 
+                      ((customTradingData.trades.filter((t: any) => t.pnl > 0).length / customTradingData.trades.filter((t: any) => t.pnl !== null).length) * 100).toFixed(1) 
+                      : '0.0'}%
+                  </div>
+                  <div className="text-xs text-green-600">Win Rate</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-purple-700">
+                    ${(customTradingData.trades?.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0) || 0).toFixed(0)}
+                  </div>
+                  <div className="text-xs text-purple-600">P&L</div>
+                </div>
+                <div className="text-center">
+                  <div className={`text-lg font-bold ${
+                    (customTradingData.trades?.length || 0) >= 50 ? 'text-green-700' : 'text-yellow-700'
+                  }`}>
+                    {(customTradingData.trades?.length || 0) >= 50 ? 'LLN ACTIVE' : `${50 - (customTradingData.trades?.length || 0)} more`}
+                  </div>
+                  <div className="text-xs text-gray-600">LLN Status</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Overall Statistics */}
         <div className="grid grid-cols-4 gap-4">
           <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4">
@@ -886,11 +957,11 @@ export default function PaperTradingMonitor() {
             <h3 className="font-semibold text-blue-900">📊 ALPACA PAPER TRADING (NOT WEBHOOKS)</h3>
             <p className="text-blue-700 text-sm">
               Paper trading uses Alpaca API directly - NO webhooks, NO validate:false needed! 
-              Real $1M Alpaca paper balance, real market prices, real API trades. 
+              Real $10K SignalCartel paper balance, real market prices, real custom trades. 
               Kraken is for LIVE trading only.
             </p>
             <div className="flex gap-4 text-sm text-blue-600">
-              <span>• Paper: Alpaca API ($1M balance)</span>
+              <span>• Paper: SignalCartel Engine ($10K balance)</span>
               <span>• Live: Kraken (real money)</span>
               <span>• NO webhooks for paper trading</span>
             </div>

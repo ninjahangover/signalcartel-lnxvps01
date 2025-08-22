@@ -41,8 +41,9 @@ export default function AIStrategyEngine({
   const [selectedStrategy, setSelectedStrategy] = useState('rsi-pullback-001');
   const [engineRunning, setEngineRunning] = useState(engineStatus.isRunning);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
+  const [recentAlerts, setRecentAlerts] = useState<any[]>([]);
 
-  // Load real strategy data from StrategyManager
+  // Load real strategy data from StrategyManager and custom paper trading alerts
   useEffect(() => {
     const strategyManager = StrategyManager.getInstance();
     const loadStrategies = () => {
@@ -55,6 +56,35 @@ export default function AIStrategyEngine({
     
     // Subscribe to strategy updates
     const unsubscribe = strategyManager.subscribe(loadStrategies);
+    
+    // Fetch real trading alerts from custom paper trading
+    const fetchRealAlerts = async () => {
+      try {
+        const response = await fetch('/api/custom-paper-trading/dashboard');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data.trades) {
+            // Convert recent trades to alert format
+            const alerts = data.data.trades.slice(0, 3).map((trade: any, index: number) => ({
+              id: index + 1,
+              strategy: 'Custom Paper Trading',
+              action: trade.side.toUpperCase(),
+              symbol: trade.symbol,
+              price: trade.price,
+              timestamp: new Date(trade.executedAt),
+              status: 'executed',
+              optimization: `${trade.strategy} - Confidence: ${(trade.confidence * 100).toFixed(1)}%`
+            }));
+            setRecentAlerts(alerts);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch real alerts:', error);
+        setRecentAlerts([]); // No hardcoded fallback
+      }
+    };
+    
+    fetchRealAlerts();
     
     return unsubscribe;
   }, []);
@@ -80,40 +110,6 @@ export default function AIStrategyEngine({
   };
 
   const displayStrategies = getDisplayStrategies();
-
-
-  const recentAlerts = [
-    {
-      id: 1,
-      strategy: 'RSI Pullback Pro',
-      action: 'BUY',
-      symbol: 'BTCUSD',
-      price: 48250.00,
-      timestamp: new Date(Date.now() - 300000), // 5 minutes ago
-      status: 'executed',
-      optimization: 'AI-Optimized RSI oversold (27.3 <= 28) + uptrend'
-    },
-    {
-      id: 2,
-      strategy: 'RSI Pullback Pro',
-      action: 'CLOSE',
-      symbol: 'BTCUSD',
-      price: 49125.50,
-      timestamp: new Date(Date.now() - 1200000), // 20 minutes ago
-      status: 'executed',
-      optimization: 'AI-Optimized RSI overbought (73.1 >= 72)'
-    },
-    {
-      id: 3,
-      strategy: 'RSI Pullback Pro',
-      action: 'SELL',
-      symbol: 'ETHUSD',
-      price: 2845.75,
-      timestamp: new Date(Date.now() - 2100000), // 35 minutes ago
-      status: 'executed',
-      optimization: 'AI-Optimized confirmation period (2 bars)'
-    }
-  ];
 
   const handleEngineToggle = () => {
     setEngineRunning(!engineRunning);

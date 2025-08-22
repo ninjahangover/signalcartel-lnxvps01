@@ -35,6 +35,7 @@ export default function OverviewDashboard({
 }: OverviewDashboardProps) {
   
   const [accountData, setAccountData] = useState<AccountData | null>(null);
+  const [customTradingData, setCustomTradingData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,6 +62,30 @@ export default function OverviewDashboard({
       });
 
     return unsubscribe;
+  }, []);
+
+  // Fetch real-time custom trading data
+  useEffect(() => {
+    const fetchCustomData = async () => {
+      try {
+        const response = await fetch('/api/custom-paper-trading/dashboard');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setCustomTradingData(data.data);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch custom trading data:', error);
+      }
+    };
+
+    fetchCustomData();
+    
+    // Auto-refresh every 10 seconds
+    const interval = setInterval(fetchCustomData, 10000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   // Use real account data - no fallbacks to fake data
@@ -100,6 +125,98 @@ export default function OverviewDashboard({
               </span>
             )}
           </div>
+        </Card>
+      )}
+
+      {/* Live Custom Trading Data */}
+      {customTradingData && (
+        <Card className="p-6 border-gold-200 bg-gradient-to-r from-gold-50 to-green-50">
+          <div className="flex items-center gap-3 mb-4">
+            <Zap className="w-8 h-8 text-gold-600" />
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">🚀 Live Custom Paper Trading</h3>
+              <p className="text-gray-600">Real-time LLN & Markov Data Generation</p>
+            </div>
+            <div className="ml-auto text-sm text-green-600 flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span>Live Updates</span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-700">{customTradingData.trades?.length || 0}</div>
+              <div className="text-sm text-blue-600">Total Trades</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-700">
+                {customTradingData.trades?.length > 0 ? 
+                  ((customTradingData.trades.filter((t: any) => t.pnl > 0).length / customTradingData.trades.filter((t: any) => t.pnl !== null).length) * 100).toFixed(1) 
+                  : '0.0'}%
+              </div>
+              <div className="text-sm text-green-600">Win Rate</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-700">
+                ${(customTradingData.trades?.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0) || 0).toFixed(0)}
+              </div>
+              <div className="text-sm text-purple-600">Total P&L</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-gold-700">
+                ${((customTradingData.trades?.reduce((sum: number, t: any) => sum + t.value, 0) || 0) / 1000).toFixed(0)}K
+              </div>
+              <div className="text-sm text-gold-600">Volume</div>
+            </div>
+          </div>
+          
+          {/* LLN & Markov Progress */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className={`p-3 rounded-lg border-2 ${
+              (customTradingData.trades?.length || 0) >= 10 ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'
+            }`}>
+              <div className="flex items-center gap-2">
+                <Target className={`w-5 h-5 ${(customTradingData.trades?.length || 0) >= 10 ? 'text-green-600' : 'text-yellow-600'}`} />
+                <span className={`font-semibold ${(customTradingData.trades?.length || 0) >= 10 ? 'text-green-800' : 'text-yellow-800'}`}>
+                  Markov Chain
+                </span>
+              </div>
+              <div className={`text-sm ${(customTradingData.trades?.length || 0) >= 10 ? 'text-green-700' : 'text-yellow-700'}`}>
+                {(customTradingData.trades?.length || 0) >= 10 ? '✅ ACTIVE' : `${10 - (customTradingData.trades?.length || 0)} more needed`}
+              </div>
+            </div>
+            <div className={`p-3 rounded-lg border-2 ${
+              (customTradingData.trades?.length || 0) >= 50 ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'
+            }`}>
+              <div className="flex items-center gap-2">
+                <BarChart3 className={`w-5 h-5 ${(customTradingData.trades?.length || 0) >= 50 ? 'text-green-600' : 'text-yellow-600'}`} />
+                <span className={`font-semibold ${(customTradingData.trades?.length || 0) >= 50 ? 'text-green-800' : 'text-yellow-800'}`}>
+                  Law of Large Numbers
+                </span>
+              </div>
+              <div className={`text-sm ${(customTradingData.trades?.length || 0) >= 50 ? 'text-green-700' : 'text-yellow-700'}`}>
+                {(customTradingData.trades?.length || 0) >= 50 ? '✅ ACTIVE' : `${50 - (customTradingData.trades?.length || 0)} more needed`}
+              </div>
+            </div>
+          </div>
+          
+          {/* Recent Trades Preview */}
+          {customTradingData.trades?.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <h4 className="font-semibold text-gray-900 mb-2">Latest Trades</h4>
+              <div className="flex gap-2 overflow-x-auto">
+                {customTradingData.trades.slice(0, 5).map((trade: any) => (
+                  <div key={trade.id} className="flex-shrink-0 bg-white p-2 rounded border text-xs">
+                    <div className="font-medium">{trade.symbol}</div>
+                    <div className={`${trade.side === 'buy' ? 'text-green-600' : 'text-red-600'}`}>
+                      {trade.side.toUpperCase()}
+                    </div>
+                    <div className="text-gray-600">${trade.value.toFixed(0)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </Card>
       )}
 
@@ -398,45 +515,53 @@ export default function OverviewDashboard({
         </Card>
       )}
 
-      {/* Market Insights */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">📈 Market Insights</h3>
-        
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-medium mb-2">Current Market Regime</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Trend:</span>
-                <Badge variant="outline">📈 Bullish</Badge>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Volatility:</span>
-                <Badge variant="outline">🔥 Medium</Badge>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Momentum:</span>
-                <Badge variant="outline">⚡ +3.5%</Badge>
-              </div>
-            </div>
-          </div>
+      {/* Market Insights - Real Data */}
+      {customTradingData && customTradingData.trades?.length >= 10 && (
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">📈 Market Insights</h3>
           
-          <div>
-            <h4 className="font-medium mb-2">AI Optimization Status</h4>
-            <div className="space-y-2 text-sm">
-              <p className="text-gray-600">
-                🎯 RSI parameters optimized for current bullish market
-              </p>
-              <p className="text-gray-600">
-                📊 Oversold level adjusted to 28 based on volatility analysis
-              </p>
-              <p className="text-gray-600">
-                ⏰ Next optimization in ~42 market updates
-              </p>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-medium mb-2">Current Market Performance</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Recent Trend:</span>
+                  <Badge variant="outline">
+                    {customTradingData.trades?.slice(0, 5).filter((t: any) => t.pnl > 0).length >= 3 ? '📈 Bullish' : '📉 Bearish'}
+                  </Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Win Rate:</span>
+                  <Badge variant="outline">
+                    🎯 {((customTradingData.trades.filter((t: any) => t.pnl > 0).length / customTradingData.trades.filter((t: any) => t.pnl !== null).length) * 100).toFixed(1)}%
+                  </Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Total P&L:</span>
+                  <Badge variant="outline">
+                    ⚡ ${customTradingData.trades?.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0).toFixed(0)}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="font-medium mb-2">Strategy Performance</h4>
+              <div className="space-y-2 text-sm">
+                <p className="text-gray-600">
+                  🎯 Total trades executed: {customTradingData.trades?.length}
+                </p>
+                <p className="text-gray-600">
+                  📊 Average trade size: ${(customTradingData.trades?.reduce((sum: number, t: any) => sum + t.value, 0) / customTradingData.trades?.length).toFixed(0)}
+                </p>
+                <p className="text-gray-600">
+                  ⏰ Latest trade: {new Date(customTradingData.trades?.[0]?.executedAt || Date.now()).toLocaleString()}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }

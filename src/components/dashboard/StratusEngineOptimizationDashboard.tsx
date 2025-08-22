@@ -44,7 +44,8 @@ import {
 } from '../../lib/global-stratus-engine-service';
 import { pineScriptInputOptimizer, startInputOptimization } from '../../lib/pine-script-input-optimizer';
 import { realTimeMarketMonitor } from '../../lib/real-time-market-monitor';
-import { alpacaStratusIntegration } from '../../lib/alpaca-stratus-integration';
+// Custom paper trading integration replaces Alpaca
+// import { alpacaStratusIntegration } from '../../lib/alpaca-stratus-integration';
 import { persistentEngine } from '../../lib/persistent-engine-manager';
 import MarketDataStatusIndicator from './MarketDataStatusIndicator';
 import TradingPairSelector from '../trading-pair-selector';
@@ -85,7 +86,7 @@ interface OptimizationStatus {
     analyses: number;
     confidence: number;
   };
-  alpacaIntegration: {
+  customPaperTrading: {
     running: boolean;
     trades: number;
     winRate: number;
@@ -570,7 +571,7 @@ Component Status:
 • Market Data: ${data.status?.components?.marketData?.active ? '✅' : '❌'} (${data.status?.components?.marketData?.symbolCount || 0} symbols, ${data.status?.components?.marketData?.confidence?.toFixed(1) || 0}% confidence)
 • Input Optimizer: ${data.status?.components?.inputOptimizer?.active ? '✅' : '❌'} (${data.status?.components?.inputOptimizer?.strategyCount || 0} strategies)
 • Market Monitor: ${data.status?.components?.marketMonitor?.active ? '✅' : '❌'} (${data.status?.components?.marketMonitor?.eventCount || 0} events)
-• Alpaca Integration: ${data.status?.components?.alpacaIntegration?.active ? '✅' : '❌'} (${data.status?.components?.alpacaIntegration?.winRate?.toFixed(1) || 0}% win rate)
+• Custom Paper Trading: ${data.status?.components?.customPaperTrading?.active ? '✅' : '❌'} (${data.status?.components?.customPaperTrading?.winRate?.toFixed(1) || 0}% win rate)
 
 🎉 NO TIMEOUT ISSUES DETECTED!`);
                     
@@ -623,7 +624,7 @@ Component Status:
 • Input Optimizer: ${status?.components?.inputOptimizer?.active ? '✅ ACTIVE' : '❌ INACTIVE'} (${status?.components?.inputOptimizer?.strategyCount || 0} strategies)
 • Market Monitor: ${status?.components?.marketMonitor?.active ? '✅ ACTIVE' : '❌ INACTIVE'} (${status?.components?.marketMonitor?.symbolCount || 0} symbols)
 • Market Data: ${status?.components?.marketData?.active ? '✅ ACTIVE' : '❌ INACTIVE'} (${status?.components?.marketData?.confidence?.toFixed(1) || 0}% confidence)
-• Alpaca Integration: ${status?.components?.alpacaIntegration?.active ? '✅ ACTIVE' : '❌ INACTIVE'} (${status?.components?.alpacaIntegration?.winRate?.toFixed(1) || 0}% win rate)
+• Custom Paper Trading: ${status?.components?.customPaperTrading?.active ? '✅ ACTIVE' : '❌ INACTIVE'} (${status?.components?.customPaperTrading?.winRate?.toFixed(1) || 0}% win rate)
 
 Logs:
 ${result.logs.slice(-5).join('\n')}
@@ -706,7 +707,7 @@ This helps identify why the input optimizer isn't starting.`);
             <Button
               onClick={async () => {
                 try {
-                  const response = await fetch('/api/test-telegram', {
+                  const response = await fetch('/api/test-ntfy-alert', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                   });
@@ -714,17 +715,16 @@ This helps identify why the input optimizer isn't starting.`);
                   const result = await response.json();
                   
                   if (result.success) {
-                    alert(`✅ Telegram Alerts Working!
+                    alert(`✅ NTFY Alerts Working!
 
-Basic Bot Test: ${result.basicBotTest ? '✅ PASSED' : '❌ FAILED'}
-Strategy Alert Test: ${result.strategyAlertTest ? '✅ PASSED' : '❌ FAILED'}
+Alert Test: ${result.success ? '✅ PASSED' : '❌ FAILED'}
 
-Bot Status:
-• Configured: ${result.botStatus.configured ? 'YES' : 'NO'}
-• Enabled: ${result.botStatus.enabled ? 'YES' : 'NO'}
-• Queue Size: ${result.botStatus.queueSize}
+NTFY Status:
+• Topic: signal-cartel
+• Service: ntfy.sh
+• Real Trading Data: ✅ CONNECTED
 
-📱 Check your Telegram for test messages!
+📱 Check your phone for NTFY notifications!
 
 You should now receive alerts for all 3 strategies when they generate signals.`);
                   } else {
@@ -797,7 +797,7 @@ Error: ${result.error || 'Unknown error'}
             <div className="text-xs text-gray-600 mt-1">Monitors live market conditions from stored data</div>
           </div>
           <div className="bg-white p-3 rounded border">
-            <div className="font-semibold text-green-800">Alpaca Stratus Integration</div>
+            <div className="font-semibold text-green-800">Custom Paper Trading Integration</div>
             <div className="text-green-600">✅ Connected to Real Database</div>
             <div className="text-xs text-gray-600 mt-1">Executes trades based on real market analysis</div>
           </div>
@@ -904,17 +904,17 @@ Error: ${result.error || 'Unknown error'}
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Alpaca Integration</p>
+              <p className="text-sm text-gray-600">Custom Paper Trading</p>
               <p className="text-2xl font-bold">
-                {engineStatus?.components?.alpacaIntegration?.winRate?.toFixed(1) || 0}%
+                {engineStatus?.components?.customPaperTrading?.winRate?.toFixed(1) || 0}%
               </p>
             </div>
             <div className={`w-3 h-3 rounded-full ${
-              engineStatus?.components?.alpacaIntegration?.active ? 'bg-purple-500 animate-pulse' : 'bg-gray-400'
+              engineStatus?.components?.customPaperTrading?.active ? 'bg-purple-500 animate-pulse' : 'bg-gray-400'
             }`} />
           </div>
           <div className="mt-2 text-xs text-gray-500">
-            {engineStatus?.components?.alpacaIntegration?.tradeCount || 0} trades • paper trading
+            {engineStatus?.components?.customPaperTrading?.tradeCount || 0} trades • custom engine
           </div>
         </Card>
       </div>

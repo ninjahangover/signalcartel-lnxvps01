@@ -17,6 +17,7 @@ let totalPnL = 0;
 class DirectLiveTrader {
   private isRunning = false;
   private tradingInterval: any;
+  private sessionId: string = '';
   
   async initialize() {
     console.log('🚀 DIRECT LIVE TRADING - IMMEDIATE LLN ACTIVATION');
@@ -34,6 +35,10 @@ class DirectLiveTrader {
     // Count our available data
     const dataCount = await prisma.marketData.count();
     console.log(`📊 Available market data: ${dataCount.toLocaleString()} points`);
+    
+    // Skip complex session creation - store trades directly as signals
+    this.sessionId = 'direct-live-' + Date.now();
+    console.log(`✅ Session ID: ${this.sessionId}`);
     
     console.log('\n⚡ ULTRA-AGGRESSIVE PARAMETERS:');
     console.log('   • Trade size: 0.0001 BTC (~$11-12 per trade)');
@@ -104,21 +109,21 @@ class DirectLiveTrader {
       const previousPrice = recentData[1].close;
       const priceChange = ((currentPrice - previousPrice) / previousPrice) * 100;
       
-      // ULTRA-AGGRESSIVE CONDITIONS - Trade on ANY movement
+      // ULTRA-AGGRESSIVE CONDITIONS - BUY ONLY (Alpaca doesn't allow fractional short sales)
       let shouldTrade = false;
       let action = '';
       let reason = '';
       
       if (Math.abs(priceChange) > 0.01) {
-        // Trade on ANY price movement > 0.01%
+        // Trade on ANY price movement > 0.01% - BUY ONLY
         shouldTrade = true;
-        action = priceChange > 0 ? 'BUY' : 'SELL';
-        reason = `Price ${priceChange > 0 ? 'rose' : 'fell'} ${Math.abs(priceChange).toFixed(3)}%`;
+        action = 'BUY';
+        reason = `Price ${priceChange > 0 ? 'rose' : 'fell'} ${Math.abs(priceChange).toFixed(3)}% - BUY opportunity`;
       } else if (Math.random() > 0.7) {
-        // 30% chance of random trade even on no movement
+        // 30% chance of random BUY trade even on no movement
         shouldTrade = true;
-        action = Math.random() > 0.5 ? 'BUY' : 'SELL';
-        reason = `Random aggressive trade (change: ${priceChange.toFixed(3)}%)`;
+        action = 'BUY';
+        reason = `Random aggressive BUY (change: ${priceChange.toFixed(3)}%)`;
       }
       
       if (shouldTrade) {
@@ -139,15 +144,15 @@ class DirectLiveTrader {
       console.log(`   🎯 EXECUTING TRADE ${liveTradeCount}: ${action} ${symbol}`);
       console.log(`      Price: $${price.toFixed(2)} | Reason: ${reason}`);
       
-      const tradeSize = 0.0001;
+      const tradeSize = Math.max(10.0 / price, 0.01); // Minimum $10 trade value for Alpaca compliance
       const cryptoSymbol = symbol.replace('USD', '');
       
       // Execute real paper trade through Alpaca
       let alpacaResult = null;
       try {
-        alpacaResult = await alpacaPaperTradingService.executeOrder({
+        alpacaResult = await alpacaPaperTradingService.placeOrder({
           symbol: cryptoSymbol,
-          side: action.toLowerCase(),
+          side: action.toLowerCase() as 'buy' | 'sell',
           type: 'market',
           qty: tradeSize.toString(),
           time_in_force: 'gtc'
@@ -192,35 +197,26 @@ class DirectLiveTrader {
   
   async storeLiveTrade(trade: any) {
     try {
-      // Store in PaperTrade table for analysis
-      await prisma.paperTrade.create({
-        data: {
-          symbol: trade.symbol,
-          side: trade.action.toLowerCase(),
-          quantity: trade.size.toString(),
-          price: trade.price.toString(),
-          type: 'market',
-          status: 'filled',
-          executedAt: trade.timestamp
-        }
-      });
-      
-      // Also store trading signal for Markov analysis
+      // Store trading signal for Markov analysis (simpler approach)
       await prisma.tradingSignal.create({
         data: {
           symbol: trade.symbol,
-          signal: trade.action,
+          strategy: 'DirectLiveTrading',
+          signalType: trade.action,
+          currentPrice: trade.price,
           confidence: trade.outcome === 'WIN' ? 0.8 : 0.4,
-          price: trade.price.toString(),
-          volume: (trade.size * trade.price).toString(),
+          volume: (trade.size * trade.price),
           indicators: JSON.stringify({
             outcome: trade.outcome,
             pnl: trade.pnl,
-            reason: trade.reason
-          }),
-          timestamp: trade.timestamp
+            reason: trade.reason,
+            tradeSize: trade.size,
+            alpacaId: trade.alpacaId || 'none'
+          })
         }
       });
+      
+      console.log(`      ✅ Trade stored in database successfully`);
       
     } catch (error) {
       console.log(`      ⚠️  Database storage error (continuing):`, error.message);

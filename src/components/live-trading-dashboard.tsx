@@ -153,34 +153,117 @@ export default function LiveTradingDashboard() {
         <TabsContent value="positions">
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Open Positions</h3>
-            <div className="text-center py-8">
-              <p className="text-gray-600">No open positions</p>
-              <p className="text-sm text-gray-500">Start trading to see your positions here</p>
-            </div>
+            {liveTradingState.positions.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-600">No open positions</p>
+                <p className="text-sm text-gray-500">
+                  {liveTradingState.isActive ? 'Positions will appear here when trades are opened' : 'Start trading to see your positions'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {liveTradingState.positions.map((position, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <div className="font-medium">{position.symbol}</div>
+                      <div className="text-sm text-gray-600">
+                        {position.quantity} • {position.side}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">{formatCurrency(position.value)}</div>
+                      <div className={`text-sm ${position.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatPercentage(position.pnlPercent)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
         </TabsContent>
 
         <TabsContent value="trades">
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Recent Trades</h3>
-            <div className="text-center py-8">
-              <p className="text-gray-600">No trades yet</p>
-              <p className="text-sm text-gray-500">Your trading activity will appear here</p>
-            </div>
+            {liveTradingState.recentTrades.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-600">No trades yet</p>
+                <p className="text-sm text-gray-500">
+                  {liveTradingState.isActive ? 'Trade activity will appear here' : 'Start trading to see your activity'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {liveTradingState.recentTrades.slice(0, 10).map((trade, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <div className="font-medium">{trade.symbol}</div>
+                      <div className="text-sm text-gray-600">
+                        {new Date(trade.timestamp).toLocaleTimeString()}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <Badge variant={trade.side === 'buy' ? 'default' : 'destructive'}>
+                        {trade.side.toUpperCase()}
+                      </Badge>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">{formatCurrency(trade.value)}</div>
+                      <div className={`text-sm ${trade.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {trade.pnl >= 0 ? '+' : ''}{formatCurrency(trade.pnl)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
         </TabsContent>
 
         <TabsContent value="performance">
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Performance Metrics</h3>
-            <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-gray-600">Performance analytics</p>
-                <p className="text-sm text-gray-500">
-                  Charts showing P&L, win rate, and strategy performance
-                </p>
+            {liveTradingState.totalTrades === 0 ? (
+              <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-gray-600">No performance data yet</p>
+                  <p className="text-sm text-gray-500">
+                    Start trading to see P&L charts, win rate, and strategy performance
+                  </p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <div className="text-sm text-blue-600">Win Rate</div>
+                  <div className="text-xl font-bold text-blue-700">
+                    {((liveTradingState.winningTrades / liveTradingState.totalTrades) * 100).toFixed(1)}%
+                  </div>
+                  <div className="text-xs text-blue-600">
+                    {liveTradingState.winningTrades}/{liveTradingState.totalTrades} trades
+                  </div>
+                </div>
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <div className="text-sm text-green-600">Total P&L</div>
+                  <div className={`text-xl font-bold ${liveTradingState.totalProfit >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                    {formatCurrency(liveTradingState.totalProfit)}
+                  </div>
+                </div>
+                <div className="p-4 bg-purple-50 rounded-lg">
+                  <div className="text-sm text-purple-600">Avg Trade</div>
+                  <div className="text-xl font-bold text-purple-700">
+                    {formatCurrency(liveTradingState.averageTradeSize)}
+                  </div>
+                </div>
+                <div className="p-4 bg-orange-50 rounded-lg">
+                  <div className="text-sm text-orange-600">Active Time</div>
+                  <div className="text-xl font-bold text-orange-700">
+                    {Math.floor((Date.now() - liveTradingState.startTime) / (1000 * 60))}m
+                  </div>
+                </div>
+              </div>
+            )}
           </Card>
         </TabsContent>
       </Tabs>

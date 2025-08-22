@@ -2,6 +2,7 @@ import marketDataService, { MarketData } from './market-data-service';
 import { Strategy } from './strategy-manager';
 import RSIStrategyOptimizer, { RSIParameters } from './rsi-strategy-optimizer';
 import { StrategyFactory, BaseStrategy, TradingSignal } from './strategy-implementations';
+import { GPURSIStrategy } from './gpu-rsi-strategy';
 import { telegramBotService } from './telegram-bot-service';
 
 interface TechnicalIndicators {

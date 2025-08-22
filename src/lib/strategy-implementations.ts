@@ -1616,21 +1616,68 @@ export class EnhancedRSIPullBackStrategy extends BaseStrategy {
 // Strategy Factory
 export class StrategyFactory {
   static createStrategy(strategyType: string, strategyId: string, symbol: string, config: any): BaseStrategy {
+    // Check for GPU acceleration preference
+    const useGPU = config?.useGPU || process.env.ENABLE_GPU_STRATEGIES === 'true';
+    
+    // GPU strategy imports (only available in Node.js environment, not browser)
+    let GPURSIStrategy, GPUBollingerStrategy, GPUNeuralStrategy, GPUQuantumOscillatorStrategy;
+    
+    if (useGPU && typeof window === 'undefined') {
+      try {
+        ({ GPURSIStrategy } = require('./gpu-rsi-strategy'));
+        ({ GPUBollingerStrategy } = require('./gpu-bollinger-strategy'));
+        ({ GPUNeuralStrategy } = require('./gpu-neural-strategy'));
+        ({ GPUQuantumOscillatorStrategy } = require('./gpu-quantum-oscillator-strategy'));
+      } catch (error) {
+        console.log('⚠️  GPU strategies not available, falling back to CPU:', error.message);
+      }
+    }
+    
     switch (strategyType) {
       case 'RSI':
+        if (useGPU && GPURSIStrategy) {
+          return new GPURSIStrategy(strategyId, symbol, config);
+        }
         return new RSIStrategy(strategyId, symbol, config);
+      case 'GPU_RSI':
+        if (!GPURSIStrategy) throw new Error('GPU RSI strategy not available');
+        return new GPURSIStrategy(strategyId, symbol, config);
       case 'ENHANCED_RSI_PULLBACK':
       case 'RSI Pullback Pro':
+        if (useGPU && GPURSIStrategy) {
+          return new GPURSIStrategy(strategyId, symbol, config);
+        }
         return new EnhancedRSIPullBackStrategy(strategyId, symbol, config);
+      case 'GPU_ENHANCED_RSI':
+        if (!GPURSIStrategy) throw new Error('GPU Enhanced RSI strategy not available');
+        return new GPURSIStrategy(strategyId, symbol, config);
       case 'CLAUDE_QUANTUM_OSCILLATOR':
       case 'Claude Quantum Oscillator':
+        if (useGPU && GPUQuantumOscillatorStrategy) {
+          return new GPUQuantumOscillatorStrategy(strategyId, symbol, config);
+        }
         return new ClaudeQuantumOscillatorStrategy(strategyId, symbol, config);
+      case 'GPU_QUANTUM_OSCILLATOR':
+        if (!GPUQuantumOscillatorStrategy) throw new Error('GPU Quantum Oscillator strategy not available');
+        return new GPUQuantumOscillatorStrategy(strategyId, symbol, config);
       case 'STRATUS_CORE_NEURAL':
       case 'Stratus Core Neural':
+        if (useGPU && GPUNeuralStrategy) {
+          return new GPUNeuralStrategy(strategyId, symbol, config);
+        }
         return new StratusCoreNeuralStrategy(strategyId, symbol, config);
+      case 'GPU_NEURAL':
+        if (!GPUNeuralStrategy) throw new Error('GPU Neural strategy not available');
+        return new GPUNeuralStrategy(strategyId, symbol, config);
       case 'BOLLINGER_BREAKOUT_ENHANCED':
       case 'Bollinger Breakout Enhanced':
+        if (useGPU && GPUBollingerStrategy) {
+          return new GPUBollingerStrategy(strategyId, symbol, config);
+        }
         return new BollingerBreakoutEnhancedStrategy(strategyId, symbol, config);
+      case 'GPU_BOLLINGER':
+        if (!GPUBollingerStrategy) throw new Error('GPU Bollinger strategy not available');
+        return new GPUBollingerStrategy(strategyId, symbol, config);
       case 'MACD':
         return new MACDStrategy(strategyId, symbol, config);
       case 'FIBONACCI':

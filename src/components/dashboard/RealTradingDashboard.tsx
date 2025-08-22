@@ -24,23 +24,30 @@ export default function RealTradingDashboard() {
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [testResult, setTestResult] = useState<any>(null);
 
-  // Fetch real data
+  // Fetch real data from Kraken API
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // TODO: Replace with API calls when server-side endpoints are ready
-      const [accountData, positionsData, ordersData] = [
-        { cash: 0, portfolio_value: 0, buying_power: 0 },
-        [],
-        []
-      ];
-      
-      setAccount(accountData);
-      setPositions(positionsData);
-      setOrders(ordersData);
+      // Fetch real data from Kraken API
+      const response = await fetch('/api/kraken/account');
+      if (response.ok) {
+        const data = await response.json();
+        setAccount(data.account || { cash: 0, portfolio_value: 0, buying_power: 0 });
+        setPositions(data.positions || []);
+        setOrders(data.orders || []);
+      } else {
+        // Use placeholder when Kraken not connected
+        setAccount({ cash: 0, portfolio_value: 0, buying_power: 0 });
+        setPositions([]);
+        setOrders([]);
+      }
       setLastUpdate(new Date());
     } catch (error) {
-      console.error('Failed to fetch data:', error);
+      console.error('Failed to fetch Kraken data:', error);
+      // Use placeholder on error
+      setAccount({ cash: 0, portfolio_value: 0, buying_power: 0 });
+      setPositions([]);
+      setOrders([]);
     }
     setIsLoading(false);
   };
