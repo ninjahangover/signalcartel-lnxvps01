@@ -36,6 +36,8 @@ export default function OverviewDashboard({
   
   const [accountData, setAccountData] = useState<AccountData | null>(null);
   const [customTradingData, setCustomTradingData] = useState<any>(null);
+  const [quantumForgeStatus, setQuantumForgeStatus] = useState<any>(null);
+  const [quantumForgePortfolio, setQuantumForgePortfolio] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,32 +66,51 @@ export default function OverviewDashboard({
     return unsubscribe;
   }, []);
 
-  // Fetch real-time custom trading data
+  // Fetch real-time QUANTUM FORGE™ data
   useEffect(() => {
-    const fetchCustomData = async () => {
+    const fetchQuantumForgeData = async () => {
       try {
-        const response = await fetch('/api/custom-paper-trading/dashboard');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            setCustomTradingData(data.data);
+        // Fetch custom trading dashboard data
+        const customResponse = await fetch('/api/custom-paper-trading/dashboard');
+        if (customResponse.ok) {
+          const customData = await customResponse.json();
+          if (customData.success) {
+            setCustomTradingData(customData.data);
+          }
+        }
+
+        // Fetch QUANTUM FORGE™ system status
+        const statusResponse = await fetch('/api/quantum-forge/status');
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          if (statusData.success) {
+            setQuantumForgeStatus(statusData.data);
+          }
+        }
+
+        // Fetch QUANTUM FORGE™ portfolio data
+        const portfolioResponse = await fetch('/api/quantum-forge/portfolio');
+        if (portfolioResponse.ok) {
+          const portfolioData = await portfolioResponse.json();
+          if (portfolioData.success) {
+            setQuantumForgePortfolio(portfolioData.data);
           }
         }
       } catch (error) {
-        console.error('Failed to fetch custom trading data:', error);
+        console.error('Failed to fetch QUANTUM FORGE™ data:', error);
       }
     };
 
-    fetchCustomData();
+    fetchQuantumForgeData();
     
     // Auto-refresh every 10 seconds
-    const interval = setInterval(fetchCustomData, 10000);
+    const interval = setInterval(fetchQuantumForgeData, 10000);
     
     return () => clearInterval(interval);
   }, []);
 
-  // Use real account data - no fallbacks to fake data
-  const portfolioData = accountData || null;
+  // Use QUANTUM FORGE™ portfolio data or fallback to account data
+  const portfolioData = quantumForgePortfolio || accountData || null;
 
   // NO MOCK DATA - Only show real strategy performance when available
   // This will be replaced with real performance data from your trading engine
@@ -263,7 +284,7 @@ export default function OverviewDashboard({
           </div>
           {portfolioData && (
             <p className="text-xs text-gray-500 mt-1">
-              {portfolioData.tradingMode} • {portfolioData.lastUpdated.toLocaleTimeString()}
+              {portfolioData.tradingMode === 'quantum_forge' ? 'QUANTUM FORGE™' : portfolioData.tradingMode} • {new Date(portfolioData.lastUpdated).toLocaleTimeString()}
             </p>
           )}
         </Card>
@@ -332,20 +353,9 @@ export default function OverviewDashboard({
           
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Kraken API:</span>
-              <Badge variant={isKrakenConnected ? 'default' : 'destructive'}>
-                {isKrakenConnected ? (
-                  <><CheckCircle className="mr-1 h-3 w-3" /> Connected</>
-                ) : (
-                  <><AlertCircle className="mr-1 h-3 w-3" /> Disconnected</>
-                )}
-              </Badge>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">Stratus Engine:</span>
-              <Badge variant={engineStatus.isRunning ? 'default' : 'secondary'}>
-                {engineStatus.isRunning ? (
+              <span className="text-gray-600">QUANTUM FORGE™:</span>
+              <Badge variant={quantumForgeStatus?.quantumForge.isRunning ? 'default' : 'destructive'}>
+                {quantumForgeStatus?.quantumForge.isRunning ? (
                   <><CheckCircle className="mr-1 h-3 w-3" /> Active</>
                 ) : (
                   <><AlertCircle className="mr-1 h-3 w-3" /> Stopped</>
@@ -354,22 +364,49 @@ export default function OverviewDashboard({
             </div>
             
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">AI Optimization:</span>
-              <Badge variant={engineStatus.optimizationActive ? 'outline' : 'secondary'}>
-                {engineStatus.optimizationActive ? (
-                  <><Activity className="mr-1 h-3 w-3" /> Optimizing</>
+              <span className="text-gray-600">Market Data:</span>
+              <Badge variant={quantumForgeStatus?.marketData.isCollecting ? 'default' : 'secondary'}>
+                {quantumForgeStatus?.marketData.isCollecting ? (
+                  <><CheckCircle className="mr-1 h-3 w-3" /> Collecting</>
+                ) : (
+                  <><AlertCircle className="mr-1 h-3 w-3" /> Stopped</>
+                )}
+              </Badge>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600">AI Services:</span>
+              <Badge variant={quantumForgeStatus?.aiServices.optimizationEngine ? 'outline' : 'secondary'}>
+                {quantumForgeStatus?.aiServices.optimizationEngine ? (
+                  <><Activity className="mr-1 h-3 w-3" /> Active</>
                 ) : (
                   'Idle'
                 )}
               </Badge>
             </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600">TensorFlow:</span>
+              <Badge variant={quantumForgeStatus?.aiServices.tensorflowServing ? 'default' : 'secondary'}>
+                {quantumForgeStatus?.aiServices.tensorflowServing ? (
+                  <><CheckCircle className="mr-1 h-3 w-3" /> Serving</>
+                ) : (
+                  <><AlertCircle className="mr-1 h-3 w-3" /> Offline</>
+                )}
+              </Badge>
+            </div>
           </div>
 
-          {!isKrakenConnected && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-700">
-                ⚠️ Connect your Kraken API to enable live trading
+          {quantumForgeStatus && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">
+                🚀 QUANTUM FORGE™ Status: {quantumForgeStatus.systemHealth.overall}
               </p>
+              {quantumForgeStatus.quantumForge.totalTrades > 0 && (
+                <p className="text-xs text-blue-600 mt-1">
+                  {quantumForgeStatus.quantumForge.totalTrades} trades • {quantumForgeStatus.quantumForge.winRate}% win rate • ${quantumForgeStatus.quantumForge.totalPnL} P&L
+                </p>
+              )}
             </div>
           )}
         </Card>
@@ -412,49 +449,82 @@ export default function OverviewDashboard({
               <p>No open positions</p>
               <p className="text-xs text-gray-400 mt-1">
                 {portfolioData 
-                  ? `${portfolioData.tradingMode === 'paper' ? 'Paper' : 'Live'} positions will appear here`
-                  : 'Connect account to see positions'
+                  ? `${portfolioData.tradingMode === 'quantum_forge' ? 'QUANTUM FORGE™' : portfolioData.tradingMode === 'paper' ? 'Paper' : 'Live'} positions will appear here`
+                  : 'QUANTUM FORGE™ is starting up...'
                 }
               </p>
             </div>
           )}
         </Card>
 
-        {/* Real Strategy Performance - Only show when data is available */}
+        {/* QUANTUM FORGE™ Strategy Performance */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
-            🧠 Strategy Performance
+            🧠 QUANTUM FORGE™ Strategy Performance
           </h3>
           
-          <div className="text-center py-8 text-gray-500">
-            <Target className="mx-auto h-12 w-12 mb-2 text-gray-300" />
-            <p className="text-sm">Real strategy performance data will appear here</p>
-            <p className="text-xs text-gray-400 mt-1">Connect your Kraken API and activate strategies to see live performance metrics</p>
-          </div>
+          {quantumForgeStatus?.quantumForge.totalTrades > 0 ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">{quantumForgeStatus.quantumForge.totalTrades}</div>
+                  <div className="text-sm text-blue-800">Total Trades</div>
+                </div>
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">{quantumForgeStatus.quantumForge.winRate}%</div>
+                  <div className="text-sm text-green-800">Win Rate</div>
+                </div>
+              </div>
+              <div className="text-center p-3 bg-purple-50 rounded-lg">
+                <div className={`text-2xl font-bold ${
+                  quantumForgeStatus.quantumForge.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  ${quantumForgeStatus.quantumForge.totalPnL >= 0 ? '+' : ''}${quantumForgeStatus.quantumForge.totalPnL}
+                </div>
+                <div className="text-sm text-purple-800">Total P&L</div>
+              </div>
+              
+              {quantumForgeStatus.aiServices.neuralNetworkActive && (
+                <div className="mt-3 p-3 bg-gold-50 border border-gold-200 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-gold-600" />
+                    <span className="text-sm font-medium text-gold-800">Neural Network Learning Active</span>
+                  </div>
+                  <p className="text-xs text-gold-700 mt-1">AI is analyzing trade patterns for optimization</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Target className="mx-auto h-12 w-12 mb-2 text-gray-300" />
+              <p className="text-sm">QUANTUM FORGE™ is starting up...</p>
+              <p className="text-xs text-gray-400 mt-1">Strategy performance will appear after first trades</p>
+            </div>
+          )}
         </Card>
       </div>
 
       {/* Quick Actions */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">⚡ Quick Actions</h3>
+        <h3 className="text-lg font-semibold mb-4">⚡ QUANTUM FORGE™ Actions</h3>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Button 
             className="flex flex-col items-center space-y-2 h-auto py-4"
             variant="outline"
-            disabled={!isKrakenConnected}
+            disabled={!quantumForgeStatus?.quantumForge.isRunning}
           >
             <Activity className="h-6 w-6" />
-            <span className="text-sm">Start Engine</span>
+            <span className="text-sm">View Live Trades</span>
           </Button>
           
           <Button 
             className="flex flex-col items-center space-y-2 h-auto py-4"
             variant="outline"
-            disabled={!isKrakenConnected}
+            disabled={!quantumForgeStatus?.aiServices.optimizationEngine}
           >
             <Zap className="h-6 w-6" />
-            <span className="text-sm">Force Optimization</span>
+            <span className="text-sm">AI Optimization</span>
           </Button>
           
           <Button 
@@ -462,7 +532,7 @@ export default function OverviewDashboard({
             variant="outline"
           >
             <Target className="h-6 w-6" />
-            <span className="text-sm">View Strategies</span>
+            <span className="text-sm">Trading Dashboard</span>
           </Button>
           
           <Button 
@@ -470,18 +540,51 @@ export default function OverviewDashboard({
             variant="outline"
           >
             <TrendingUp className="h-6 w-6" />
-            <span className="text-sm">Open Trading</span>
+            <span className="text-sm">Market Data</span>
           </Button>
         </div>
+        
+        {quantumForgeStatus && (
+          <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <Zap className="w-4 h-4 text-blue-600" />
+              <span className="font-medium text-blue-900">QUANTUM FORGE™ Status</span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span className="text-gray-600">System:</span>
+                <span className={`ml-1 font-semibold ${quantumForgeStatus.systemHealth.overall === 'healthy' ? 'text-green-600' : 'text-yellow-600'}`}>
+                  {quantumForgeStatus.systemHealth.overall}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600">Active Sessions:</span>
+                <span className="ml-1 font-semibold text-blue-600">{quantumForgeStatus.tradingSessions.active}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Neural Network:</span>
+                <span className={`ml-1 font-semibold ${quantumForgeStatus.aiServices.neuralNetworkActive ? 'text-green-600' : 'text-gray-400'}`}>
+                  {quantumForgeStatus.aiServices.neuralNetworkActive ? 'Learning' : 'Standby'}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600">Last Trade:</span>
+                <span className="ml-1 font-semibold text-purple-600">
+                  {quantumForgeStatus.quantumForge.lastTrade ? 'Active' : 'Waiting'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </Card>
 
-      {/* Live Market Chart */}
-      {isKrakenConnected && (
+      {/* Live Market Chart - QUANTUM FORGE™ Data */}
+      {quantumForgeStatus?.marketData.isCollecting && (
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold flex items-center">
               <BarChart3 className="mr-2 h-5 w-5 text-green-500" />
-              🔴 LIVE Market Chart - BTCUSD
+              🚀 QUANTUM FORGE™ Market Data - BTCUSD
             </h3>
             <Badge variant="default" className="bg-green-500">
               <div className="flex items-center space-x-1">
@@ -512,6 +615,14 @@ export default function OverviewDashboard({
               View Full Trading Charts
             </Button>
           </div>
+          
+          {quantumForgeStatus?.marketData.recentDataPoints > 0 && (
+            <div className="mt-3 text-center text-sm text-gray-600">
+              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                {quantumForgeStatus.marketData.recentDataPoints} recent data points collected
+              </span>
+            </div>
+          )}
         </Card>
       )}
 

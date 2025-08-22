@@ -1,17 +1,16 @@
 "use client";
 
 /**
- * DEPRECATED: Legacy Paper Trading Monitor
+ * QUANTUM FORGE™ Paper Trading Monitor
  * 
- * This component has been replaced by the new PaperTradingDashboard.
- * Please use @/components/paper-trading-dashboard instead.
+ * Revolutionary AI-powered paper trading engine that learns and optimizes in real-time.
  * 
- * The new component provides:
- * ✅ Real Alpaca paper trading integration
- * ✅ Automated account cycling
- * ✅ Real market data
- * ✅ Better UI/UX
- * ✅ Database persistence
+ * Features:
+ * ✅ QUANTUM FORGE™ custom paper trading engine
+ * ✅ No API restrictions or rate limits
+ * ✅ Smart trend analysis and AI optimization
+ * ✅ Real-time market data integration
+ * ✅ Pattern recognition and learning
  */
 
 import { useState, useEffect } from 'react';

@@ -89,11 +89,11 @@ export default function UnifiedStrategyDashboard() {
             <div className="flex items-center space-x-2">
               <div className={`w-2 h-2 rounded-full ${liveStrategies > 0 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} />
               <span className="text-lg font-bold">
-                {liveStrategies > 0 ? `${liveStrategies} LIVE (Kraken)` : 'PAPER (Alpaca)'}
+                {liveStrategies > 0 ? `${liveStrategies} LIVE (Kraken)` : 'PAPER (QUANTUM FORGE™)'}
               </span>
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              {liveStrategies > 0 ? 'Webhook → kraken.circuitcartel.com' : 'Direct Alpaca API'}
+              {liveStrategies > 0 ? 'Webhook → kraken.circuitcartel.com' : 'QUANTUM FORGE™ AI Engine'}
             </div>
           </Card>
           <Card className="p-4">
@@ -152,7 +152,7 @@ export default function UnifiedStrategyDashboard() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge variant={strategy.mode === 'live' ? 'destructive' : 'default'}>
-                        {strategy.mode === 'live' ? '🔴 LIVE (Kraken)' : '📊 PAPER (Alpaca)'}
+                        {strategy.mode === 'live' ? '🔴 LIVE (Kraken)' : '🧠 PAPER (QUANTUM FORGE™)'}
                       </Badge>
                       <Badge variant={strategy.enabled ? 'default' : 'secondary'}>
                         {strategy.enabled ? 'ACTIVE' : 'PAUSED'}
@@ -176,7 +176,7 @@ export default function UnifiedStrategyDashboard() {
                       }}
                     >
                       {strategy.mode === 'live' 
-                        ? '📊 Switch to Paper (Alpaca)' 
+                        ? '🧠 Switch to Paper (QUANTUM FORGE™)' 
                         : '🔴 Switch to Live (Kraken)'
                       }
                     </Button>

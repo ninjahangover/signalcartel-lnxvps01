@@ -19,7 +19,7 @@ services:
       - monitoring-data:/app/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "monitoring"]
+      test: ["CMD", "pgrep", "-f", "resource-monitor"]
       interval: 60s
       timeout: 15s
       retries: 3

@@ -172,8 +172,8 @@ export default function CustomPaperTradingDashboard() {
           <div className="flex items-center gap-3">
             <Zap className="w-8 h-8 text-gold-600" />
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Custom Paper Trading Dashboard</h2>
-              <p className="text-gray-600">Real-time LLN & Markov Data Generation</p>
+              <h2 className="text-2xl font-bold text-gray-900">QUANTUM FORGE™ Trading Dashboard</h2>
+              <p className="text-gray-600">Revolutionary AI Paper Trading Engine</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
