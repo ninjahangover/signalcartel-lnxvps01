@@ -3,7 +3,7 @@ import { Strategy } from './strategy-manager';
 import RSIStrategyOptimizer, { RSIParameters } from './rsi-strategy-optimizer';
 import { StrategyFactory, BaseStrategy, TradingSignal } from './strategy-implementations';
 import { GPURSIStrategy } from './gpu-rsi-strategy';
-import { telegramBotService } from './telegram-bot-service';
+import { telegramAlerts } from './telegram-alert-service';
 
 interface TechnicalIndicators {
   rsi: number[];
@@ -555,15 +555,113 @@ class StrategyExecutionEngine {
       const strategyManager = StrategyManager.getInstance();
       const strategy = strategyManager.getStrategy(strategyId);
 
+      // STEP 3: Execute trade (QUANTUM FORGE™ Paper Trading ONLY - Completely separate from LIVE)
+      if (this.paperTradingMode) {
+        console.log(`🚀 QUANTUM FORGE™ PAPER TRADING: ${action} for ${strategyId}`);
+        
+        try {
+          // Import Prisma for direct database access
+          const { PrismaClient } = await import('@prisma/client');
+          const prisma = new PrismaClient();
+          
+          // Convert action to side format
+          let orderSide: 'buy' | 'sell';
+          if (action === 'CLOSE') {
+            const state = this.strategyStates.get(strategyId);
+            orderSide = state?.position === 'long' ? 'sell' : 'buy';
+          } else {
+            orderSide = action.toLowerCase() as 'buy' | 'sell';
+          }
+          
+          // Calculate position size based on confidence and price
+          const currentPrice = signalData.price || 50000;
+          const confidence = signalData.confidence || 0.8;
+          const basePositionValue = 100; // $100 base position
+          const positionValue = basePositionValue * confidence;
+          const quantity = positionValue / currentPrice;
+          const tradeValue = quantity * currentPrice;
+          
+          // Create QUANTUM FORGE™ paper trade directly in database
+          const trade = await prisma.paperTrade.create({
+            data: {
+              sessionId: `quantum-forge-${Date.now()}`,
+              symbol: symbol,
+              side: orderSide,
+              quantity: quantity,
+              price: currentPrice,
+              value: tradeValue,
+              commission: 0.0,
+              fees: 0.0,
+              netValue: tradeValue,
+              isEntry: action !== 'CLOSE',
+              tradeType: 'market',
+              strategy: 'QUANTUM FORGE™',
+              signalSource: 'ai',
+              confidence: confidence,
+              executedAt: new Date()
+            }
+          });
+          
+          // Also create trading signal for analysis
+          await prisma.tradingSignal.create({
+            data: {
+              symbol: symbol,
+              strategy: 'QUANTUM FORGE™',
+              signalType: action,
+              currentPrice: currentPrice,
+              confidence: confidence,
+              volume: tradeValue,
+              indicators: JSON.stringify({
+                strategyId: strategyId.slice(0, 8),
+                reason: signalData.reason || 'GPU Strategy Signal',
+                tradeValue: tradeValue,
+                executionTime: new Date().getTime()
+              })
+            }
+          });
+          
+          console.log(`✅ QUANTUM FORGE™ PAPER TRADE EXECUTED:`, {
+            id: trade.id,
+            symbol: trade.symbol,
+            side: trade.side,
+            quantity: trade.quantity,
+            price: trade.price,
+            value: trade.value,
+            strategy: 'QUANTUM FORGE™'
+          });
+          
+          // Update strategy state
+          const state = this.strategyStates.get(strategyId);
+          if (state) {
+            state.lastSignal = new Date();
+            state.position = action === 'BUY' ? 'long' : action === 'SELL' ? 'short' : 'none';
+            if (action !== 'CLOSE') {
+              state.entryPrice = currentPrice;
+            }
+          }
+          
+          await prisma.$disconnect();
+          this.notifyListeners();
+          return; // QUANTUM FORGE™ paper trading complete
+          
+        } catch (error) {
+          console.error(`❌ Error with QUANTUM FORGE™ paper trading:`, error);
+          console.log(`📊 Signal logged but not executed: ${action} ${symbol} at ${signalData.price}`);
+        }
+
+        return; // QUANTUM FORGE™ platform only - no webhooks
+      }
+
+      // LIVE TRADING: Requires Pine Script configuration
       if (!strategy || !strategy.pineScript) {
-        console.warn(`❌ Strategy ${strategyId} has no Pine Script webhook configuration`);
+        console.warn(`❌ Strategy ${strategyId} has no Pine Script webhook configuration for live trading`);
         return;
       }
 
-      // STEP 3: Extract Pine Script variables for intelligent webhook generation
+      // Extract Pine Script variables for intelligent webhook generation
       const pineScriptVariables = this.extractPineScriptVariables(strategy.pineScript.source || '');
       
-      // STEP 4: Generate webhook using proven RSI template structure
+      // Generate webhook using proven RSI template structure
       const marketData = signalData.marketData || { symbol, price: signalData.price };
       const intelligentWebhook = this.generateWebhookFromTemplate(
         strategyId,
@@ -573,76 +671,6 @@ class StrategyExecutionEngine {
       );
 
       console.log(`📡 Stratus Engine: Generated intelligent webhook for ${strategyId}:`, intelligentWebhook);
-
-      // STEP 5: Execute trade (Paper Trading or Live Trading)
-      if (this.paperTradingMode) {
-        // PAPER TRADING: Execute via Alpaca Paper Trading API
-        console.log(`📝 PAPER TRADE: ${action} for ${strategyId} at $${intelligentWebhook.strategy.order_price}`);
-        
-        try {
-          // Import Alpaca paper trading service
-          const { alpacaPaperTradingService } = await import('./alpaca-paper-trading-service');
-          
-          // Check if Alpaca is initialized
-          const accountInfo = await alpacaPaperTradingService.getAccountInfo();
-          if (!accountInfo) {
-            console.error(`❌ Alpaca paper trading not initialized. Please configure API keys.`);
-            return;
-          }
-          
-          // Convert action to Alpaca format
-          let orderSide: 'buy' | 'sell';
-          if (action === 'CLOSE') {
-            // For closing, we need to check current position
-            const state = this.strategyStates.get(strategyId);
-            orderSide = state?.position === 'long' ? 'sell' : 'buy';
-          } else {
-            orderSide = action.toLowerCase() as 'buy' | 'sell';
-          }
-          
-          // Place order via Alpaca API
-          const orderParams = {
-            symbol: intelligentWebhook.ticker || symbol,
-            qty: parseFloat(intelligentWebhook.strategy.order_contracts),
-            side: orderSide,
-            type: 'market' as const, // Use market orders for paper trading
-            timeInForce: 'day' as const
-          };
-          
-          console.log(`📡 Sending paper trade to Alpaca:`, orderParams);
-          const order = await alpacaPaperTradingService.placeOrder(orderParams);
-          
-          if (order) {
-            console.log(`✅ Paper trade executed via Alpaca:`, order);
-            
-            // Track the trade internally for learning
-            this.executePaperTrade(
-              strategyId,
-              action,
-              parseFloat(intelligentWebhook.strategy.order_price),
-              parseFloat(intelligentWebhook.strategy.order_contracts),
-              pineScriptVariables
-            );
-          } else {
-            console.error(`❌ Failed to execute paper trade via Alpaca`);
-          }
-        } catch (error) {
-          console.error(`❌ Error executing paper trade via Alpaca:`, error);
-        }
-
-        // Update strategy state for paper trading
-        const state = this.strategyStates.get(strategyId);
-        if (state) {
-          state.lastSignal = new Date();
-          state.position = action === 'BUY' ? 'long' : action === 'SELL' ? 'short' : 'none';
-          if (action !== 'CLOSE') {
-            state.entryPrice = parseFloat(intelligentWebhook.strategy.order_price);
-          }
-        }
-
-        this.notifyListeners();
-        return; // Skip webhook for paper trading
-      }
 
       // LIVE TRADING: Execute real webhook to kraken.circuitcartel.com/webhook
       intelligentWebhook.strategy.validate = "false"; // Live trading mode
@@ -982,10 +1010,13 @@ class StrategyExecutionEngine {
   async validateStrategyReadiness(strategyId: string): Promise<{ ready: boolean; issues: string[] }> {
     const issues: string[] = [];
     
-    // Test webhook connectivity
-    const webhookTest = await this.testWebhookConnectivity(strategyId);
-    if (!webhookTest.success) {
-      issues.push(`Webhook connectivity failed: ${webhookTest.error}`);
+    // Skip webhook testing in paper trading mode
+    if (!this.paperTradingMode) {
+      // Test webhook connectivity only for live trading
+      const webhookTest = await this.testWebhookConnectivity(strategyId);
+      if (!webhookTest.success) {
+        issues.push(`Webhook connectivity failed: ${webhookTest.error}`);
+      }
     }
     
     // Check if strategy implementation exists in our new system
@@ -1218,7 +1249,7 @@ class StrategyExecutionEngine {
       });
       
       // Send Telegram notification for trade execution
-      telegramBotService.sendTradeAlert({
+      telegramAlerts.sendTradeAlert({
         type: 'TRADE_EXECUTED',
         strategy: this.getStrategyName(strategyId),
         symbol: 'BTCUSD',
@@ -1253,7 +1284,7 @@ class StrategyExecutionEngine {
         });
         
         // Send Telegram notification for trade close
-        telegramBotService.sendTradeAlert({
+        telegramAlerts.sendTradeAlert({
           type: 'TRADE_EXECUTED',
           strategy: this.getStrategyName(strategyId),
           symbol: 'BTCUSD',

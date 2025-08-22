@@ -37,8 +37,8 @@ import AIStrategyEngine from './AIStrategyEngine';
 import LiveTradingEngine from './LiveTradingEngine';
 import ConfigurationPanel from './ConfigurationPanel';
 import PaperTradingMonitor from './PaperTradingMonitor';
-import AutomatedStrategyExecutionDashboard from '../automated-strategy-execution-dashboard';
-import StratusEngineOptimizationDashboard from './StratusEngineOptimizationDashboard';
+// Removed unused AutomatedStrategyExecutionDashboard - replaced with QUANTUM FORGE™
+import QuantumForgeStrategyMonitor from './QuantumForgeStrategyMonitor';
 import RealTradingDashboard from './RealTradingDashboard';
 import StratusNeuralPredictor from './StratusNeuralPredictor';
 import StratusBrainDashboard from './StratusBrainDashboard';
@@ -238,9 +238,9 @@ export default function UnifiedDashboard({
     },
     {
       id: 'strategy-monitor',
-      label: 'Strategy Monitor',
-      icon: BarChart3,
-      description: 'AI-Enhanced Strategy Performance'
+      label: 'QUANTUM FORGE™',
+      icon: Brain,
+      description: 'Advanced AI Paper Trading Platform'
     },
     {
       id: 'stratus-brain',
@@ -461,7 +461,7 @@ export default function UnifiedDashboard({
         );
       
       case 'stratus-optimizer':
-        return <StratusEngineOptimizationDashboard />;
+        return <QuantumForgeStrategyMonitor />;
       
       case 'trading':
         return (

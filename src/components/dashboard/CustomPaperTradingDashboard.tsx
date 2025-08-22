@@ -413,9 +413,9 @@ export default function CustomPaperTradingDashboard() {
         <div className="flex gap-4">
           <AlertCircle className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
           <div>
-            <h3 className="font-semibold text-blue-900">🚀 Custom Paper Trading Engine Status</h3>
+            <h3 className="font-semibold text-blue-900">🚀 QUANTUM FORGE™ Engine Status</h3>
             <p className="text-blue-700 text-sm mt-1">
-              This dashboard shows real trades from your custom paper trading engine. All data is stored in the database and updates every 10 seconds.
+              This dashboard shows real trades from your QUANTUM FORGE™ engine. All data is stored in the database and updates every 10 seconds.
             </p>
             <div className="flex gap-4 text-sm text-blue-600 mt-2">
               <span>• Database-driven: Direct integration</span>

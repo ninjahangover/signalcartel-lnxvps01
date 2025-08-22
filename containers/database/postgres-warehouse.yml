@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Data Warehouse for Long-term Analytics
+  postgres-warehouse:
+    image: postgres:15-alpine
+    container_name: signalcartel-warehouse
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: quantum_forge_warehouse
+      POSTGRES_USER: warehouse_user
+      POSTGRES_PASSWORD: ${WAREHOUSE_DB_PASSWORD:-quantum_forge_warehouse_2024}
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    volumes:
+      - warehouse-data:/var/lib/postgresql/data
+      - ./warehouse-init:/docker-entrypoint-initdb.d
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U warehouse_user -d quantum_forge_warehouse"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - signalcartel-network
+    
+    # Optimized for analytics workload
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c max_connections=50
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+
+volumes:
+  warehouse-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/telgkb9/signalcartel-data/warehouse
+
+networks:
+  signalcartel-network:
+    external: true
+    name: signalcartel_signalcartel-network

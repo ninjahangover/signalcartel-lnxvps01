@@ -7,10 +7,10 @@ export async function GET(request: NextRequest) {
   try {
     // Fetch custom paper trading data from database
     const [trades, sessions, signals] = await Promise.all([
-      // Recent paper trades from CustomPaperEngine
+      // Recent paper trades from QUANTUM FORGE™
       prisma.paperTrade.findMany({
         where: {
-          strategy: 'CustomPaperEngine'
+          strategy: 'QUANTUM FORGE™'
         },
         orderBy: {
           executedAt: 'desc'
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       // Paper trading sessions
       prisma.paperTradingSession.findMany({
         where: {
-          strategy: 'CustomPaperEngine'
+          strategy: 'QUANTUM FORGE™'
         },
         orderBy: {
           sessionStart: 'desc'
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       // Trading signals for Markov analysis
       prisma.tradingSignal.findMany({
         where: {
-          strategy: 'CustomPaperEngine'
+          strategy: 'QUANTUM FORGE™'
         },
         orderBy: {
           createdAt: 'desc'

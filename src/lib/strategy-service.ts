@@ -113,7 +113,7 @@ export class StrategyService {
 
       return strategies.map(strategy => ({
         ...strategy,
-        tradingPairs: JSON.parse(strategy.tradingPairs),
+        tradingPairs: strategy.tradingPairs.includes(',') ? strategy.tradingPairs.split(',') : [strategy.tradingPairs],
       }));
     } catch (error) {
       console.error('Error fetching user strategies:', error);
@@ -148,7 +148,7 @@ export class StrategyService {
 
       return {
         ...strategy,
-        tradingPairs: JSON.parse(strategy.tradingPairs),
+        tradingPairs: strategy.tradingPairs.includes(',') ? strategy.tradingPairs.split(',') : [strategy.tradingPairs],
       };
     } catch (error) {
       console.error('Error fetching strategy:', error);
@@ -348,7 +348,7 @@ export class StrategyService {
 
       return strategies.map(strategy => ({
         ...strategy,
-        tradingPairs: JSON.parse(strategy.tradingPairs),
+        tradingPairs: strategy.tradingPairs.includes(',') ? strategy.tradingPairs.split(',') : [strategy.tradingPairs],
       }));
     } catch (error) {
       console.error('Error fetching strategies for optimization:', error);

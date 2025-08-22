@@ -64,7 +64,7 @@ export default function LiveTradingSystemDashboard() {
   const [systemStatus, setSystemStatus] = useState<SystemStatus>({
     isRunning: true, // Custom paper trading is running
     paperTradingMode: true,
-    strategiesLoaded: 1, // CustomPaperEngine is loaded
+    strategiesLoaded: 1, // QUANTUM FORGE™ is loaded
     totalStrategies: 4,
     ntfyEnabled: true, // NTFY is working
     marketDataConnected: true, // Market data is connected

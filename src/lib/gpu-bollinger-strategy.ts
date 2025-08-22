@@ -244,7 +244,7 @@ export class GPUBollingerStrategy extends BaseStrategy {
     
     execSync(`mkdir -p ${tempDir}`, { stdio: 'ignore' });
     
-    const priceData = this.state.priceHistory.join('\\n');
+    const priceData = this.state.priceHistory.join('\n');
     writeFileSync(inputFile, priceData);
     
     const pythonScript = `
@@ -258,7 +258,8 @@ try:
     
     # Read price data
     with open('${inputFile}', 'r') as f:
-        prices = [float(line.strip()) for line in f if line.strip()]
+        data = f.read().replace('\\\\n', '\\n')  # Fix double-escaped newlines
+        prices = [float(line.strip()) for line in data.split('\\n') if line.strip()]
     
     period = ${this.config.period}
     std_dev = ${this.config.stdDev}
@@ -328,7 +329,8 @@ except Exception as e:
     
     # Read price data
     with open('${inputFile}', 'r') as f:
-        prices = [float(line.strip()) for line in f if line.strip()]
+        data = f.read().replace('\\\\n', '\\n')  # Fix double-escaped newlines
+        prices = [float(line.strip()) for line in data.split('\\n') if line.strip()]
     
     period = ${this.config.period}
     std_dev = ${this.config.stdDev}

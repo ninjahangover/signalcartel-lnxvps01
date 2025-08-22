@@ -37,9 +37,9 @@ export class GPUQuantumOscillatorStrategy extends BaseStrategy {
     this.config = {
       lookbackPeriod: config.lookbackPeriod || 100,
       quantumPeriod: config.quantumPeriod || 20,
-      energyThreshold: config.energyThreshold || 0.6,
-      coherenceThreshold: config.coherenceThreshold || 0.7,
-      phaseShiftSensitivity: config.phaseShiftSensitivity || 0.8
+      energyThreshold: config.energyThreshold || 0.3, // More aggressive - 30%
+      coherenceThreshold: config.coherenceThreshold || 0.4, // More aggressive - 40%
+      phaseShiftSensitivity: config.phaseShiftSensitivity || 0.5 // More aggressive - 50%
     };
   }
   
@@ -110,9 +110,9 @@ export class GPUQuantumOscillatorStrategy extends BaseStrategy {
     const bearishPhase = oscillator < 0 && momentum < 0;
     const neutralPhase = Math.abs(oscillator) < 0.1;
     
-    // Entry conditions with quantum signals
-    const longCondition = quantumResonance && bullishPhase && phaseTransition;
-    const shortCondition = quantumResonance && bearishPhase && phaseTransition;
+    // Entry conditions with quantum signals (more aggressive - remove phase transition requirement)
+    const longCondition = quantumResonance && bullishPhase;
+    const shortCondition = quantumResonance && bearishPhase;
     
     // Track quantum conditions for confirmation
     if (longCondition) {
@@ -248,7 +248,7 @@ export class GPUQuantumOscillatorStrategy extends BaseStrategy {
     
     execSync(`mkdir -p ${tempDir}`, { stdio: 'ignore' });
     
-    const priceData = this.state.priceHistory.join('\\n');
+    const priceData = this.state.priceHistory.join('\n');
     writeFileSync(inputFile, priceData);
     
     const pythonScript = `
@@ -263,7 +263,8 @@ try:
     
     # Read price data
     with open('${inputFile}', 'r') as f:
-        prices = [float(line.strip()) for line in f if line.strip()]
+        data = f.read().replace('\\\\n', '\\n')  # Fix double-escaped newlines
+        prices = [float(line.strip()) for line in data.split('\\n') if line.strip()]
     
     prices_gpu = cp.array(prices, dtype=cp.float32)
     quantum_period = ${this.config.quantumPeriod}
@@ -347,7 +348,8 @@ except Exception as e:
     
     # Read price data
     with open('${inputFile}', 'r') as f:
-        prices = [float(line.strip()) for line in f if line.strip()]
+        data = f.read().replace('\\\\n', '\\n')  # Fix double-escaped newlines
+        prices = [float(line.strip()) for line in data.split('\\n') if line.strip()]
     
     quantum_period = ${this.config.quantumPeriod}
     lookback = ${this.config.lookbackPeriod}

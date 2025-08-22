@@ -155,7 +155,7 @@ export default function OverviewDashboard({
           <div className="flex items-center gap-3 mb-4">
             <Zap className="w-8 h-8 text-gold-600" />
             <div>
-              <h3 className="text-xl font-bold text-gray-900">🚀 Live Custom Paper Trading</h3>
+              <h3 className="text-xl font-bold text-gray-900">🚀 Live QUANTUM FORGE™</h3>
               <p className="text-gray-600">Real-time LLN & Markov Data Generation</p>
             </div>
             <div className="ml-auto text-sm text-green-600 flex items-center gap-2">

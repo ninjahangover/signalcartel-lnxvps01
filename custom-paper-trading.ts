@@ -8,11 +8,11 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { smartNtfyAlerts } from './src/lib/smart-ntfy-alerts';
+import { telegramAlerts } from './src/lib/telegram-alert-service';
 import { PAPER_TRADING_CONFIG } from './src/lib/paper-trading-config';
 
 const prisma = new PrismaClient();
-const alertService = smartNtfyAlerts;
+const alertService = telegramAlerts;
 
 interface TradeExecutionResult {
   id: string;
@@ -52,9 +52,12 @@ class CustomPaperTradingEngine {
     console.log(`📊 Session ID: ${this.sessionId}`);
     console.log('🎯 Ready for LLN and Markov data generation!\n');
     
-    // Send startup alert using smart batching
-    alertService.addSystemEvent('🚀 Custom Trading Engine Started', 
-      `Session initialized with $${this.balance.toLocaleString()} balance. Smart NTFY alerts active with 5-minute summaries.`
+    // Send startup alert
+    await alertService.sendAlert(
+      '🚀 <b>Custom Trading Engine Started</b>\n' +
+      `Session initialized with $${this.balance.toLocaleString()} balance.\n` +
+      'Telegram alerts active with 5-minute summaries.',
+      'medium'
     );
   }
   
@@ -88,7 +91,7 @@ class CustomPaperTradingEngine {
         paperAccountId: paperAccount.id,
         sessionName: `Custom Paper Trading - ${new Date().toISOString()}`,
         startingBalance: this.balance,
-        strategy: 'CustomPaperEngine'
+        strategy: 'QUANTUM FORGE™'
       }
     });
     
@@ -147,7 +150,7 @@ class CustomPaperTradingEngine {
     console.log(`   Balance: $${this.balance.toFixed(2)}`);
     
     // Add trade to smart alert batching system
-    alertService.addTrade(params.symbol, params.side.toUpperCase() as 'BUY' | 'SELL', executionPrice, params.quantity, undefined, 'CustomPaperEngine');
+    alertService.addTrade(params.symbol, params.side.toUpperCase() as 'BUY' | 'SELL', executionPrice, params.quantity, undefined, 'QUANTUM FORGE™');
     
     return trade;
   }
@@ -194,7 +197,7 @@ class CustomPaperTradingEngine {
     console.log(`   Balance: $${this.balance.toFixed(2)}`);
     
     // Add position close to smart alert batching system
-    alertService.addTrade(position.symbol, 'CLOSE', position.exitPrice || 0, position.quantity, pnl, 'CustomPaperEngine');
+    alertService.addTrade(position.symbol, 'CLOSE', position.exitPrice || 0, position.quantity, pnl, 'QUANTUM FORGE™');
     
     return position;
   }
@@ -230,7 +233,7 @@ class CustomPaperTradingEngine {
           netValue: tradeValue,
           isEntry: true,
           tradeType: 'market',
-          strategy: 'CustomPaperEngine',
+          strategy: 'QUANTUM FORGE™',
           signalSource: 'ai',
           confidence: 0.85, // High confidence for custom engine
           executedAt: trade.executedAt
@@ -241,7 +244,7 @@ class CustomPaperTradingEngine {
       await prisma.tradingSignal.create({
         data: {
           symbol: trade.symbol,
-          strategy: 'CustomPaperEngine',
+          strategy: 'QUANTUM FORGE™',
           signalType: trade.side.toUpperCase(),
           currentPrice: trade.entryPrice,
           confidence: 0.85,
@@ -279,7 +282,7 @@ class CustomPaperTradingEngine {
             pnlPercent: (trade.pnl / (trade.quantity * trade.entryPrice)) * 100,
             isEntry: false,
             tradeType: 'market',
-            strategy: 'CustomPaperEngine',
+            strategy: 'QUANTUM FORGE™',
             signalSource: 'ai',
             confidence: 0.85,
             executedAt: new Date()
@@ -397,7 +400,7 @@ class CustomPaperTradingEngine {
       where: { sessionId: this.sessionId }
     });
     const signalCount = await prisma.tradingSignal.count({
-      where: { strategy: 'CustomPaperEngine' }
+      where: { strategy: 'QUANTUM FORGE™' }
     });
     
     console.log('\n📊 DATABASE INTEGRATION:');

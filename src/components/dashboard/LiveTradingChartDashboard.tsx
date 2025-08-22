@@ -22,6 +22,7 @@ import {
   Maximize,
   Minimize
 } from 'lucide-react';
+import RealTimeChart from '../real-time-chart';
 
 interface TradeEntry {
   id: string;
@@ -95,7 +96,7 @@ export default function LiveTradingChartDashboard() {
               .filter((trade: any) => trade.symbol === selectedSymbol)
               .map((trade: any) => ({
                 id: trade.id,
-                strategy: trade.strategy || 'CustomPaperEngine',
+                strategy: trade.strategy || 'QUANTUM FORGE™',
                 symbol: trade.symbol,
                 side: trade.side.toUpperCase() as 'BUY' | 'SELL',
                 price: trade.price,
@@ -248,6 +249,27 @@ export default function LiveTradingChartDashboard() {
               <option value="1W">1 Week</option>
             </select>
             
+            {/* Strategy Filter */}
+            <select 
+              value={selectedStrategies.includes('all') ? 'all' : selectedStrategies[0] || 'all'}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === 'all') {
+                  setSelectedStrategies(['all']);
+                } else {
+                  setSelectedStrategies([value]);
+                }
+              }}
+              className="px-3 py-2 border rounded-lg bg-white text-sm"
+            >
+              <option value="all">All Strategies</option>
+              <option value="RSI">RSI Strategy</option>
+              <option value="Bollinger">Bollinger Bands</option>
+              <option value="Neural">Neural Network</option>
+              <option value="Quantum">Quantum Oscillator</option>
+              <option value="QUANTUM FORGE™">QUANTUM FORGE™</option>
+            </select>
+
             {/* Live Toggle */}
             <Button
               onClick={() => setIsLive(!isLive)}
@@ -293,57 +315,14 @@ export default function LiveTradingChartDashboard() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="h-full">
-              {/* Simplified Chart Visualization */}
-              <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
-                <div className="text-center">
-                  <Activity className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                  <div className="text-lg font-medium text-gray-600">Live Price Chart</div>
-                  <div className="text-sm text-gray-500">
-                    {marketData.length} data points • {trades.length} trades plotted
-                  </div>
-                  <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                    <div className="bg-white p-3 rounded border">
-                      <div className="font-medium text-green-600">Buy Signals</div>
-                      <div className="text-2xl font-bold">
-                        {trades.filter(t => t.side === 'BUY').length}
-                      </div>
-                    </div>
-                    <div className="bg-white p-3 rounded border">
-                      <div className="font-medium text-red-600">Sell Signals</div>
-                      <div className="text-2xl font-bold">
-                        {trades.filter(t => t.side === 'SELL').length}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Trade Entry/Exit Markers */}
-              <div className="mt-4">
-                <h4 className="font-medium mb-2">Recent Trade Signals</h4>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {trades.slice(0, 10).map((trade) => (
-                    <div key={trade.id} className="flex items-center justify-between p-2 bg-white border rounded">
-                      <div className="flex items-center gap-2">
-                        <Badge variant={trade.side === 'BUY' ? 'default' : 'destructive'}>
-                          {trade.side}
-                        </Badge>
-                        <span className="font-medium">${trade.price.toLocaleString()}</span>
-                        <span className="text-sm text-gray-600">{trade.strategy}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm ${(trade.pnl || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {(trade.pnl || 0) >= 0 ? '+' : ''}${(trade.pnl || 0).toFixed(2)}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(trade.timestamp).toLocaleTimeString()}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <CardContent className="h-full p-0">
+              {/* QUANTUM FORGE™ Real-Time Trading Chart */}
+              <RealTimeChart
+                symbol={selectedSymbol}
+                height={400}
+                showControls={true}
+                className="border-0"
+              />
             </CardContent>
           </Card>
         </div>

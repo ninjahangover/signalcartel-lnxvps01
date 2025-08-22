@@ -33,7 +33,8 @@ import PositionCleanupModal from './PositionCleanupModal';
 import { cleanTestingService, type CleanTestingSession } from '../../lib/clean-testing-service';
 import { stratusEngine, getAITradingSignal, type AITradingDecision } from '../../lib/stratus-engine-ai';
 import { marketIntelligence, startIntelligenceCapture, getQuickTradingAdjustments } from '../../lib/market-intelligence-service';
-import { alpacaPaperTradingService, paperAccountCyclingService, paperTradingEngine, getPaperAccount, startAIPaperTrading, type AlpacaPaperAccount, type PaperAccount } from '../../lib/paper-trading-engine';
+import { paperTradingEngine, getPaperAccount, startAIPaperTrading, type PaperAccount } from '../../lib/paper-trading-engine';
+// QUANTUM FORGE™ uses custom paper trading engine - no external dependencies
 
 interface StrategyPerformance {
   strategyId: string;

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { telegramBotService } from '../../../lib/telegram-bot-service';
+import { telegramAlerts } from '../../../lib/telegram-alert-service';
 import { testTelegramAlerts } from '../../../lib/strategy-signal-monitor';
 
 export async function POST(request: NextRequest) {
@@ -7,13 +7,13 @@ export async function POST(request: NextRequest) {
     console.log('🧪 Testing Telegram bot connection...');
     
     // Test basic bot service
-    const basicTest = await telegramBotService.testConnection();
+    const basicTest = await telegramAlerts.testConnection();
     
     // Test strategy alert system
     const alertTest = await testTelegramAlerts();
     
     // Get bot status
-    const status = telegramBotService.getStatus();
+    const status = telegramAlerts.getStatus();
     
     const result = {
       success: basicTest && alertTest,
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     // Get current status without sending test messages
-    const status = telegramBotService.getStatus();
+    const status = telegramAlerts.getStatus();
     
     return NextResponse.json({
       telegramConfigured: status.configured,

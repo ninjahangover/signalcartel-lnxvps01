@@ -67,13 +67,13 @@ export default function AIStrategyEngine({
             // Convert recent trades to alert format
             const alerts = data.data.trades.slice(0, 3).map((trade: any, index: number) => ({
               id: index + 1,
-              strategy: 'Custom Paper Trading',
+              strategy: 'QUANTUM FORGE™',
               action: trade.side.toUpperCase(),
               symbol: trade.symbol,
               price: trade.price,
               timestamp: new Date(trade.executedAt),
               status: 'executed',
-              optimization: `${trade.strategy} - Confidence: ${(trade.confidence * 100).toFixed(1)}%`
+              optimization: `QUANTUM FORGE™ - Confidence: ${(trade.confidence * 100).toFixed(1)}%`
             }));
             setRecentAlerts(alerts);
           }

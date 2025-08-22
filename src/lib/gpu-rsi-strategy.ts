@@ -32,9 +32,9 @@ export class GPURSIStrategy extends BaseStrategy {
     super(strategyId, symbol);
     this.config = {
       rsiPeriod: config.rsiPeriod || 14,
-      oversoldLevel: config.oversoldLevel || 30,
-      overboughtLevel: config.overboughtLevel || 70,
-      confirmationPeriod: config.confirmationPeriod || 3
+      oversoldLevel: config.oversoldLevel || 40, // More aggressive - trigger more often
+      overboughtLevel: config.overboughtLevel || 60, // More aggressive - trigger more often  
+      confirmationPeriod: config.confirmationPeriod || 2 // Faster confirmation
     };
   }
   
@@ -105,9 +105,9 @@ export class GPURSIStrategy extends BaseStrategy {
     const priceAboveSMA50 = price > sma50;
     const priceBelowSMA50 = price < sma50;
     
-    // Entry conditions
-    const longCondition = rsiOversold && priceAboveSMA50 && uptrend;
-    const shortCondition = rsiOverbought && priceBelowSMA50 && downtrend;
+    // Entry conditions (more aggressive - focus on RSI signals)
+    const longCondition = rsiOversold; // Remove SMA restrictions for more signals
+    const shortCondition = rsiOverbought; // Remove SMA restrictions for more signals
     
     // Track conditions for confirmation
     if (longCondition) {
@@ -138,7 +138,7 @@ export class GPURSIStrategy extends BaseStrategy {
     if (longConfirmed) {
       return {
         action: 'BUY',
-        confidence: 0.9, // High confidence due to GPU precision
+        confidence: 0.95, // Match Bollinger strategy confidence
         price,
         quantity,
         reason: `GPU RSI Long: RSI=${rsi.toFixed(1)} oversold, trend up, confirmed`,
@@ -159,7 +159,7 @@ export class GPURSIStrategy extends BaseStrategy {
     if (shortConfirmed) {
       return {
         action: 'SELL',
-        confidence: 0.9,
+        confidence: 0.95,
         price,
         quantity,
         reason: `GPU RSI Short: RSI=${rsi.toFixed(1)} overbought, trend down, confirmed`,
