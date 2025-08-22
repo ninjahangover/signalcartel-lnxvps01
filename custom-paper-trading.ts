@@ -8,10 +8,11 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { ntfyAlerts } from './src/lib/ntfy-alerts';
+import { smartNtfyAlerts } from './src/lib/smart-ntfy-alerts';
+import { PAPER_TRADING_CONFIG } from './src/lib/paper-trading-config';
 
 const prisma = new PrismaClient();
-const ntfyService = ntfyAlerts;
+const alertService = smartNtfyAlerts;
 
 interface TradeExecutionResult {
   id: string;
@@ -28,7 +29,7 @@ interface TradeExecutionResult {
 
 class CustomPaperTradingEngine {
   private sessionId: string = '';
-  private balance = 1000000; // $1M starting balance
+  private balance = PAPER_TRADING_CONFIG.STARTING_BALANCE; // $10K realistic starting balance
   private trades: TradeExecutionResult[] = [];
   private openPositions: Map<string, TradeExecutionResult> = new Map();
   private tradeCount = 0;
@@ -51,14 +52,10 @@ class CustomPaperTradingEngine {
     console.log(`📊 Session ID: ${this.sessionId}`);
     console.log('🎯 Ready for LLN and Markov data generation!\n');
     
-    // Send startup alert
-    await ntfyService.sendAlert({
-      title: '🚀 Custom Trading Engine Started',
-      message: `Session initialized with $${(this.balance/1000000).toFixed(1)}M balance. Ready for LLN & Markov data generation!`,
-      priority: 'default',
-      tags: ['startup', 'engine', 'ready'],
-      emoji: '⚡'
-    });
+    // Send startup alert using smart batching
+    alertService.addSystemEvent('🚀 Custom Trading Engine Started', 
+      `Session initialized with $${this.balance.toLocaleString()} balance. Smart NTFY alerts active with 5-minute summaries.`
+    );
   }
   
   async createTradingSession() {
@@ -149,14 +146,8 @@ class CustomPaperTradingEngine {
     console.log(`   Value: $${tradeValue.toFixed(2)}`);
     console.log(`   Balance: $${this.balance.toFixed(2)}`);
     
-    // Send ntfy alert for trade execution
-    await ntfyService.sendAlert({
-      title: `📈 Trade Executed #${this.tradeCount}`,
-      message: `${params.side.toUpperCase()} ${trade.symbol} | $${tradeValue.toFixed(0)} | Balance: $${this.balance.toFixed(0)}`,
-      priority: 'default',
-      tags: ['trading', 'custom-engine'],
-      emoji: params.side === 'buy' ? '🟢' : '🔴'
-    });
+    // Add trade to smart alert batching system
+    alertService.addTrade(params.symbol, params.side.toUpperCase() as 'BUY' | 'SELL', executionPrice, params.quantity, undefined, 'CustomPaperEngine');
     
     return trade;
   }
@@ -202,14 +193,8 @@ class CustomPaperTradingEngine {
     console.log(`   P&L: ${pnl > 0 ? '+' : ''}$${pnl.toFixed(2)} (${position.outcome})`);
     console.log(`   Balance: $${this.balance.toFixed(2)}`);
     
-    // Send ntfy alert for position close
-    await ntfyService.sendAlert({
-      title: `🎯 Position Closed`,
-      message: `${position.symbol} ${position.outcome} | P&L: ${pnl > 0 ? '+' : ''}$${pnl.toFixed(2)} | Balance: $${this.balance.toFixed(0)}`,
-      priority: pnl > 0 ? 'default' : 'high',
-      tags: ['trading', 'close', position.outcome?.toLowerCase() || 'unknown'],
-      emoji: pnl > 0 ? '💰' : '📉'
-    });
+    // Add position close to smart alert batching system
+    alertService.addTrade(position.symbol, 'CLOSE', position.exitPrice || 0, position.quantity, pnl, 'CustomPaperEngine');
     
     return position;
   }
@@ -363,39 +348,24 @@ class CustomPaperTradingEngine {
           console.log('\n🔄 MARKOV CHAIN READY!');
           console.log('✅ 10+ trades completed - pattern analysis can begin');
           
-          await ntfyService.sendAlert({
-            title: '🔄 MARKOV CHAIN ACTIVATED!',
-            message: `10 trades completed! Pattern analysis now available. Win rate: ${winRate.toFixed(1)}%`,
-            priority: 'high',
-            tags: ['milestone', 'markov', 'ai'],
-            emoji: '🧠'
-          });
+          alertService.addSystemEvent('🔄 MARKOV CHAIN ACTIVATED!', 
+            `10 trades completed! Pattern analysis now available. Win rate: ${winRate.toFixed(1)}%`);
         }
         
         if (this.tradeCount === 50) {
           console.log('\n🎯 LAW OF LARGE NUMBERS ACTIVATED!');
           console.log('✅ 50+ trades completed - statistical optimization enabled');
           
-          await ntfyService.sendAlert({
-            title: '🎯 LAW OF LARGE NUMBERS!',
-            message: `50 trades completed! Statistical optimization activated. Win rate: ${winRate.toFixed(1)}%`,
-            priority: 'urgent',
-            tags: ['milestone', 'lln', 'optimization'],
-            emoji: '📊'
-          });
+          alertService.addSystemEvent('🎯 LAW OF LARGE NUMBERS!', 
+            `50 trades completed! Statistical optimization activated. Win rate: ${winRate.toFixed(1)}%`);
         }
         
         if (this.tradeCount >= 100) {
           console.log('\n🏆 OPTIMIZATION DATASET COMPLETE!');
           console.log('✅ 100+ trades completed - ready for advanced algorithms');
           
-          await ntfyService.sendAlert({
-            title: '🏆 DATASET COMPLETE!',
-            message: `100+ trades completed! Ready for advanced AI algorithms. Final win rate: ${winRate.toFixed(1)}%`,
-            priority: 'urgent',
-            tags: ['milestone', 'complete', 'ai-ready'],
-            emoji: '🚀'
-          });
+          alertService.addSystemEvent('🏆 DATASET COMPLETE!', 
+            `100+ trades completed! Ready for advanced AI algorithms. Final win rate: ${winRate.toFixed(1)}%`);
           
           clearInterval(tradingInterval);
           await this.printFinalResults();
