@@ -94,47 +94,46 @@ export default function LiveTradingSystemDashboard() {
   // Fetch real database stats and system status
   const fetchSystemStatus = async () => {
     try {
-      // Fetch custom paper trading data for real stats
-      const response = await fetch('/api/custom-paper-trading/dashboard');
+      // Fetch QUANTUM FORGE™ data for real stats
+      const response = await fetch('/api/quantum-forge/status');
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.data) {
-          const { trades, sessions, signals } = data.data;
+          const { quantumForge, tradingSessions } = data.data;
           
-          // Update database stats with real data
+          // Update database stats with real QUANTUM FORGE™ data
           setDatabaseStats({
             users: 3,
             strategies: 4,
-            paperAccounts: sessions?.length || 1,
-            tradingSignals: signals?.length || 0
+            paperAccounts: tradingSessions?.active || 1,
+            tradingSignals: quantumForge?.last24hTrades || 0
           });
           
-          // Calculate strategy status from real trading data
-          const totalTrades = trades?.length || 0;
-          const profitableTrades = trades?.filter((t: any) => t.pnl > 0).length || 0;
-          const winRate = totalTrades > 0 ? (profitableTrades / totalTrades) * 100 : 0;
+          // Calculate strategy status from real QUANTUM FORGE™ data
+          const totalTrades = quantumForge?.totalTrades || 0;
+          const winRate = quantumForge?.winRate || 0;
           
-          // Create a realistic strategy status based on real data
-          const customPaperStrategy: StrategyStatus = {
-            id: 'custom-paper-engine',
-            name: 'Custom Paper Trading Engine',
-            type: 'Multi-Symbol LLN Generator',
-            isActive: true,
-            confidence: Math.min(0.9, (totalTrades / 50)), // Confidence grows with data
-            lastSignal: trades?.length > 0 ? trades[0].side.toUpperCase() : 'HOLD',
+          // Create a realistic strategy status based on real QUANTUM FORGE™ data
+          const quantumForgeStrategy: StrategyStatus = {
+            id: 'quantum-forge-engine',
+            name: 'QUANTUM FORGE™ AI Trading Engine',
+            type: 'Multi-Symbol AI Analysis',
+            isActive: quantumForge?.isRunning || false,
+            confidence: Math.min(0.9, (totalTrades / 100)), // Confidence grows with data
+            lastSignal: quantumForge?.isRunning ? 'ACTIVE' : 'STANDBY',
             totalTrades,
             winRate,
-            currentPosition: 'none' // Paper trading doesn't hold positions
+            currentPosition: 'none' // QUANTUM FORGE™ executes trades immediately
           };
           
-          setStrategies([customPaperStrategy]);
+          setStrategies([quantumForgeStrategy]);
           
-          // Update system status to reflect real activity
+          // Update system status to reflect real QUANTUM FORGE™ activity
           setSystemStatus(prev => ({
             ...prev,
-            isRunning: totalTrades > 0, // Running if we have trades
+            isRunning: quantumForge?.isRunning || false,
             strategiesLoaded: 1,
-            marketDataConnected: true, // We're getting real market data
+            marketDataConnected: data.data.marketData?.isCollecting || false,
             ntfyEnabled: true, // NTFY alerts are working
             lastUpdate: new Date().toISOString()
           }));
@@ -164,34 +163,34 @@ export default function LiveTradingSystemDashboard() {
     }
   };
 
-  // Fetch recent trades from custom paper trading
+  // Fetch recent trades from QUANTUM FORGE™ portfolio
   const fetchRecentTrades = async () => {
     try {
-      const response = await fetch('/api/custom-paper-trading/dashboard');
+      const response = await fetch('/api/quantum-forge/portfolio');
       if (response.ok) {
         const data = await response.json();
-        if (data.success && data.data.trades) {
-          const trades = data.data.trades.slice(0, 10); // Last 10 trades
+        if (data.success && data.data.positions) {
+          const trades = data.data.positions.slice(0, 10); // Last 10 trades
           
-          // Convert to TradeExecution format
+          // Convert to TradeExecution format from QUANTUM FORGE™ data
           const formattedTrades: TradeExecution[] = trades.map((trade: any) => ({
             id: trade.id,
-            strategy: trade.strategy || 'CustomPaperEngine',
+            strategy: 'QUANTUM FORGE™',
             action: trade.side.toUpperCase(),
             symbol: trade.symbol,
-            price: trade.price,
-            quantity: trade.quantity,
-            confidence: (trade.confidence || 0.85) * 100,
-            timestamp: trade.executedAt,
+            price: trade.entryPrice,
+            quantity: trade.size,
+            confidence: 85, // Default confidence for QUANTUM FORGE™
+            timestamp: trade.timestamp,
             status: 'success' as const,
             mode: 'paper' as const
           }));
           
           setRecentTrades(formattedTrades);
           
-          // Calculate execution stats from real data
-          const totalTrades = data.data.trades.length;
-          const successfulTrades = data.data.trades.filter((t: any) => t.pnl !== null).length;
+          // Calculate execution stats from real QUANTUM FORGE™ data
+          const totalTrades = data.data.performance?.totalTrades || 0;
+          const successfulTrades = data.data.performance?.winningTrades || 0;
           const failedTrades = totalTrades - successfulTrades;
           const successRate = totalTrades > 0 ? ((successfulTrades / totalTrades) * 100).toFixed(1) + '%' : '0%';
           
@@ -260,9 +259,9 @@ export default function LiveTradingSystemDashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
-            SignalCartel Live Trading System
+            QUANTUM FORGE™ Live Trading System
             <Badge variant={systemStatus.isRunning ? "default" : "destructive"}>
-              {systemStatus.isRunning ? 'LIVE' : 'OFFLINE'}
+              {systemStatus.isRunning ? 'QUANTUM FORGE™ ACTIVE' : 'QUANTUM FORGE™ OFFLINE'}
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -411,7 +410,13 @@ export default function LiveTradingSystemDashboard() {
 
         <TabsContent value="strategies" className="space-y-4">
           <div className="grid gap-4">
-            {strategies.map((strategy) => (
+            {strategies.length === 0 ? (
+              <Card>
+                <CardContent className="p-4 text-center text-gray-600">
+                  Loading QUANTUM FORGE™ strategy status...
+                </CardContent>
+              </Card>
+            ) : strategies.map((strategy) => (
               <Card key={strategy.id}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
@@ -458,7 +463,7 @@ export default function LiveTradingSystemDashboard() {
             {recentTrades.length === 0 ? (
               <Card>
                 <CardContent className="p-4 text-center text-gray-600">
-                  No trades executed yet. Strategies are analyzing market conditions...
+                  No trades executed yet. QUANTUM FORGE™ is analyzing market conditions...
                 </CardContent>
               </Card>
             ) : (
