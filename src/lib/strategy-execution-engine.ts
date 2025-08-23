@@ -332,17 +332,88 @@ class StrategyExecutionEngine {
     }
   }
 
-  // Process trading signal from strategy implementation
+  // Process trading signal from strategy implementation with sentiment enhancement
   private async processStrategySignal(strategyId: string, signal: TradingSignal): Promise<void> {
     if (signal.action === 'HOLD' || signal.confidence < 0.5) {
       return; // Don't execute low-confidence or hold signals
     }
 
-    console.log(`🎯 Strategy ${strategyId} generated signal:`, {
+    console.log(`🎯 Strategy ${strategyId} generated raw signal:`, {
       action: signal.action,
       confidence: `${(signal.confidence * 100).toFixed(1)}%`,
       reason: signal.reason
     });
+
+    // ✨ SENTIMENT ENHANCEMENT INTEGRATION
+    try {
+      const { universalSentimentEnhancer } = await import('./sentiment/universal-sentiment-enhancer');
+      
+      // Convert TradingSignal to BaseStrategySignal format
+      const baseSignal = {
+        action: signal.action,
+        confidence: signal.confidence,
+        symbol: signal.symbol || 'BTC',
+        price: signal.price,
+        strategy: this.getStrategyName(strategyId),
+        reason: signal.reason,
+        timestamp: new Date()
+      };
+
+      // Enhance signal with sentiment validation
+      const enhancedSignal = await universalSentimentEnhancer.enhanceSignal(baseSignal);
+      
+      console.log(`🔮 SENTIMENT-ENHANCED SIGNAL:`, {
+        originalAction: enhancedSignal.originalAction,
+        finalAction: enhancedSignal.finalAction,
+        originalConfidence: `${(enhancedSignal.originalConfidence * 100).toFixed(1)}%`,
+        enhancedConfidence: `${(enhancedSignal.confidence * 100).toFixed(1)}%`,
+        sentimentScore: enhancedSignal.sentimentScore.toFixed(3),
+        sentimentConflict: enhancedSignal.sentimentConflict ? '⚠️ CONFLICT' : '✅ ALIGNED',
+        shouldExecute: enhancedSignal.shouldExecute ? '✅ EXECUTE' : '❌ SKIP',
+        reason: enhancedSignal.executionReason
+      });
+
+      // Store enhanced signal in database for analysis
+      try {
+        const { PrismaClient } = await import('@prisma/client');
+        const prisma = new PrismaClient();
+        
+        await prisma.enhancedTradingSignal.create({
+          data: {
+            symbol: enhancedSignal.symbol,
+            strategy: this.getStrategyName(strategyId),
+            technicalScore: enhancedSignal.originalConfidence,
+            technicalAction: enhancedSignal.originalAction,
+            sentimentScore: enhancedSignal.sentimentScore,
+            sentimentConfidence: enhancedSignal.sentimentConfidence,
+            sentimentConflict: enhancedSignal.sentimentConflict,
+            combinedConfidence: enhancedSignal.confidence,
+            finalAction: enhancedSignal.finalAction,
+            confidenceBoost: enhancedSignal.confidenceModifier,
+            wasExecuted: enhancedSignal.shouldExecute,
+            executeReason: enhancedSignal.executionReason
+          }
+        });
+        
+        await prisma.$disconnect();
+      } catch (dbError) {
+        console.warn('📊 Could not store enhanced signal to database:', dbError);
+      }
+
+      // Only proceed if sentiment validation recommends execution
+      if (!enhancedSignal.shouldExecute) {
+        console.log(`🚫 Signal skipped due to sentiment validation: ${enhancedSignal.executionReason}`);
+        return;
+      }
+
+      // Use enhanced signal for execution
+      signal.confidence = enhancedSignal.confidence;
+      signal.reason = `${signal.reason} | Sentiment-Enhanced: ${enhancedSignal.executionReason}`;
+      
+    } catch (sentimentError) {
+      console.warn('⚠️ Sentiment enhancement failed, proceeding with original signal:', sentimentError);
+      // Continue with original signal if sentiment enhancement fails
+    }
 
     // Update strategy state
     const state = this.strategyStates.get(strategyId);
@@ -360,7 +431,7 @@ class StrategyExecutionEngine {
       state.lastSignal = new Date();
     }
 
-    // Execute the signal
+    // Execute the sentiment-enhanced signal
     await this.executeSignal(strategyId, state?.symbol || 'BTCUSD', signal.action, {
       price: signal.price,
       quantity: signal.quantity,

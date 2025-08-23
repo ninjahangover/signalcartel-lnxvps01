@@ -39,6 +39,7 @@ import StratusBrainDashboard from './StratusBrainDashboard';
 import CustomPaperTradingDashboard from './CustomPaperTradingDashboard';
 import LiveTradingChartDashboard from './LiveTradingChartDashboard';
 import QuantumForgeStrategyMonitor from './QuantumForgeStrategyMonitor';
+import SentimentAnalysisDashboard from './SentimentAnalysisDashboard';
 
 interface UnifiedDashboardProps {
   isKrakenConnected: boolean;
@@ -237,6 +238,12 @@ export default function UnifiedDashboard({
       description: 'AI Analysis & Expectancy Formula'
     },
     {
+      id: 'sentiment-analysis',
+      label: 'Sentiment Intelligence',
+      icon: Activity,
+      description: 'Live Sentiment Analysis & Signal Enhancement'
+    },
+    {
       id: 'paper-trading',
       label: 'QUANTUM FORGE™',
       icon: Brain,
@@ -283,6 +290,9 @@ export default function UnifiedDashboard({
       
       case 'stratus-brain':
         return <StratusBrainDashboard />;
+      
+      case 'sentiment-analysis':
+        return <SentimentAnalysisDashboard />;
       
       case 'paper-trading':
         return <CustomPaperTradingDashboard />;

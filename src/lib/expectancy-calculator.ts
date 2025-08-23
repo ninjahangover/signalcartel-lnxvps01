@@ -45,11 +45,12 @@ class ExpectancyCalculator {
    * Calculate expectancy for a specific strategy using completed trades
    */
   async calculateStrategyExpectancy(strategyName: string): Promise<ExpectancyResult> {
-    // Get completed trades (with P&L) for the strategy
+    // Get completed trades (exit trades with P&L) for the strategy
     const trades = await prisma.paperTrade.findMany({
       where: {
         strategy: strategyName,
-        pnl: { not: null } // Only completed trades
+        pnl: { not: null }, // Only completed trades
+        isEntry: false     // Only exit trades (completed positions)
       },
       select: {
         pnl: true,
@@ -126,15 +127,32 @@ class ExpectancyCalculator {
    * Get expectancy for all active strategies
    */
   async calculateAllStrategiesExpectancy(): Promise<ExpectancyResult[]> {
-    const strategies = await prisma.pineStrategy.findMany({
+    // Get strategy names from PineStrategy table
+    const pineStrategies = await prisma.pineStrategy.findMany({
       where: { isActive: true },
       select: { name: true }
     });
 
+    // Get actual strategy names from trades (for custom engines like CustomPaperEngine)
+    const actualStrategyNames = await prisma.paperTrade.findMany({
+      where: { 
+        pnl: { not: null }, // Only completed trades
+        isEntry: false      // Only exit trades
+      },
+      select: { strategy: true },
+      distinct: ['strategy']
+    });
+
+    // Combine both sources and remove duplicates
+    const allStrategyNames = new Set([
+      ...pineStrategies.map(s => s.name),
+      ...actualStrategyNames.map(t => t.strategy)
+    ]);
+
     const results: ExpectancyResult[] = [];
 
-    for (const strategy of strategies) {
-      const expectancy = await this.calculateStrategyExpectancy(strategy.name);
+    for (const strategyName of allStrategyNames) {
+      const expectancy = await this.calculateStrategyExpectancy(strategyName);
       results.push(expectancy);
     }
 

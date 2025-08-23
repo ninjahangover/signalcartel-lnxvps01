@@ -627,3 +627,63 @@ model PaperPerformanceSnapshot {
   @@index([snapshotDate])
   @@index([period])
 }
+
+// Sentiment Analysis Models
+model SentimentData {
+  id              String   @id @default(cuid())
+  symbol          String   // BTC, ETH, etc.
+  source          String   // twitter, reddit, news, etc.
+  score           Float    // -1.0 (bearish) to +1.0 (bullish)
+  confidence      Float    // 0.0 to 1.0
+  tweetCount      Int?     // Number of tweets analyzed
+  positiveCount   Int?     // Number of positive mentions
+  negativeCount   Int?     // Number of negative mentions
+  neutralCount    Int?     // Number of neutral mentions
+  
+  // Raw data for analysis
+  keywords        String?  // JSON array of keywords found
+  rawData         String?  // Original tweets/content for debugging
+  
+  // Metadata
+  timestamp       DateTime @default(now())
+  processingTime  Int?     // MS taken to process
+  
+  @@index([symbol, timestamp])
+  @@index([source, timestamp])
+  @@index([score, confidence])
+}
+
+model EnhancedTradingSignal {
+  id                 String   @id @default(cuid())
+  symbol             String
+  strategy           String   // RSI, Bollinger, etc.
+  
+  // Technical signal data
+  technicalScore     Float    // Original strategy confidence
+  technicalAction    String   // BUY, SELL, HOLD
+  
+  // Sentiment validation
+  sentimentScore     Float?   // Sentiment score at time of signal
+  sentimentConfidence Float?  // Confidence in sentiment
+  sentimentConflict  Boolean  @default(false) // True if sentiment conflicts with technical
+  
+  // Combined signal
+  combinedConfidence Float    // Final confidence after sentiment adjustment
+  finalAction        String   // Final recommended action
+  confidenceBoost    Float?   // How much sentiment boosted/reduced confidence
+  
+  // Execution tracking
+  wasExecuted        Boolean  @default(false)
+  executeReason      String?  // Why it was/wasn't executed
+  
+  // Link to actual trade if executed
+  tradeId            String?  // Link to PaperTrade
+  
+  // Timestamps
+  signalTime         DateTime @default(now())
+  executionTime      DateTime?
+  
+  @@index([symbol, signalTime])
+  @@index([strategy, signalTime])
+  @@index([wasExecuted])
+}
