@@ -111,7 +111,7 @@ export default function QuantumForgeStrategyMonitor() {
         },
         performance: {
           totalTrades: result.data?.totalTrades || result.data?.trades?.length || 0,
-          winningTrades: result.data?.trades?.filter((t: any) => (t.pnl || 0) > 0).length || 0,
+          winningTrades: result.data?.trades?.filter((t: any) => t.pnl !== null && t.pnl !== undefined && t.pnl > 0).length || 0,
           winRate: calculateWinRate(result.data?.trades || []),
           currentBalance: result.data?.balance || 10000,
           startingBalance: 10000, // QUANTUM FORGE™ starts with $10K
@@ -185,9 +185,11 @@ export default function QuantumForgeStrategyMonitor() {
   };
 
   const calculateWinRate = (trades: any[]): number => {
-    if (trades.length === 0) return 0;
-    const winners = trades.filter(t => (t.pnl || 0) > 0).length;
-    return (winners / trades.length) * 100;
+    // Only count completed trades (those with P&L data)
+    const completedTrades = trades.filter(t => t.pnl !== null && t.pnl !== undefined);
+    if (completedTrades.length === 0) return 0;
+    const winners = completedTrades.filter(t => t.pnl > 0).length;
+    return (winners / completedTrades.length) * 100;
   };
 
   const calculateStrategyTrades = (trades: any[], strategyType: string): number => {
