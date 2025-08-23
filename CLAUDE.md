@@ -237,6 +237,25 @@ Database (PineStrategy)
 - ✅ **Database Integration** - SQLite with Redis caching layers for optimal performance
 - ✅ **Professional Presentation** - All dashboard components now show real trading performance metrics
 
+## Session Notes (August 23, 2025 - Market Data Container Fix)
+
+### 🔧 **Fixed Market Data Container SQLite Permission Issue**
+**Problem**: Market-data container failing with "attempt to write a readonly database" errors when trying to write to SQLite database.
+
+**Root Cause**: Container was running as `marketdata` user (UID 1001) but database file was owned by different UID on host system, causing permission mismatch.
+
+**Solution Implemented**:
+1. Modified Dockerfile to run container as root user (removed USER directive)
+2. Set world-writable permissions on container directories
+3. Removed user specification from docker-compose.yml
+4. Rebuilt and redeployed container
+
+**Files Modified**:
+- `containers/market-data/Dockerfile` - Removed USER directive, added chmod 777 for directories
+- `containers/market-data/docker-compose.yml` - Removed user specification
+
+**Result**: Market-data container now successfully collecting and storing real-time price data from CoinGecko and CryptoCompare APIs.
+
 ## Previous Session Notes (August 22, 2025 - COMPREHENSIVE DATA OVERHAUL COMPLETE)
 - ✅ GPU acceleration fully implemented and tested for all strategies
 - ✅ CUDA 13.0 working with PyTorch 2.5.1+cu121 and CuPy 13.6.0
@@ -588,6 +607,7 @@ pip install cupy-cuda12x
 - **Set `ENABLE_GPU_STRATEGIES=true` to enable GPU acceleration**
 - **GPU strategies automatically fallback to CPU if CUDA unavailable**
 - **Test GPU performance with `test-gpu-strategy-fast.ts`**
+- **Market-data container runs as root to avoid SQLite permission issues**
 
 ## Project Structure
 ```

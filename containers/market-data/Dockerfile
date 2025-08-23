@@ -41,30 +41,24 @@ RUN apk add --no-cache procps && \
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=1024"
 
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 marketdata
-
 # Copy necessary files from builder
-COPY --from=builder --chown=marketdata:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=marketdata:nodejs /app/package*.json ./
-COPY --from=builder --chown=marketdata:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/package*.json ./
+COPY --from=builder --chown=node:node /app/prisma ./prisma
 
 # Copy market data collector script and libraries
-COPY --chown=marketdata:nodejs scripts/engines/market-data-collector.ts ./scripts/engines/
-COPY --chown=marketdata:nodejs src/lib ./src/lib
+COPY --chown=node:node scripts/engines/market-data-collector.ts ./scripts/engines/
+COPY --chown=node:node src/lib ./src/lib
 
 # Copy configuration files
-COPY --chown=marketdata:nodejs tsconfig.json ./
+COPY --chown=node:node tsconfig.json ./
 
 # Environment files are handled by docker-compose env_file directive
 # No need to copy them into the container
 
 # Create directories for volumes
 RUN mkdir -p logs data historical analysis predictions correlations && \
-    chown -R marketdata:nodejs logs data historical analysis predictions correlations
+    chmod -R 777 logs data historical analysis predictions correlations prisma
 
-USER marketdata
-
-# Default command to run the market data collector
+# Default command to run the market data collector (runs as root)
 CMD ["npx", "tsx", "scripts/engines/market-data-collector.ts"]
