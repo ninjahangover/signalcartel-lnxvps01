@@ -21,10 +21,12 @@ services:
       - KRAKEN_API_SECRET=${KRAKEN_API_SECRET}
       - BINANCE_API_KEY=${BINANCE_API_KEY}
       - BINANCE_API_SECRET=${BINANCE_API_SECRET}
+      - DATABASE_URL=file:/app/database/dev.db
     volumes:
       - ../../logs:/app/logs
       - ../../.env.local:/app/.env.local:ro
-      - ../../prisma:/app/prisma
+      - ../../prisma:/app/prisma:ro
+      - /home/telgkb9/signalcartel-db:/app/database
       - market-data:/app/data
       - historical-data:/app/historical
       - market-analysis:/app/analysis
