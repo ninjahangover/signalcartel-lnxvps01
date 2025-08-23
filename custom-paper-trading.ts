@@ -149,8 +149,12 @@ class CustomPaperTradingEngine {
     console.log(`   Value: $${tradeValue.toFixed(2)}`);
     console.log(`   Balance: $${this.balance.toFixed(2)}`);
     
-    // Add trade to smart alert batching system
-    alertService.addTrade(params.symbol, params.side.toUpperCase() as 'BUY' | 'SELL', executionPrice, params.quantity, undefined, 'QUANTUM FORGE™');
+    // Queue trade alert for batching
+    alertService.queueAlert(
+      `${params.side.toUpperCase()} ${params.quantity.toFixed(6)} ${params.symbol} @ $${executionPrice.toFixed(2)}`,
+      'low',
+      'QUANTUM FORGE™'
+    );
     
     return trade;
   }
@@ -196,8 +200,12 @@ class CustomPaperTradingEngine {
     console.log(`   P&L: ${pnl > 0 ? '+' : ''}$${pnl.toFixed(2)} (${position.outcome})`);
     console.log(`   Balance: $${this.balance.toFixed(2)}`);
     
-    // Add position close to smart alert batching system
-    alertService.addTrade(position.symbol, 'CLOSE', position.exitPrice || 0, position.quantity, pnl, 'QUANTUM FORGE™');
+    // Queue position close alert for batching
+    alertService.queueAlert(
+      `CLOSE ${position.quantity.toFixed(6)} ${position.symbol} @ $${currentPrice.toFixed(2)} | P&L: ${pnl > 0 ? '+' : ''}$${pnl.toFixed(2)}`,
+      pnl > 0 ? 'medium' : 'low',
+      'QUANTUM FORGE™'
+    );
     
     return position;
   }

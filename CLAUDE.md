@@ -237,7 +237,24 @@ Database (PineStrategy)
 - ✅ **Database Integration** - SQLite with Redis caching layers for optimal performance
 - ✅ **Professional Presentation** - All dashboard components now show real trading performance metrics
 
-## Session Notes (August 23, 2025 - Market Data Container Fix)
+## Session Notes (August 23, 2025 - Database Permission Fixes & QUANTUM FORGE™ Recovery)
+
+### 🔧 **Fixed Critical Database Permission Issues**
+**Problem**: QUANTUM FORGE™ and all database write operations failing with "attempt to write a readonly database" errors.
+
+**Root Cause**: 
+- Database file (`prisma/dev.db`) and prisma directory were owned by UID 1001
+- Application runs as UID 1000 (telgkb9), causing permission mismatch
+- Prisma schema had hardcoded database path that didn't respect DATABASE_URL env variable
+
+**Solution Implemented**:
+1. Changed ownership of `prisma/` directory and `prisma/dev.db` to UID 1000 (telgkb9)
+   ```bash
+   sudo chown -R telgkb9:telgkb9 /home/telgkb9/depot/dev-signalcartel/prisma/
+   ```
+2. Fixed alert service method calls in `custom-paper-trading.ts`
+   - Changed from non-existent `alertService.addTrade()` to `alertService.queueAlert()`
+3. Database now fully writable and QUANTUM FORGE™ operational
 
 ### 🔧 **Fixed Market Data Container SQLite Permission Issue**
 **Problem**: Market-data container failing with "attempt to write a readonly database" errors when trying to write to SQLite database.
