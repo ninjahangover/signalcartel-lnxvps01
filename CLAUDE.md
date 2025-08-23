@@ -256,6 +256,18 @@ Database (PineStrategy)
 
 **Result**: Market-data container now successfully collecting and storing real-time price data from CoinGecko and CryptoCompare APIs.
 
+### 🔧 **Fixed Main Application Database Permission Issue**
+**Additional Issue**: Main application (`load-database-strategies.ts`) also experiencing SQLite permission issues.
+
+**Root Cause**: Database file owned by UID 1001 while application runs as UID 1000 (telgkb9).
+
+**Workaround Solutions**:
+1. **Temporary**: Copy database to `/tmp/signalcartel-db/` and update `DATABASE_URL` 
+2. **Permanent**: Need to fix file ownership with sudo or run processes with matching UID
+3. **Docker Solution**: Run market-data container as root (implemented above)
+
+**Note**: Database permission issues occur when different processes with different UIDs try to access the same SQLite file. Ensure all processes run with the same UID or use a client-server database like PostgreSQL for production.
+
 ## Previous Session Notes (August 22, 2025 - COMPREHENSIVE DATA OVERHAUL COMPLETE)
 - ✅ GPU acceleration fully implemented and tested for all strategies
 - ✅ CUDA 13.0 working with PyTorch 2.5.1+cu121 and CuPy 13.6.0
