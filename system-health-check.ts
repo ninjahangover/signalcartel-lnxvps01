@@ -132,7 +132,8 @@ class SystemHealthChecker {
     console.log('💡 QUICK HEALTH CHECK COMMANDS:');
     console.log('   📊 Check recent trades: npx tsx -e "import {PrismaClient} from \'@prisma/client\'; const p = new PrismaClient(); p.paperTrade.findMany({where:{strategy:\'QUANTUM FORGE™\'},take:5,orderBy:{executedAt:\'desc\'}}).then(console.log)"');
     console.log('   🔄 Restart system: ENABLE_GPU_STRATEGIES=true npx tsx -r dotenv/config load-database-strategies.ts');
-    console.log('   📈 Dashboard: http://localhost:3001');
+    console.log('   📈 Dashboard: http://localhost:3002');
+    console.log('   🏭 Start warehouse: docker-compose -f containers/database/postgres-warehouse.yml up -d');
 
     if (overallStatus === 'HEALTHY') {
       console.log('\n🎉 All systems operational! QUANTUM FORGE™ is ready for trading.');
@@ -148,13 +149,58 @@ class SystemHealthChecker {
     }
   }
 
+  async checkWarehouse(): Promise<void> {
+    console.log('🔍 Checking Data Warehouse...');
+    try {
+      // Check if warehouse container is running
+      const { exec } = require('child_process');
+      const util = require('util');
+      const execAsync = util.promisify(exec);
+      
+      try {
+        await execAsync('docker ps | grep signalcartel-warehouse');
+        
+        // If container is running, try to connect to check health
+        try {
+          await execAsync('docker exec signalcartel-warehouse pg_isready -U warehouse_user -d quantum_forge_warehouse');
+          this.addResult('Data Warehouse', 'HEALTHY', 'PostgreSQL warehouse container running and accepting connections');
+        } catch (healthError) {
+          this.addResult('Data Warehouse', 'WARNING', 'Warehouse container running but database not ready');
+        }
+      } catch (containerError) {
+        // Container not running - check if it's expected to be running
+        try {
+          // Check if warehouse configuration exists
+          const fs = require('fs');
+          const configExists = fs.existsSync('./containers/database/postgres-warehouse.yml');
+          
+          if (configExists) {
+            this.addResult('Data Warehouse', 'WARNING', 
+              'Warehouse configured but not running. Start with: docker-compose -f containers/database/postgres-warehouse.yml up -d',
+              { 
+                suggestion: 'Optional component for long-term analytics',
+                configFile: './containers/database/postgres-warehouse.yml'
+              });
+          } else {
+            this.addResult('Data Warehouse', 'WARNING', 'No warehouse configuration found');
+          }
+        } catch (configError) {
+          this.addResult('Data Warehouse', 'WARNING', 'Warehouse not configured or running');
+        }
+      }
+    } catch (error) {
+      this.addResult('Data Warehouse', 'CRITICAL', `Warehouse check failed: ${error.message}`);
+    }
+  }
+
   async runAllChecks(): Promise<void> {
     console.log('🚀 Starting QUANTUM FORGE™ System Health Check...\n');
 
     await Promise.allSettled([
       this.checkDatabase(),
       this.checkGPUStrategies(),
-      this.checkTradeExecution()
+      this.checkTradeExecution(),
+      this.checkWarehouse()
     ]);
 
     this.generateReport();
