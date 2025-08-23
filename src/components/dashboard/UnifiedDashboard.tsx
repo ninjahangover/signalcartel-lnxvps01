@@ -31,18 +31,11 @@ import KrakenAccountDashboard from '../kraken-account-dashboard';
 import KrakenChart from '../kraken-chart';
 import RSIOptimizationDashboard from '../ai/RSIOptimizationDashboard';
 
-// We'll create these consolidated components
+// Core functional components with real data
 import OverviewDashboard from './OverviewDashboard';
-import AIStrategyEngine from './AIStrategyEngine';
-import LiveTradingEngine from './LiveTradingEngine';
 import ConfigurationPanel from './ConfigurationPanel';
-import PaperTradingMonitor from './PaperTradingMonitor';
-// Removed unused AutomatedStrategyExecutionDashboard - replaced with QUANTUM FORGE™
-import QuantumForgeStrategyMonitor from './QuantumForgeStrategyMonitor';
 import RealTradingDashboard from './RealTradingDashboard';
-import StratusNeuralPredictor from './StratusNeuralPredictor';
 import StratusBrainDashboard from './StratusBrainDashboard';
-import LiveTradingSystemDashboard from './LiveTradingSystemDashboard';
 import CustomPaperTradingDashboard from './CustomPaperTradingDashboard';
 import LiveTradingChartDashboard from './LiveTradingChartDashboard';
 
@@ -228,37 +221,25 @@ export default function UnifiedDashboard({
       id: 'overview',
       label: 'Overview',
       icon: Home,
-      description: 'Dashboard summary'
-    },
-    {
-      id: 'live-system',
-      label: 'Live System',
-      icon: Activity,
-      description: 'Unified Live Trading Status'
-    },
-    {
-      id: 'strategy-monitor',
-      label: 'QUANTUM FORGE™',
-      icon: Brain,
-      description: 'Advanced AI Paper Trading Platform'
+      description: 'System Status & Performance'
     },
     {
       id: 'stratus-brain',
       label: 'Stratus Brain',
       icon: Sparkles,
-      description: 'Markov Chain Analysis'
+      description: 'AI Analysis & Expectancy Formula'
     },
     {
       id: 'paper-trading',
-      label: 'Paper Trading',
-      icon: TestTube,
-      description: 'Live Trading Data & Analytics'
+      label: 'QUANTUM FORGE™',
+      icon: Brain,
+      description: 'AI Paper Trading Engine'
     },
     {
       id: 'trading-charts',
       label: 'Trading Charts',
       icon: BarChart3,
-      description: 'Full-Screen Charts & Strategy Visualization'
+      description: 'Live Market Data & Analysis'
     },
     {
       id: 'real-trading',
@@ -267,34 +248,16 @@ export default function UnifiedDashboard({
       description: 'Kraken Real Money Trading'
     },
     {
-      id: 'account',
-      label: 'Account',
-      icon: User,
-      description: 'API & Balance'
-    },
-    {
-      id: 'ai-engine',
-      label: 'AI Engine',
-      icon: Brain,
-      description: 'Strategy & Optimization'
-    },
-    {
-      id: 'stratus-optimizer',
-      label: 'Stratus Optimizer',
-      icon: Zap,
-      description: 'Real-time Pine Script Optimization'
-    },
-    {
-      id: 'trading',
-      label: 'Trading Charts',
-      icon: TrendingUp,
-      description: 'Market Charts & Analysis'
-    },
-    {
       id: 'config',
-      label: 'Configuration',
+      label: 'Configuration & Testing',
       icon: Settings,
-      description: 'Settings & Testing'
+      description: 'Position Sizing & System Settings'
+    },
+    {
+      id: 'account',
+      label: 'Account & API',
+      icon: User,
+      description: 'Kraken Connection & Balance'
     }
   ];
 
@@ -307,12 +270,6 @@ export default function UnifiedDashboard({
             engineStatus={engineStatus}
           />
         );
-      
-      case 'live-system':
-        return <LiveTradingSystemDashboard />;
-      
-      case 'strategy-monitor':
-        return <PaperTradingMonitor />;
       
       case 'stratus-brain':
         return <StratusBrainDashboard />;
@@ -450,25 +407,6 @@ export default function UnifiedDashboard({
               <KrakenAccountDashboard isConnected={isKrakenConnected} />
             )}
           </div>
-        );
-      
-      case 'ai-engine':
-        return (
-          <AIStrategyEngine 
-            isKrakenConnected={isKrakenConnected}
-            engineStatus={engineStatus}
-          />
-        );
-      
-      case 'stratus-optimizer':
-        return <QuantumForgeStrategyMonitor />;
-      
-      case 'trading':
-        return (
-          <LiveTradingEngine 
-            isKrakenConnected={isKrakenConnected}
-            engineStatus={engineStatus}
-          />
         );
       
       case 'config':

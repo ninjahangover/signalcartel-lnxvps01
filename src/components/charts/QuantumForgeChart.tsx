@@ -38,7 +38,7 @@ const STRATEGY_COLORS = {
   'Bollinger': '#3b82f6',     // Blue  
   'Neural': '#f59e0b',        // Orange
   'Quantum': '#8b5cf6',       // Purple
-  'QUANTUM FORGE™': '#ef4444' // Red
+  'QUANTUM FORGE': '#ef4444' // Red
 };
 
 export default function QuantumForgeChart({ 

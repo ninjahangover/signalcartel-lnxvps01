@@ -707,10 +707,7 @@ This helps identify why the input optimizer isn't starting.`);
             <Button
               onClick={async () => {
                 try {
-                  const response = await fetch('/api/test-ntfy-alert', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                  });
+                  // Telegram alerts are always active - no API call needed
                   
                   const result = await response.json();
                   

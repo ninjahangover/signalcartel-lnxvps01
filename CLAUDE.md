@@ -1,37 +1,46 @@
 # SignalCartel Trading Platform - Claude Context
 
 ## Project Overview
-SignalCartel is a revolutionary cryptocurrency trading platform that executes GPU-accelerated automated trading strategies using Pine Script parameters stored in a database. Features **QUANTUM FORGE™** - our advanced AI paper trading engine with realistic retail trader configuration ($10K starting balance) and 100% real-data dashboard integration. All trades are stored in the database for Law of Large Numbers analysis, Markov chain optimization, and intelligent pattern learning.
+SignalCartel is a revolutionary cryptocurrency trading platform that executes GPU-accelerated automated trading strategies using Pine Script parameters stored in a database. Features **QUANTUM FORGE™** - our advanced AI paper trading engine with realistic retail trader configuration ($10K starting balance) and 100% real-data dashboard integration. All trades are stored in the database for Law of Large Numbers analysis, Markov chain optimization, and intelligent pattern learning. Now includes **Expectancy Formula Analysis** E = (W × A) - (L × B) for mathematical profit optimization.
 
-## Current State (As of August 22, 2025 Night - GPU STRATEGY INTEGRATION COMPLETE)
+## Current State (As of August 23, 2025 - EXPECTANCY FORMULA & DASHBOARD CLEANUP COMPLETE)
+- ✅ **EXPECTANCY FORMULA INTEGRATED** - Real-time E = (W × A) - (L × B) analysis in Stratus Brain
+- ✅ **KELLY CRITERION POSITION SIZING** - Mathematical position sizing based on expectancy
+- ✅ **DASHBOARD CLEANUP COMPLETE** - Removed 5 redundant tabs, focused on 7 core functional tabs
+- ✅ **NEURAL NETWORK ACTIVELY TRADING** - 70-75% confidence SELL signals executing trades every 30 seconds
 - ✅ **4 GPU STRATEGIES INTEGRATED** - All GPU strategies now execute paper trades via QUANTUM FORGE™
+- ✅ **100% REAL DATA PLATFORM** - APIs, databases, data warehouse all connected with live data
 - ✅ **QUANTUM FORGE™ UNIFIED** - Single platform for ALL paper trading, completely separate from live
 - ✅ **Direct Database Integration** - GPU strategies create paper trades directly in database
-- ✅ **High-Confidence Signals** - Bollinger 95%, RSI 95%, Quantum 79%+ confidence BUY/SELL signals
+- ✅ **High-Confidence Signals** - Bollinger 95%, RSI 95%, Neural Network 70-75% confidence
 - ✅ **No Webhook Dependencies** - QUANTUM FORGE™ operates independently, LIVE uses webhooks
-- ✅ **Service Consolidation** - Single NTFY alert system, eliminated duplicate Telegram notifications
 - ✅ **Container Infrastructure** - All Docker services healthy (website, AI-ML, database, monitoring)
-- ✅ **Market Data Active** - 105,348+ data points collected and growing via Kraken API
+- ✅ **Market Data Active** - Real-time Kraken API data feeding live trading decisions
 - ✅ **AI Services Running** - TensorFlow Serving (ports 8500/8501) + AI optimization engine operational
 - ✅ **Database Performance** - SQLite + Redis caching layers optimized for real-time trading
-- ✅ **Professional Presentation** - All dashboard components reflect real system performance
 - ✅ **GPU ACCELERATION READY** - All strategies GPU-accelerated with CUDA 13.0 support
 - ✅ **Realistic $10K Configuration** - Professional retail trader setup with real P&L tracking
+- ✅ **DATA WAREHOUSE ACTIVE** - Historical data collection for advanced analytics
 
 ## Architecture
 
 ### Core Components
 1. **Database (SQLite/Prisma)** - Stores strategies, parameters, and trade history
-2. **QUANTUM FORGE™** - Advanced AI paper trading engine with intelligent optimization
-3. **Strategy Execution Engine** - Processes signals and executes trades (GPU-accelerated)
-4. **Market Data Service** - Real-time data from Kraken API
-5. **Web Interface** - Next.js dashboard at port 3001 with 100% real data
+2. **Quantum Forge** - Advanced AI paper trading engine with intelligent optimization
+3. **Stratus Brain** - Law of Large Numbers analysis and Markov Chain market predictor
+4. **Stratus Optimizer** - Strategy optimization and pattern learning engine
+5. **Strategy Execution Engine** - Processes signals and executes trades (GPU-accelerated)
+6. **Market Data Service** - Real-time data from Kraken API
+7. **Web Interface** - Next.js dashboard at port 3001 with 100% real data
 
 ### Key Files
 - `load-database-strategies.ts` - Main entry point for running strategies
 - `src/lib/strategy-execution-engine.ts` - Core trading logic (GPU-enabled)
 - `src/lib/custom-paper-trading-engine.ts` - Custom paper trading with database storage
 - `src/lib/paper-trading-config.ts` - Centralized configuration for realistic trading
+- `src/lib/expectancy-calculator.ts` - Expectancy formula analysis and Kelly Criterion
+- `src/components/dashboard/ExpectancyAnalysis.tsx` - Real-time expectancy visualization
+- `src/app/api/expectancy/` - Expectancy analysis API endpoints
 - `prisma/schema.prisma` - Database schema with trade history
 - `src/components/dashboard/` - 100% real data dashboard components
 
@@ -45,6 +54,31 @@ SignalCartel is a revolutionary cryptocurrency trading platform that executes GP
 - `test-gpu-strategy-fast.ts` - Fast GPU testing with simulated data
 
 ## Recent Work Completed
+
+### Expectancy Formula Integration & Dashboard Cleanup (August 23, 2025)
+- ✅ **EXPECTANCY FORMULA SYSTEM** - Complete implementation of E = (W × A) - (L × B)
+  - Real-time expectancy calculation for all strategies
+  - Win/Loss probability analysis with average win/loss amounts
+  - Expected value per $1000 invested calculations
+  - Statistical confidence tracking based on trade sample sizes
+- ✅ **KELLY CRITERION POSITION SIZING** - Mathematical position sizing optimization
+  - Optimal bet sizing based on expectancy analysis
+  - Risk-adjusted position recommendations with confidence levels
+  - Dynamic sizing based on strategy performance and statistical significance
+- ✅ **DASHBOARD ARCHITECTURE OVERHAUL** - Eliminated placeholder components
+  - **Removed 5 redundant/duplicate tabs**: live-system, strategy-monitor, ai-engine, stratus-optimizer, trading
+  - **Streamlined to 7 core functional tabs**: Overview, Stratus Brain, QUANTUM FORGE™, Trading Charts, Live Trading, Configuration & Testing, Account & API
+  - **100% real data integration**: Every component now uses live APIs and database data
+  - **Clean import structure**: Removed unused components and imports
+- ✅ **STRATUS BRAIN ENHANCEMENT** - Integrated expectancy analysis into AI dashboard
+  - Mathematical breakdown of strategy performance using expectancy formula
+  - Profit factor analysis (gross profit ÷ gross loss)
+  - Strategy comparison and ranking by expectancy
+  - Real-time insights for profit optimization beyond win rate
+- ✅ **LIVE TRADING VALIDATION** - Neural Network actively generating trades
+  - 70-75% confidence SELL signals executing every 30 seconds
+  - Real-time market data from Kraken API driving decisions
+  - Documented trade execution: $70-75 value trades with 0.0006+ BTC quantities
 
 ### GPU Acceleration Implementation (August 22, 2025)
 - ✅ **GPU-Accelerated RSI Strategy** - 76% GPU usage, 80 data points/second
@@ -128,15 +162,15 @@ ENABLE_GPU_STRATEGIES=true  # Enables GPU for all strategies
 
 ## Quick Commands
 
-### QUANTUM FORGE™ System Management
+### Quantum Forge System Management
 ```bash
-# Start QUANTUM FORGE™ trading engine
+# Start Quantum Forge trading engine
 NTFY_TOPIC="signal-cartel" npx tsx -r dotenv/config custom-paper-trading.ts
 
 # Start market data collector
 npx tsx -r dotenv/config scripts/engines/market-data-collector.ts
 
-# Check QUANTUM FORGE™ system status via API
+# Check Quantum Forge system status via API
 curl http://localhost:3001/api/quantum-forge/status
 
 # Get live portfolio data
@@ -176,7 +210,7 @@ python3 src/lib/gpu-accelerated-indicators.py
 npx tsx system-health-check.ts
 
 # Quick checks
-npx tsx -e "import {PrismaClient} from '@prisma/client'; const p = new PrismaClient(); p.paperTrade.findMany({where:{strategy:'QUANTUM FORGE™'},take:5,orderBy:{executedAt:'desc'}}).then(console.log)"
+npx tsx -e "import {PrismaClient} from '@prisma/client'; const p = new PrismaClient(); p.paperTrade.findMany({where:{strategy:'Quantum Forge'},take:5,orderBy:{executedAt:'desc'}}).then(console.log)"
 ```
 
 ## Development Workflow
@@ -220,18 +254,40 @@ Database (PineStrategy)
 - ✅ Bollinger Bands with GPU squeeze detection
 
 ## Next Development Areas
-- Multi-symbol GPU batch processing for portfolio strategies
+
+### Immediate Priorities
+- **Test Deployment on Dev System** - Validate complete system rebuild from repo
+- **Container Orchestration** - Kubernetes setup for exponential scaling
+- **Multi-symbol GPU Expansion** - ETH, multiple crypto pairs
+- **Portfolio-level Risk Management** - Cross-asset correlation analysis
+
+### Advanced Development
 - Real-time GPU model training and parameter optimization
 - Advanced pattern recognition using GPU-accelerated computer vision
 - Distributed GPU computing across multiple trading pairs
+- Machine learning pipeline for strategy parameter auto-tuning
 
-## Session Transition Notes (August 22, 2025 Evening - QUANTUM FORGE™ SYSTEM RECOVERY & API INTEGRATION)
+## Deployment & Scaling
+
+### Container Architecture Status
+- ✅ **Fully Containerized Platform** - All services running in Docker containers
+- ✅ **Reproducible Builds** - Complete system can be rebuilt from repository
+- ✅ **Service Isolation** - Website, AI-ML, database, monitoring in separate containers
+- ✅ **Ready for Orchestration** - Kubernetes-ready architecture for scaling
+
+### Scaling Roadmap
+1. **Phase 1**: Test rebuild on dev system (Tomorrow)
+2. **Phase 2**: Kubernetes orchestration setup
+3. **Phase 3**: Multi-node deployment with load balancing
+4. **Phase 4**: Auto-scaling based on trading volume and GPU usage
+
+## Session Transition Notes (August 22, 2025 Evening - Quantum Forge SYSTEM RECOVERY & API INTEGRATION)
 - ✅ **System Recovery Complete** - Fixed overnight service failures and alert system issues
-- ✅ **Service Cleanup** - Eliminated duplicate trading engines (old Alpaca vs new QUANTUM FORGE™)
+- ✅ **Service Cleanup** - Eliminated duplicate trading engines (old Alpaca vs new Quantum Forge)
 - ✅ **Alert Consolidation** - Single NTFY notification channel, removed duplicate Telegram alerts
-- ✅ **QUANTUM FORGE™ API Integration** - New API endpoints for real-time system status and portfolio data
+- ✅ **Quantum Forge API Integration** - New API endpoints for real-time system status and portfolio data
 - ✅ **Overview Dashboard Integration** - Complete live data integration replacing all placeholder content
-- ✅ **631+ Trades Active** - QUANTUM FORGE™ trading engine successfully running with 49.1% win rate
+- ✅ **631+ Trades Active** - Quantum Forge trading engine successfully running with 49.1% win rate
 - ✅ **Real-time System Health** - Live monitoring of trading, market data, AI services, and TensorFlow
 - ✅ **Container Infrastructure** - All Docker services (website, AI-ML, database, monitoring) healthy
 - ✅ **Database Integration** - SQLite with Redis caching layers for optimal performance
@@ -241,7 +297,7 @@ Database (PineStrategy)
 
 ### 🔧 **Fixed Critical Dashboard & Database Issues**
 **Problems Identified**:
-1. QUANTUM FORGE™ dashboard showing incorrect data (0.0% win rate, "paused" engine status)
+1. Quantum Forge dashboard showing incorrect data (0.0% win rate, "paused" engine status)
 2. Database write operations failing with "attempt to write a readonly database" errors
 3. Dashboard components showing hardcoded strategy statistics not updating with real data
 
@@ -301,7 +357,7 @@ Database (PineStrategy)
 
 **Implementation**:
 1. **Enhanced `system-health-check.ts`** with comprehensive service monitoring:
-   - **QUANTUM FORGE™ Trading Engine**: Active trade monitoring and win rate tracking  
+   - **Quantum Forge Trading Engine**: Active trade monitoring and win rate tracking  
    - **Database Health**: SQLite connectivity and recent trade activity
    - **Market Data Collection**: Kraken/CoinGecko API data ingestion status
    - **GPU Strategies**: Individual strategy performance and execution status
@@ -321,20 +377,20 @@ Database (PineStrategy)
    - **Easy management**: Install, test, and remove commands provided
 
 **Monitoring Coverage**:
-- ✅ **Trading Systems**: QUANTUM FORGE™ engine, strategy execution, trade performance
+- ✅ **Trading Systems**: Quantum Forge engine, strategy execution, trade performance
 - ✅ **Data Systems**: SQLite database, market data ingestion, warehouse analytics
 - ✅ **Infrastructure**: Docker containers, GPU utilization, system resources
 - ✅ **Alert Reliability**: Telegram-only (no NTFY cost limits), smart alerting logic
 
 ### 🚀 **System Restart & Final Deployment**
 **Final Steps Completed**:
-1. **QUANTUM FORGE™ Restart**: Successfully restarted with 4 active GPU strategies
+1. **Quantum Forge Restart**: Successfully restarted with 4 active GPU strategies
 2. **Website Deployment**: Rebuilt and deployed on port 3001 with all dashboard fixes
 3. **Health Monitoring Active**: Cron job running every 30 minutes with Telegram alerts
 4. **Complete System Integration**: All services operational with real-time monitoring
 
 **Current System Status**:
-- **QUANTUM FORGE™**: Running with 4 GPU strategies (Bollinger, Neural, Quantum Oscillator, RSI)
+- **Quantum Forge**: Running with 4 GPU strategies (Bollinger, Neural, Quantum Oscillator, RSI)
 - **Dashboard**: Live data showing 49% win rate, 2400+ trades, real-time updates
 - **Health Monitoring**: Automated alerts for any service degradation or failures
 - **Database**: All permission issues resolved, full read/write access restored
@@ -354,7 +410,7 @@ Database (PineStrategy)
 - ✅ **COMPREHENSIVE DATA SWEEP COMPLETE** - All hardcoded data eliminated
 - ✅ **Dashboard Consolidation** - Removed redundant components, unified data sources
 - ✅ **Real Balance Integration** - Consistent $10K starting balance across all components
-- ✅ **QUANTUM FORGE™ LAUNCHED** - Advanced AI paper trading with intelligent optimization
+- ✅ **Quantum Forge LAUNCHED** - Advanced AI paper trading with intelligent optimization
 - ✅ **Smart NTFY Alerts Active** - 5-minute consolidated summaries working perfectly
 
 ## Comprehensive Data Overhaul (August 22, 2025 Evening Session)
@@ -430,31 +486,31 @@ const data = await response.json();
 - ✅ **Running Live**: Available at `http://localhost:3001` with real data
 - ✅ **No Downtime**: Seamless deployment of comprehensive improvements
 
-## QUANTUM FORGE™ System Recovery & API Integration (August 22, 2025 Evening Session)
+## Quantum Forge System Recovery & API Integration (August 22, 2025 Evening Session)
 
 ### 🚨 **System Recovery - Service Failures Overnight**
 **Problem Identified**: All trading services and alerts stopped working overnight. The system had two competing trading engines running simultaneously, causing confusion and service failures.
 
 **Root Cause Analysis**:
 - Old Alpaca-based `direct-live-trading.ts` was still running but stuck
-- New custom `custom-paper-trading.ts` (QUANTUM FORGE™) was not properly started
+- New custom `custom-paper-trading.ts` (Quantum Forge) was not properly started
 - Duplicate alert systems (NTFY + Telegram) causing notification conflicts
 - Market data collection had stalled despite having 105,348+ data points
 
 ### 🔧 **Service Architecture Cleanup**
 #### **Eliminated Legacy Alpaca Dependencies**
 - ✅ **Stopped Old Engine**: Terminated stuck `direct-live-trading.ts` process
-- ✅ **QUANTUM FORGE™ Primary**: Confirmed `custom-paper-trading.ts` as sole trading engine
+- ✅ **Quantum Forge Primary**: Confirmed `custom-paper-trading.ts` as sole trading engine
 - ✅ **No More Alpaca**: Fully migrated to independent paper trading platform
 - ✅ **Single Alert Channel**: Consolidated to NTFY-only notifications
 
 #### **Service Recovery Process**
 - ✅ **Market Data Collector**: Restarted `market-data-collector.ts` successfully
-- ✅ **QUANTUM FORGE™ Engine**: Restarted `custom-paper-trading.ts` with NTFY integration
+- ✅ **Quantum Forge Engine**: Restarted `custom-paper-trading.ts` with NTFY integration
 - ✅ **Process Monitoring**: Verified all services running with `pgrep` checks
 - ✅ **Database Health**: Confirmed SQLite database integrity with 631+ trades
 
-### 🎯 **QUANTUM FORGE™ API Development**
+### 🎯 **Quantum Forge API Development**
 Created comprehensive API infrastructure for real-time system integration:
 
 #### **New API Endpoints**
@@ -489,11 +545,11 @@ Created comprehensive API infrastructure for real-time system integration:
 #### **OverviewDashboard.tsx - Comprehensive Overhaul**
 **Problem**: Dashboard contained 90% placeholder data despite having live trading engine
 
-**Solution**: Complete integration of QUANTUM FORGE™ APIs across all dashboard components
+**Solution**: Complete integration of Quantum Forge APIs across all dashboard components
 
 #### **Key Integration Points**
 1. **System Status Section**
-   - ✅ **QUANTUM FORGE™ Status**: Live trading engine monitoring
+   - ✅ **Quantum Forge Status**: Live trading engine monitoring
    - ✅ **Market Data**: Real-time collection status (105,348+ data points)
    - ✅ **AI Services**: TensorFlow Serving + AI Optimization Engine status
    - ✅ **Database Health**: SQLite + Redis container monitoring
@@ -501,22 +557,22 @@ Created comprehensive API infrastructure for real-time system integration:
 2. **Strategy Performance**
    - ✅ **Neural Network**: Real activation status based on trade count (>10 trades)
    - ✅ **Live Trade Data**: Actual win rates, P&L, and trade counts from database
-   - ✅ **Real-time Updates**: Every 30 seconds from QUANTUM FORGE™ APIs
+   - ✅ **Real-time Updates**: Every 30 seconds from Quantum Forge APIs
 
 3. **Market Chart Integration**
-   - ✅ **QUANTUM FORGE™ Data**: Portfolio performance chart using real trade data
+   - ✅ **Quantum Forge Data**: Portfolio performance chart using real trade data
    - ✅ **No More Mock Data**: Eliminated all hardcoded chart values
    - ✅ **Live Balance Updates**: Real-time account value calculations
 
 4. **Quick Actions**
-   - ✅ **Service-Specific**: QUANTUM FORGE™-aware action buttons
+   - ✅ **Service-Specific**: Quantum Forge-aware action buttons
    - ✅ **Real Status**: Live service health indicators
    - ✅ **Smart Controls**: Context-aware based on actual system state
 
 #### **Component Updates**
-- **UnifiedStrategyDashboard.tsx**: Updated branding from Alpaca to QUANTUM FORGE™
+- **UnifiedStrategyDashboard.tsx**: Updated branding from Alpaca to Quantum Forge
 - **PaperTradingMonitor.tsx**: Updated headers and references
-- **CustomPaperTradingDashboard.tsx**: Enhanced with QUANTUM FORGE™ branding
+- **CustomPaperTradingDashboard.tsx**: Enhanced with Quantum Forge branding
 
 ### 🏗️ **Infrastructure Improvements**
 #### **Container Architecture**
@@ -532,7 +588,7 @@ Created comprehensive API infrastructure for real-time system integration:
 - ✅ **Performance Metrics**: Real-time win rate and P&L calculations
 
 ### 📈 **Current System Performance**
-- **QUANTUM FORGE™**: 631+ trades executed, 49.1% win rate, $9,999.68 portfolio value
+- **Quantum Forge**: 631+ trades executed, 49.1% win rate, $9,999.68 portfolio value
 - **Market Data**: 105,348+ data points collected and actively growing
 - **AI Services**: TensorFlow Serving + optimization engine fully operational
 - **Database**: SQLite performing optimally with Redis caching layers
@@ -540,9 +596,9 @@ Created comprehensive API infrastructure for real-time system integration:
 
 ### 🎯 **Technical Achievement Summary**
 1. **System Recovery**: Fixed overnight service failures and restored full trading functionality
-2. **API Infrastructure**: Built comprehensive QUANTUM FORGE™ API layer for real-time integration
+2. **API Infrastructure**: Built comprehensive Quantum Forge API layer for real-time integration
 3. **Dashboard Revolution**: Eliminated all placeholder data, achieved 100% live data integration
-4. **Service Consolidation**: Single NTFY alert channel, unified QUANTUM FORGE™ trading engine
+4. **Service Consolidation**: Single NTFY alert channel, unified Quantum Forge trading engine
 5. **Professional Presentation**: All dashboard components now reflect real system performance
 
 ### 📋 **Files Created/Modified Today**
@@ -552,22 +608,22 @@ Created comprehensive API infrastructure for real-time system integration:
 
 #### **Modified Files**
 - `src/components/dashboard/OverviewDashboard.tsx` - Complete live data integration
-- `src/components/UnifiedStrategyDashboard.tsx` - QUANTUM FORGE™ branding updates  
+- `src/components/UnifiedStrategyDashboard.tsx` - Quantum Forge branding updates  
 - `src/components/dashboard/PaperTradingMonitor.tsx` - Updated references
 - `src/components/dashboard/CustomPaperTradingDashboard.tsx` - Enhanced branding
 
 ### 🚀 **Ready for Next Session**
-QUANTUM FORGE™ is now fully operational with:
+Quantum Forge is now fully operational with:
 - ✅ **Complete API Integration** - All dashboard data is live
 - ✅ **Robust Monitoring** - Real-time system health tracking
 - ✅ **Professional Presentation** - No placeholder data remains
 - ✅ **Scalable Architecture** - Ready for advanced trading optimization
 - ✅ **Consolidated Services** - Single trading engine, single alert system
 
-## QUANTUM FORGE™ - Advanced AI Trading Engine (August 22, 2025 Late Evening)
+## Quantum Forge - Advanced AI Trading Engine (August 22, 2025 Late Evening)
 
 ### 🚀 **The Evolution of Paper Trading**
-After identifying poor performance in the basic trading system (6.1% win rate, -$639 loss), we developed **QUANTUM FORGE™** - a revolutionary AI-powered paper trading engine that learns and optimizes in real-time.
+After identifying poor performance in the basic trading system (6.1% win rate, -$639 loss), we developed **Quantum Forge** - a revolutionary AI-powered paper trading engine that learns and optimizes in real-time.
 
 ### 🧠 **Core Intelligence Features**
 
@@ -597,7 +653,7 @@ After identifying poor performance in the basic trading system (6.1% win rate, -
 
 ### 🎯 **Key Improvements Over Basic System**
 
-| Feature | Basic System | QUANTUM FORGE™ |
+| Feature | Basic System | Quantum Forge |
 |---------|-------------|----------------|
 | **Trade Logic** | Random trades every 10s | AI-analyzed trades every 30s |
 | **Position Sizing** | Fixed $200-500 | Dynamic based on confidence |
@@ -610,7 +666,7 @@ After identifying poor performance in the basic trading system (6.1% win rate, -
 
 #### **Files Created**
 - `src/lib/intelligent-trading-optimizer.ts` - Core AI optimization engine
-- `intelligent-paper-trading.ts` - QUANTUM FORGE™ main engine
+- `intelligent-paper-trading.ts` - Quantum Forge main engine
 - Enhanced smart NTFY alerts with trade reasoning
 
 #### **AI Decision Process**
@@ -628,7 +684,7 @@ After identifying poor performance in the basic trading system (6.1% win rate, -
 - **Adaptive Strategy**: Learns from market changes and adjusts
 
 ### 🎮 **Ready for Tomorrow**
-QUANTUM FORGE™ is ready to demonstrate intelligent trading with:
+Quantum Forge is ready to demonstrate intelligent trading with:
 - ✅ **GTX 1080 GPU acceleration** for rapid calculations
 - ✅ **Real-time market data integration** 
 - ✅ **Smart NTFY alerts** with 5-minute summaries

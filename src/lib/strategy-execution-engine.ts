@@ -624,7 +624,7 @@ class StrategyExecutionEngine {
               netValue: tradeValue,
               isEntry: action !== 'CLOSE',
               tradeType: 'market',
-              strategy: 'QUANTUM FORGE™',
+              strategy: this.getStrategyName(strategyId),
               signalSource: 'ai',
               confidence: confidence,
               executedAt: new Date()
@@ -635,7 +635,7 @@ class StrategyExecutionEngine {
           await prisma.tradingSignal.create({
             data: {
               symbol: symbol,
-              strategy: 'QUANTUM FORGE™',
+              strategy: this.getStrategyName(strategyId),
               signalType: action,
               currentPrice: currentPrice,
               confidence: confidence,
@@ -678,7 +678,7 @@ class StrategyExecutionEngine {
           console.log(`📊 Signal logged but not executed: ${action} ${symbol} at ${signalData.price}`);
         }
 
-        return; // QUANTUM FORGE™ platform only - no webhooks
+        return; // Quantum Forge platform only - no webhooks
       }
 
       // LIVE TRADING: Requires Pine Script configuration

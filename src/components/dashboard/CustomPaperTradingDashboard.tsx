@@ -136,8 +136,8 @@ export default function CustomPaperTradingDashboard() {
   }, [trades, sessions, signals]);
 
   // Get recent trades for display
-  const recentTrades = trades.slice(0, 10);
-  const recentSignals = signals.slice(0, 5);
+  const recentTrades = trades; // Show all trades, not just 10
+  const recentSignals = signals; // Show all signals, not just 5
 
   if (loading) {
     return (

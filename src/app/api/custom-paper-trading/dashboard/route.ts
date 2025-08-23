@@ -7,46 +7,46 @@ export async function GET(request: NextRequest) {
   try {
     // Fetch custom paper trading data from database
     const [trades, sessions, signals, totalTradeCount] = await Promise.all([
-      // Recent paper trades from QUANTUM FORGE™ and CustomPaperEngine
+      // Recent paper trades from QUANTUM FORGE and CustomPaperEngine
       prisma.paperTrade.findMany({
         where: {
           OR: [
-            { strategy: 'QUANTUM FORGE™' },
+            { strategy: 'QUANTUM FORGE' },
             { strategy: 'CustomPaperEngine' }
           ]
         },
         orderBy: {
           executedAt: 'desc'
         },
-        take: 100 // Last 100 trades
+        // Get all trades - no arbitrary limit
       }),
       
       // Paper trading sessions
       prisma.paperTradingSession.findMany({
         where: {
           OR: [
-            { strategy: 'QUANTUM FORGE™' },
+            { strategy: 'QUANTUM FORGE' },
             { strategy: 'CustomPaperEngine' }
           ]
         },
         orderBy: {
           sessionStart: 'desc'
         },
-        take: 10 // Last 10 sessions
+        // Get all sessions - no arbitrary limit
       }),
       
       // Trading signals for Markov analysis
       prisma.tradingSignal.findMany({
         where: {
           OR: [
-            { strategy: 'QUANTUM FORGE™' },
+            { strategy: 'QUANTUM FORGE' },
             { strategy: 'CustomPaperEngine' }
           ]
         },
         orderBy: {
           createdAt: 'desc'
         },
-        take: 50 // Last 50 signals
+        // Get all signals - no arbitrary limit
       }),
       
       // Get total trade count

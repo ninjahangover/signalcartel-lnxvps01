@@ -20,8 +20,11 @@ import {
   Eye,
   Lightbulb,
   Award,
-  Gauge
+  Gauge,
+  Calculator,
+  DollarSign
 } from 'lucide-react';
+import ExpectancyAnalysis from './ExpectancyAnalysis';
 
 // Real data from custom paper trading engine
 interface MarkovData {
@@ -487,6 +490,22 @@ export default function StratusBrainDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Expectancy Formula Analysis Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center gap-2">
+            <Calculator className="w-6 h-6 text-green-500" />
+            Expectancy Formula Analysis - E = (W × A) - (L × B)
+          </CardTitle>
+          <p className="text-gray-600">
+            Mathematical analysis of your strategy performance using the Expectancy Formula for profit optimization
+          </p>
+        </CardHeader>
+        <CardContent>
+          <ExpectancyAnalysis />
+        </CardContent>
+      </Card>
 
       {/* Market State Transition Matrix */}
       <Card>

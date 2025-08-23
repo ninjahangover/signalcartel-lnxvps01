@@ -5,7 +5,6 @@
 
 import { alpacaPaperTradingService } from './alpaca-paper-trading-service';
 import { telegramBotService } from './telegram-bot-service';
-import { ntfyAlerts } from './ntfy-alerts';
 
 export interface TradeOrder {
   symbol: string;
@@ -286,7 +285,7 @@ class UnifiedTradeExecutor {
     try {
       // Send NTFY alert (primary notification method)
       if (result.success) {
-        await ntfyAlerts.sendTradeAlert({
+        // NTFY removed - using Telegram only
           action: order.action,
           symbol: order.symbol,
           price: result.executionPrice || order.price,
@@ -297,7 +296,7 @@ class UnifiedTradeExecutor {
           orderId: result.orderId
         });
       } else {
-        await ntfyAlerts.sendAlert({
+        // NTFY removed - using Telegram only
           title: '❌ Trade Failed',
           message: `Strategy: ${order.strategy}
 Action: ${order.action} ${order.quantity} ${order.symbol}

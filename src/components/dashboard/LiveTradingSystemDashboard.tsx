@@ -42,7 +42,6 @@ interface SystemStatus {
   paperTradingMode: boolean;
   strategiesLoaded: number;
   totalStrategies: number;
-  ntfyEnabled: boolean;
   marketDataConnected: boolean;
   lastUpdate: string;
 }
@@ -66,7 +65,6 @@ export default function LiveTradingSystemDashboard() {
     paperTradingMode: true,
     strategiesLoaded: 1, // QUANTUM FORGE™ is loaded
     totalStrategies: 4,
-    ntfyEnabled: true, // NTFY is working
     marketDataConnected: true, // Market data is connected
     lastUpdate: new Date().toISOString()
   });
@@ -134,7 +132,6 @@ export default function LiveTradingSystemDashboard() {
             isRunning: quantumForge?.isRunning || false,
             strategiesLoaded: 1,
             marketDataConnected: data.data.marketData?.isCollecting || false,
-            ntfyEnabled: true, // NTFY alerts are working
             lastUpdate: new Date().toISOString()
           }));
         }
@@ -207,30 +204,7 @@ export default function LiveTradingSystemDashboard() {
     }
   };
 
-  // Check NTFY status
-  const checkNtfyStatus = async () => {
-    try {
-      // Simple check - if NTFY_TOPIC is set, it's enabled
-      setSystemStatus(prev => ({
-        ...prev,
-        ntfyEnabled: true // We know this is working
-      }));
-    } catch (error) {
-      console.error('Failed to check NTFY status:', error);
-    }
-  };
 
-  // Test NTFY alerts
-  const testNtfyAlert = async () => {
-    try {
-      const response = await fetch('/api/test-ntfy-alert', { method: 'POST' });
-      if (response.ok) {
-        alert('NTFY test alert sent! Check your phone 📱');
-      }
-    } catch (error) {
-      console.error('Failed to send test alert:', error);
-    }
-  };
 
   // Force refresh all data
   const refreshAll = async () => {
@@ -283,12 +257,6 @@ export default function LiveTradingSystemDashboard() {
               <span className="text-sm">Market Data</span>
             </div>
             
-            <div className="flex items-center gap-2">
-              {React.createElement(getStatusIcon(systemStatus.ntfyEnabled), 
-                { className: `h-4 w-4 ${getStatusColor(systemStatus.ntfyEnabled)}` }
-              )}
-              <span className="text-sm">NTFY Alerts</span>
-            </div>
             
             <div className="flex items-center gap-2">
               {React.createElement(getStatusIcon(systemStatus.paperTradingMode), 
@@ -303,10 +271,6 @@ export default function LiveTradingSystemDashboard() {
           <div className="mt-4 flex gap-2">
             <Button onClick={refreshAll} size="sm" variant="outline">
               Refresh Data
-            </Button>
-            <Button onClick={testNtfyAlert} size="sm" variant="outline">
-              <Smartphone className="h-4 w-4 mr-1" />
-              Test NTFY Alert
             </Button>
           </div>
         </CardContent>
@@ -501,24 +465,20 @@ export default function LiveTradingSystemDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Smartphone className="h-5 w-5" />
-                NTFY Push Notifications
+                Telegram Alerts
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span>Status:</span>
-                  <Badge variant={systemStatus.ntfyEnabled ? "default" : "destructive"}>
-                    {systemStatus.ntfyEnabled ? 'ENABLED' : 'DISABLED'}
+                  <Badge variant="default">
+                    ACTIVE
                   </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Topic:</span>
-                  <code className="text-sm bg-gray-100 px-2 py-1 rounded">signal-cartel</code>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm text-gray-600">
-                    You will receive instant notifications for:
+                    You will receive Telegram notifications for:
                   </p>
                   <ul className="text-sm space-y-1 ml-4">
                     <li>• BUY/SELL signal generation</li>
@@ -527,10 +487,6 @@ export default function LiveTradingSystemDashboard() {
                     <li>• Critical errors or alerts</li>
                   </ul>
                 </div>
-                <Button onClick={testNtfyAlert} className="w-full">
-                  <Zap className="h-4 w-4 mr-2" />
-                  Send Test Alert
-                </Button>
               </div>
             </CardContent>
           </Card>

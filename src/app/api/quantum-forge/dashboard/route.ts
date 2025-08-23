@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Real QUANTUM FORGE™ strategy IDs from the actual running system
+// Real Quantum Forge strategy IDs from the actual running system
 const ACTIVE_STRATEGY_IDS = [
   'bollinger_7F01281584090027A0EA0421691BF44D',  // GPU Bollinger Bands - High confidence signals
   'neural_3F08C405DED44100417B3B663EC74901',      // GPU Neural Network - Pattern analysis
@@ -13,20 +13,20 @@ const ACTIVE_STRATEGY_IDS = [
 
 export async function GET(request: NextRequest) {
   try {
-    // Get all paper trades from QUANTUM FORGE™ and CustomPaperEngine
+    // Get all paper trades from Quantum Forge and CustomPaperEngine
     const [recentTrades, completedTrades, totalTradeCount, sessions] = await Promise.all([
       // Recent trades (for activity display)
       prisma.paperTrade.findMany({
         where: {
           OR: [
-            { strategy: 'QUANTUM FORGE™' },
+            { strategy: 'Quantum Forge' },
             { strategy: 'CustomPaperEngine' }
           ]
         },
         orderBy: {
           executedAt: 'desc'
-        },
-        take: 50
+        }
+        // Get all recent trades
       }),
       // Completed trades with P&L (for win rate calculation)
       prisma.paperTrade.findMany({
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
           AND: [
             {
               OR: [
-                { strategy: 'QUANTUM FORGE™' },
+                { strategy: 'Quantum Forge' },
                 { strategy: 'CustomPaperEngine' }
               ]
             },
@@ -47,13 +47,13 @@ export async function GET(request: NextRequest) {
         },
         orderBy: {
           executedAt: 'desc'
-        },
-        take: 100
+        }
+        // Get all completed trades
       }),
       prisma.paperTrade.count({
         where: {
           OR: [
-            { strategy: 'QUANTUM FORGE™' },
+            { strategy: 'Quantum Forge' },
             { strategy: 'CustomPaperEngine' }
           ]
         }
@@ -61,18 +61,18 @@ export async function GET(request: NextRequest) {
       prisma.paperTradingSession.findMany({
         where: {
           OR: [
-            { strategy: 'QUANTUM FORGE™' },
+            { strategy: 'Quantum Forge' },
             { strategy: 'CustomPaperEngine' }
           ]
         },
         orderBy: {
           sessionStart: 'desc'
-        },
-        take: 5
+        }
+        // Get all sessions
       })
     ]);
 
-    // Get real trading signals from the actual running QUANTUM FORGE™ strategies
+    // Get real trading signals from the actual running Quantum Forge strategies
     const signals = await prisma.tradingSignal.findMany({
       where: {
         OR: [
@@ -88,13 +88,13 @@ export async function GET(request: NextRequest) {
       },
       orderBy: {
         createdAt: 'desc'
-      },
-      take: 100
+      }
+      // Get all signals
     });
 
     // Calculate performance metrics from real data
     const totalSignals = signals.length;
-    const recentSignals = signals.slice(0, 20);
+    const recentSignals = signals; // Use all signals, not just 20
     
     // Strategy performance breakdown
     const strategyPerformance = ACTIVE_STRATEGY_IDS.map(strategyId => {
@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
       quantity: trade.quantity,
       price: trade.price,
       pnl: trade.pnl,
-      strategy: trade.strategy || 'QUANTUM FORGE™',
+      strategy: trade.strategy || 'Quantum Forge',
       executedAt: trade.executedAt.toISOString()
     }));
 
@@ -157,20 +157,30 @@ export async function GET(request: NextRequest) {
     const totalPnL = completedTrades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
     const currentBalance = 10000 + totalPnL;
 
+    // Calculate win rate from completed trades
+    const winningTrades = completedTrades.filter(trade => (trade.pnl || 0) > 0).length;
+    const winRate = completedTrades.length > 0 ? (winningTrades / completedTrades.length) * 100 : 0;
+
     return NextResponse.json({
       success: true,
       data: {
         systemStatus: {
           activeStrategies: ACTIVE_STRATEGY_IDS.length,
           totalSignals: totalSignals,
-          recentActivity: recentSignals.length
+          recentActivity: recentSignals.length,
+          totalTrades: totalTradeCount,
+          completedTrades: completedTrades.length,
+          winRate: winRate,
+          isActive: recentTrades.length > 0
         },
         strategies: strategyPerformance,
         signals: transformedSignals,
         trades: transformedTrades,
         totalTrades: totalTradeCount,
         balance: currentBalance,
-        currentSession: sessions.find(s => s.isActive) ? {
+        winRate: winRate,
+        totalPnL: totalPnL,
+        currentSession: sessions.length > 0 ? {
           id: sessions[0].id,
           startTime: sessions[0].sessionStart.toISOString()
         } : null,
@@ -185,11 +195,11 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('QUANTUM FORGE™ dashboard API error:', error);
+    console.error('Quantum Forge dashboard API error:', error);
     
     return NextResponse.json({
       success: false,
-      error: 'Failed to fetch QUANTUM FORGE™ system data',
+      error: 'Failed to fetch Quantum Forge system data',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
     

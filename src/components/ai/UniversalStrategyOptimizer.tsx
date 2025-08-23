@@ -63,26 +63,38 @@ export default function UniversalStrategyOptimizer() {
   const [selectedStrategyForTesting, setSelectedStrategyForTesting] = useState<string>('');
   const [webhookUrl, setWebhookUrl] = useState<string>('https://kraken.circuitcartel.com/webhook');
   const [webhookTestResult, setWebhookTestResult] = useState<any>(null);
+  const [realStrategies, setRealStrategies] = useState<any[]>([]);
+  const [loadingStrategies, setLoadingStrategies] = useState<boolean>(true);
 
-  // Auto-load default RSI strategy on component mount
+  // Load real strategies from database
   useEffect(() => {
-    // Load actual strategy configurations from StrategyManager
-    const strategyManager = StrategyManager.getInstance();
-    const realStrategies = strategyManager.getStrategies();
-    
-    // Find the RSI Pullback Pro strategy and load its real configuration
-    const rsiStrategy = realStrategies.find(s => s.id === 'rsi-pullback-001' || s.name.includes('RSI Pullback'));
-    if (rsiStrategy && !selectedStrategy) {
-      loadRealStrategy(rsiStrategy);
-      console.log('✅ Auto-loaded real RSI strategy configuration for optimization');
-    } else {
-      // Fallback to sample strategy if real one not found
-      const defaultStrategy = sampleStrategies.find(s => s.isDefault) || sampleStrategies[0];
-      if (defaultStrategy && !selectedStrategy) {
-        loadSampleStrategy(defaultStrategy.id);
-        console.log('✅ Auto-loaded default RSI strategy for optimization');
+    const fetchRealStrategies = async () => {
+      try {
+        setLoadingStrategies(true);
+        const response = await fetch('/api/strategies/all');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setRealStrategies(data.data.strategies);
+            console.log(`✅ Loaded ${data.data.strategies.length} real strategies from database`);
+            
+            // Auto-load first strategy if available
+            if (data.data.strategies.length > 0 && !selectedStrategy) {
+              const firstStrategy = data.data.strategies[0];
+              setSelectedStrategy(firstStrategy.id);
+              setPineScriptCode(firstStrategy.pineScriptCode || '');
+              console.log(`✅ Auto-loaded strategy: ${firstStrategy.name}`);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load real strategies:', error);
+      } finally {
+        setLoadingStrategies(false);
       }
-    }
+    };
+    
+    fetchRealStrategies();
   }, []);
 
   // Automatically extract variables whenever Pine Script code changes
@@ -96,134 +108,10 @@ export default function UniversalStrategyOptimizer() {
     }
   }, [pineScriptCode]);
 
-  // Preloaded Pine Script strategies - Default is your proven RSI strategy
-  const sampleStrategies = [
-    {
-      id: 'rsi-pullback-pro',
-      name: 'RSI Pullback Pro (Your Proven Strategy)', 
-      isDefault: true,
-      code: `//@version=5
-strategy("RSI Pullback Pro - Stratus Engine", shorttitle="RSI-PB-Pro", overlay=true, 
-         initial_capital=100000, default_qty_type=strategy.percent_of_equity, 
-         default_qty_value=2, commission_type=strategy.commission.percent, 
-         commission_value=0.075, slippage=1)
+  // Real strategies are now loaded from the database via useEffect above
+  // No more hardcoded sample strategies
 
-// === STRATEGY PROPERTIES (BASELINE FOR STRATUS ENGINE OPTIMIZATION) ===
-initial_capital = input.int(100000, title="Initial Capital", minval=1000, maxval=1000000, group="Properties")
-base_currency = input.string("USD", title="Base Currency", options=["USD", "BTC", "ETH"], group="Properties")
-order_size = input.float(2.0, title="Order Size (% of Equity)", minval=0.1, maxval=10.0, step=0.1, group="Properties")
-commission = input.float(0.075, title="Commission (%)", minval=0.0, maxval=1.0, step=0.001, group="Properties")
-slippage = input.int(1, title="Slippage (ticks)", minval=0, maxval=10, group="Properties")
-
-// === RSI OPTIMIZATION VARIABLES (BASELINE FOR STRATUS ENGINE) ===
-// These are the baseline criteria that Stratus Engine will optimize around
-rsi_lookback = input.int(2, title="RSI Lookback Period", minval=2, maxval=50, group="RSI Optimization")
-lower_barrier = input.int(28, title="Lower Barrier (Oversold)", minval=10, maxval=40, group="RSI Optimization")
-lower_threshold = input.int(25, title="Lower Threshold", minval=15, maxval=35, group="RSI Optimization")
-upper_barrier = input.int(72, title="Upper Barrier (Overbought)", minval=60, maxval=90, group="RSI Optimization")
-upper_threshold = input.int(75, title="Upper Threshold", minval=65, maxval=85, group="RSI Optimization")
-ma_length = input.int(20, title="Moving Average Length", minval=5, maxval=100, group="RSI Optimization")
-
-// === ATR STOP LOSS & TAKE PROFIT OPTIMIZATION ===
-atr_multiplier_stop = input.float(2.0, title="ATR Multiplier Stop Loss", minval=0.5, maxval=5.0, step=0.1, group="Risk Management")
-atr_multiplier_take = input.float(3.0, title="ATR Multiplier Take Profit", minval=1.0, maxval=10.0, step=0.1, group="Risk Management")
-atr_length = input.int(14, title="ATR Length", minval=5, maxval=50, group="Risk Management")
-
-// === TECHNICAL INDICATORS ===
-rsi = ta.rsi(close, rsi_lookback)
-ma = ta.sma(close, ma_length)
-atr = ta.atr(atr_length)
-
-// === ENTRY CONDITIONS (BASELINE LOGIC FOR OPTIMIZATION) ===
-rsi_oversold = rsi <= lower_barrier and rsi >= lower_threshold
-rsi_overbought = rsi >= upper_barrier and rsi <= upper_threshold
-price_above_ma = close > ma
-price_below_ma = close < ma
-
-long_condition = rsi_oversold and price_above_ma
-short_condition = rsi_overbought and price_below_ma
-
-// === STOP LOSS & TAKE PROFIT LEVELS ===
-if (strategy.position_size > 0)
-    stop_loss_level = strategy.position_avg_price - (atr * atr_multiplier_stop)
-    take_profit_level = strategy.position_avg_price + (atr * atr_multiplier_take)
-    strategy.exit("Exit Long", "Long", stop=stop_loss_level, limit=take_profit_level)
-
-if (strategy.position_size < 0)
-    stop_loss_level = strategy.position_avg_price + (atr * atr_multiplier_stop)
-    take_profit_level = strategy.position_avg_price - (atr * atr_multiplier_take)
-    strategy.exit("Exit Short", "Short", stop=stop_loss_level, limit=take_profit_level)
-
-// === ENTRY ORDERS ===
-if (long_condition)
-    strategy.entry("Long", strategy.long)
-    
-if (short_condition)
-    strategy.entry("Short", strategy.short)
-
-// === WEBHOOK ALERTS (Auto-configured for CircuitCartel) ===
-// These baseline parameters will be optimized by Stratus Engine`
-    },
-    {
-      id: 'macd-momentum',
-      name: 'MACD Momentum Master',
-      isDefault: false,
-      code: `//@version=5
-strategy("MACD Momentum Master", shorttitle="MACD-Mom", overlay=true)
-
-// === MACD PARAMETERS ===
-fast_length = input.int(12, title="MACD Fast Length", minval=1, maxval=50, group="MACD Settings")
-slow_length = input.int(26, title="MACD Slow Length", minval=1, maxval=100, group="MACD Settings")
-signal_length = input.int(9, title="Signal Length", minval=1, maxval=50, group="MACD Settings")
-momentum_threshold = input.float(0.001, title="Momentum Threshold", minval=0.0001, maxval=0.01, step=0.0001, group="Entry Settings")
-volume_multiplier = input.float(1.5, title="Volume Multiplier", minval=1.0, maxval=3.0, step=0.1, group="Entry Settings")
-use_volume_filter = input.bool(true, title="Use Volume Filter", group="Entry Settings")
-
-// === TECHNICAL INDICATORS ===
-[macd_line, signal_line, histogram] = ta.macd(close, fast_length, slow_length, signal_length)
-volume_ma = ta.sma(volume, 20)
-rsi = ta.rsi(close, 14)
-atr = ta.atr(20)
-
-// === ENTRY CONDITIONS ===
-macd_bullish = macd_line > signal_line and histogram > momentum_threshold
-macd_bearish = macd_line < signal_line and histogram < -momentum_threshold
-volume_condition = not use_volume_filter or volume > volume_ma * volume_multiplier
-rsi_neutral = rsi > 25 and rsi < 75`
-    },
-    {
-      id: 'bollinger-breakout',
-      name: 'Bollinger Band Breakout Elite',
-      isDefault: false,
-      code: `//@version=5
-strategy("Bollinger Band Breakout Elite", shorttitle="BB-Breakout", overlay=true)
-
-// === BOLLINGER BAND PARAMETERS ===
-bb_length = input.int(20, title="BB Length", minval=5, maxval=100, group="Bollinger Settings")
-bb_mult = input.float(2.0, title="BB Multiplier", minval=1.0, maxval=4.0, step=0.1, group="Bollinger Settings")
-squeeze_threshold = input.float(0.02, title="Squeeze Threshold", minval=0.01, maxval=0.1, step=0.01, group="Breakout Settings")
-breakout_confirmation = input.int(2, title="Breakout Confirmation Bars", minval=1, maxval=5, group="Breakout Settings")
-rsi_filter_enabled = input.bool(true, title="Use RSI Filter", group="Filter Settings")
-rsi_overbought = input.int(75, title="RSI Overbought", minval=60, maxval=90, group="Filter Settings")
-rsi_oversold = input.int(25, title="RSI Oversold", minval=10, maxval=40, group="Filter Settings")
-
-// === TECHNICAL INDICATORS ===
-basis = ta.sma(close, bb_length)
-dev = bb_mult * ta.stdev(close, bb_length)
-upper = basis + dev
-lower = basis - dev
-bb_width = (upper - lower) / basis
-rsi = ta.rsi(close, 14)
-volume_sma = ta.sma(volume, 20)
-
-// === BREAKOUT CONDITIONS ===
-squeeze = bb_width < squeeze_threshold
-breakout_up = close > upper and not squeeze
-breakout_down = close < lower and not squeeze
-volume_surge = volume > volume_sma * 1.5
-rsi_filter = not rsi_filter_enabled or (rsi > rsi_oversold and rsi < rsi_overbought)`
-    }
-  ];
+  // Hardcoded strategies removed - now using real database strategies
 
   // Extract parameters from Pine Script code - Enhanced for RSI optimization variables
   const extractParameters = (code: string): PineScriptVariable[] => {
@@ -384,22 +272,7 @@ if (short_condition)
     });
   };
 
-  // Load a sample strategy for optimization
-  const loadSampleStrategy = (strategyId: string) => {
-    const strategy = sampleStrategies.find(s => s.id === strategyId);
-    if (strategy) {
-      setSelectedStrategy(strategyId);
-      setPineScriptCode(strategy.code);
-      const params = extractParameters(strategy.code);
-      setExtractedParams(params);
-      
-      const statusMessage = strategy.isDefault 
-        ? `🌟 Default RSI strategy "${strategy.name}" loaded for optimization` 
-        : `✅ Strategy "${strategy.name}" loaded for optimization`;
-      
-      console.log(statusMessage);
-    }
-  };
+  // Load sample strategy function removed - now using real database strategies only
 
   // Test webhook connectivity using the existing CircuitCartel webhook system
   const testWebhook = async () => {
@@ -461,7 +334,7 @@ if (short_condition)
 
   // Check for open positions before starting optimization
   const handleStartOptimization = async () => {
-    const strategyName = sampleStrategies.find(s => s.id === selectedStrategy)?.name || 'Current Strategy';
+    const strategyName = realStrategies.find(s => s.id === selectedStrategy)?.name || 'Current Strategy';
     setSelectedStrategyForTesting(strategyName);
     
     try {
@@ -714,82 +587,47 @@ if (short_condition)
             <Card className="p-6">
               <h3 className="text-lg font-bold mb-4">📝 Pine Script Code</h3>
               
-              {/* Sample Strategy Loader */}
+              {/* Real Strategy Loader */}
               <div className="mb-4">
-                <Label>Load Preloaded Strategies:</Label>
-                <div className="flex flex-col gap-2 mt-2">
-                  {sampleStrategies.map(strategy => (
-                    <Button 
-                      key={strategy.id}
-                      variant={strategy.isDefault ? "default" : "outline"} 
-                      size="sm"
-                      onClick={() => loadSampleStrategy(strategy.id)}
-                      className={`justify-start ${strategy.isDefault ? 'bg-gold-500 hover:bg-gold-600 text-white border-gold-500' : ''} ${selectedStrategy === strategy.id ? 'ring-2 ring-blue-500' : ''}`}
-                    >
-                      {strategy.isDefault && '🌟 '}{strategy.name}{strategy.isDefault && ' (Default)'}
-                    </Button>
-                  ))}
-                </div>
-                
-                {/* Real Strategy Loader */}
-                <div className="mt-4 pt-4 border-t">
-                  <Label className="text-blue-600 font-semibold">🎯 Load LIVE Trading Configurations:</Label>
+                <Label>Load Real QUANTUM FORGE Strategies:</Label>
+                {loadingStrategies ? (
+                  <div className="flex items-center gap-2 mt-2 p-4 bg-blue-50 rounded-lg">
+                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-sm text-blue-600">Loading strategies from database...</span>
+                  </div>
+                ) : (
                   <div className="flex flex-col gap-2 mt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        const strategyManager = StrategyManager.getInstance();
-                        const realStrategies = strategyManager.getStrategies();
-                        const rsiStrategy = realStrategies.find(s => s.id === 'rsi-pullback-001' || s.name.includes('RSI Pullback'));
-                        if (rsiStrategy) {
-                          loadRealStrategy(rsiStrategy);
-                        }
-                      }}
-                      className="justify-start border-blue-500 text-blue-600 hover:bg-blue-50"
-                    >
-                      🔴 RSI Pullback Pro (LIVE CONFIG)
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        const strategyManager = StrategyManager.getInstance();
-                        const realStrategies = strategyManager.getStrategies();
-                        const claudeStrategy = realStrategies.find(s => s.id === 'claude-quantum-oscillator-001');
-                        if (claudeStrategy) {
-                          loadRealStrategy(claudeStrategy);
-                        }
-                      }}
-                      className="justify-start border-green-500 text-green-600 hover:bg-green-50"
-                    >
-                      🟢 Claude Quantum Oscillator (LIVE CONFIG)
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        const strategyManager = StrategyManager.getInstance();
-                        const realStrategies = strategyManager.getStrategies();
-                        const stratusStrategy = realStrategies.find(s => s.id === 'stratus-core-neural-001');
-                        if (stratusStrategy) {
-                          loadRealStrategy(stratusStrategy);
-                        }
-                      }}
-                      className="justify-start border-purple-500 text-purple-600 hover:bg-purple-50"
-                    >
-                      🟣 Stratus Core Neural Engine (LIVE CONFIG)
-                    </Button>
+                    {realStrategies.map(strategy => (
+                      <Button 
+                        key={strategy.id}
+                        variant={strategy.isActive ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedStrategy(strategy.id);
+                          setPineScriptCode(strategy.pineScriptCode || '');
+                        }}
+                        className={`justify-start text-left ${strategy.isActive ? 'bg-green-500 hover:bg-green-600 text-white border-green-500' : ''} ${selectedStrategy === strategy.id ? 'ring-2 ring-blue-500' : ''}`}
+                      >
+                        <div className="flex-1">
+                          <div className="font-semibold">
+                            {strategy.isActive && '✅ '}{strategy.name}
+                          </div>
+                          <div className="text-xs opacity-75">
+                            {strategy.performance.totalTrades} trades | {strategy.performance.winRate.toFixed(1)}% win rate | ${strategy.performance.totalPnL.toFixed(2)} P&L
+                          </div>
+                        </div>
+                      </Button>
+                    ))}
+                    
+                    {realStrategies.length === 0 && (
+                      <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
+                        <p>No strategies found in database</p>
+                        <p className="text-xs mt-1">Add strategies to see them here</p>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-xs text-blue-600 mt-2 font-medium">
-                    ⚡ These load the ACTUAL configurations currently being used for trading
-                  </div>
+                )}
                 </div>
-                
-                <div className="text-xs text-gray-500 mt-4">
-                  💡 Live configurations show exactly what parameters are trading vs sample strategies
-                </div>
-              </div>
               
               <Textarea
                 placeholder="Paste your Pine Script code here..."

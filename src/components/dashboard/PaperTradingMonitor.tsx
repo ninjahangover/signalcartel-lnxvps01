@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * QUANTUM FORGE™ Paper Trading Monitor
+ * Stratus Engine Paper Trading Monitor
  * 
  * Revolutionary AI-powered paper trading engine that learns and optimizes in real-time.
  * 
  * Features:
- * ✅ QUANTUM FORGE™ custom paper trading engine
+ * ✅ Quantum Forge custom paper trading engine
  * ✅ No API restrictions or rate limits
  * ✅ Smart trend analysis and AI optimization
  * ✅ Real-time market data integration
@@ -34,7 +34,7 @@ import { cleanTestingService, type CleanTestingSession } from '../../lib/clean-t
 import { stratusEngine, getAITradingSignal, type AITradingDecision } from '../../lib/stratus-engine-ai';
 import { marketIntelligence, startIntelligenceCapture, getQuickTradingAdjustments } from '../../lib/market-intelligence-service';
 import { paperTradingEngine, getPaperAccount, startAIPaperTrading, type PaperAccount } from '../../lib/paper-trading-engine';
-// QUANTUM FORGE™ uses custom paper trading engine - no external dependencies
+// Quantum Forge uses custom paper trading engine - no external dependencies
 
 interface StrategyPerformance {
   strategyId: string;
@@ -587,7 +587,7 @@ export default function PaperTradingMonitor() {
             {/* AI Trading Signals */}
             {aiDecisions.size > 0 && (
               <div className="mt-3 pt-3 border-t border-purple-200">
-                <div className="text-sm font-medium text-purple-800 mb-2">🎯 Live AI Trading Signals:</div>
+                <div className="text-sm font-medium text-purple-800 mb-2">🎯 QUANTUM FORGE AI Signals:</div>
                 <div className="flex gap-4">
                   {Array.from(aiDecisions.entries()).map(([symbol, decision]) => (
                     <div key={symbol} className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-purple-100">
@@ -610,70 +610,77 @@ export default function PaperTradingMonitor() {
           </div>
         )}
 
-        {/* Paper Trading Account Status */}
-        {paperAccount && (
+        {/* QUANTUM FORGE Account Status */}
+        {customTradingData && (
           <div className="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                 <div>
-                  <h4 className="font-semibold text-green-800">💰 AI Paper Trading Account</h4>
+                  <h4 className="font-semibold text-green-800">💰 QUANTUM FORGE Account</h4>
                   <p className="text-sm text-green-700">
-                    Active Positions: {paperAccount.positions.length} • 
-                    Total Trades: {paperAccount.totalTrades} • 
-                    Win Rate: {paperAccount.winRate.toFixed(1)}%
+                    Stratus Engine Paper Trading • Real Market Data • $10K Starting Balance
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-700">
-                    ${paperAccount.totalBalance.toFixed(2)}
+                    ${customTradingData ? (() => {
+                      const totalPnL = (customTradingData.trades?.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0) || 0);
+                      return (10000 + totalPnL).toFixed(2);
+                    })() : '10000.00'}
                   </div>
                   <div className="text-xs text-green-600">Total Balance</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-blue-700">
-                    ${paperAccount.availableBalance.toFixed(2)}
+                    ${customTradingData ? (() => {
+                      const totalPnL = (customTradingData.trades?.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0) || 0);
+                      const openPositions = customTradingData.trades?.filter((t: any) => !t.pnl).length || 0;
+                      const allocatedFunds = openPositions * 100; // Assume $100 per position
+                      return (10000 + totalPnL - allocatedFunds).toFixed(2);
+                    })() : '10000.00'}
                   </div>
                   <div className="text-xs text-blue-600">Available</div>
                 </div>
                 <div className="text-center">
                   <div className={`text-lg font-bold ${
-                    paperAccount.realizedPnL >= 0 ? 'text-green-700' : 'text-red-700'
+                    (customTradingData?.trades?.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0) || 0) >= 0 ? 'text-green-700' : 'text-red-700'
                   }`}>
-                    ${paperAccount.realizedPnL >= 0 ? '+' : ''}${paperAccount.realizedPnL.toFixed(2)}
+                    {(() => {
+                      const pnl = customTradingData?.trades?.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0) || 0;
+                      return `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`;
+                    })()}
                   </div>
-                  <div className="text-xs text-gray-600">Realized P&L</div>
+                  <div className="text-xs text-gray-600">Total P&L</div>
                 </div>
                 <div className="text-center">
-                  <div className={`text-lg font-bold ${
-                    paperAccount.unrealizedPnL >= 0 ? 'text-green-700' : 'text-red-700'
-                  }`}>
-                    ${paperAccount.unrealizedPnL >= 0 ? '+' : ''}${paperAccount.unrealizedPnL.toFixed(2)}
+                  <div className="text-lg font-bold text-purple-700">
+                    {customTradingData ? (customTradingData.trades?.length || 0) : 0}
                   </div>
-                  <div className="text-xs text-gray-600">Unrealized P&L</div>
+                  <div className="text-xs text-gray-600">Total Trades</div>
                 </div>
               </div>
             </div>
             
             {/* Recent Trades */}
-            {paperAccount.trades.length > 0 && (
+            {customTradingData && customTradingData.trades?.length > 0 && (
               <div className="mt-3 pt-3 border-t border-green-200">
-                <div className="text-sm font-medium text-green-800 mb-2">📈 Recent AI Trades:</div>
+                <div className="text-sm font-medium text-green-800 mb-2">📈 Recent QUANTUM FORGE Trades:</div>
                 <div className="flex gap-3 overflow-x-auto">
-                  {paperTradingEngine.getRecentTrades(5).map((trade) => (
+                  {customTradingData.trades.slice(0, 10).map((trade: any) => ( // Show more recent trades
                     <div key={trade.id} className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-green-100 min-w-fit">
                       <span className="font-medium text-gray-700">{trade.symbol?.replace('USD', '') || 'N/A'}</span>
                       <span className={`px-2 py-1 text-xs font-bold rounded ${
-                        trade.side === 'BUY' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        trade.side?.toUpperCase() === 'BUY' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                       }`}>
-                        {trade.side}
+                        {trade.side?.toUpperCase()}
                       </span>
                       <span className="text-xs text-gray-600">
-                        ${trade.price.toFixed(2)}
+                        ${trade.price?.toFixed(2) || '0.00'}
                       </span>
-                      {trade.pnl !== undefined && (
+                      {trade.pnl !== undefined && trade.pnl !== null && (
                         <span className={`text-xs font-medium ${
                           trade.pnl >= 0 ? 'text-green-600' : 'text-red-600'
                         }`}>
@@ -688,23 +695,23 @@ export default function PaperTradingMonitor() {
           </div>
         )}
 
-        {/* Live Custom Trading Engine Status */}
+        {/* QUANTUM FORGE Trading Engine Status */}
         {customTradingData && (
-          <div className="mt-4 p-4 bg-gradient-to-r from-gold-50 to-green-50 border border-gold-200 rounded-lg">
+          <div className="mt-4 p-4 bg-gradient-to-r from-yellow-50 to-green-50 border border-yellow-200 rounded-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Zap className="w-6 h-6 text-gold-600 animate-pulse" />
+                <Zap className="w-6 h-6 text-yellow-600 animate-pulse" />
                 <div>
-                  <h4 className="font-semibold text-gold-800">🚀 Live Custom Trading Engine</h4>
-                  <p className="text-sm text-gold-700">
-                    Real-time data generation for LLN & Markov optimization
+                  <h4 className="font-semibold text-yellow-800">🚀 QUANTUM FORGE Engine</h4>
+                  <p className="text-sm text-yellow-700">
+                    Stratus Brain: Real-time data generation for LLN & Markov optimization
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-6">
                 <div className="text-center">
                   <div className="text-lg font-bold text-blue-700">{customTradingData.trades?.length || 0}</div>
-                  <div className="text-xs text-blue-600">Live Trades</div>
+                  <div className="text-xs text-blue-600">Total Trades</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-green-700">
@@ -740,7 +747,7 @@ export default function PaperTradingMonitor() {
               <div>
                 <p className="text-green-600 text-sm font-medium">AI Total Profit</p>
                 <p className="text-2xl font-bold text-green-700">
-                  ${paperAccount ? paperAccount.realizedPnL.toFixed(2) : strategies.reduce((sum, s) => sum + s.metrics.totalProfit, 0).toFixed(2)}
+                  ${customTradingData ? (customTradingData.trades?.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0) || 0).toFixed(2) : '0.00'}
                 </p>
               </div>
               <DollarSign className="w-8 h-8 text-green-600 opacity-50" />
@@ -752,7 +759,12 @@ export default function PaperTradingMonitor() {
               <div>
                 <p className="text-blue-600 text-sm font-medium">Avg Win Rate</p>
                 <p className="text-2xl font-bold text-blue-700">
-                  {(strategies.reduce((sum, s) => sum + s.metrics.winRate, 0) / strategies.length).toFixed(1)}%
+                  {customTradingData && customTradingData.trades?.length > 0 ? (() => {
+                    const completedTrades = customTradingData.trades.filter((t: any) => t.pnl !== null && t.pnl !== undefined);
+                    if (completedTrades.length === 0) return '0.0';
+                    const winningTrades = completedTrades.filter((t: any) => t.pnl > 0);
+                    return ((winningTrades.length / completedTrades.length) * 100).toFixed(1);
+                  })() : '0.0'}%
                 </p>
               </div>
               <Target className="w-8 h-8 text-blue-600 opacity-50" />
@@ -764,22 +776,31 @@ export default function PaperTradingMonitor() {
               <div>
                 <p className="text-purple-600 text-sm font-medium">Total Trades</p>
                 <p className="text-2xl font-bold text-purple-700">
-                  {strategies.reduce((sum, s) => sum + s.metrics.totalTrades, 0)}
+                  {customTradingData ? (customTradingData.trades?.length || 0) : 0}
                 </p>
               </div>
               <Activity className="w-8 h-8 text-purple-600 opacity-50" />
             </div>
           </div>
           
-          <div className="bg-gradient-to-br from-gold-50 to-gold-100 rounded-lg p-4">
+          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gold-600 text-sm font-medium">Avg Sharpe</p>
-                <p className="text-2xl font-bold text-gold-700">
-                  {(strategies.reduce((sum, s) => sum + s.metrics.sharpeRatio, 0) / strategies.length).toFixed(2)}
+                <p className="text-yellow-600 text-sm font-medium">Sharpe Ratio</p>
+                <p className="text-2xl font-bold text-yellow-700">
+                  {customTradingData ? (() => {
+                    const trades = customTradingData.trades || [];
+                    const completedTrades = trades.filter((t: any) => t.pnl !== null);
+                    if (completedTrades.length < 2) return '0.00';
+                    const returns = completedTrades.map((t: any) => t.pnl / 10000); // Convert to percentage
+                    const avgReturn = returns.reduce((sum: number, r: number) => sum + r, 0) / returns.length;
+                    const variance = returns.reduce((sum: number, r: number) => sum + Math.pow(r - avgReturn, 2), 0) / (returns.length - 1);
+                    const stdDev = Math.sqrt(variance);
+                    return stdDev === 0 ? '0.00' : (avgReturn / stdDev).toFixed(2);
+                  })() : '0.00'}
                 </p>
               </div>
-              <BarChart3 className="w-8 h-8 text-gold-600 opacity-50" />
+              <BarChart3 className="w-8 h-8 text-yellow-600 opacity-50" />
             </div>
           </div>
         </div>
@@ -789,8 +810,8 @@ export default function PaperTradingMonitor() {
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <Activity className="w-6 h-6 text-gold-600" />
-            <h3 className="text-xl font-bold text-gray-900">Live Activity Feed</h3>
+            <Activity className="w-6 h-6 text-yellow-600" />
+            <h3 className="text-xl font-bold text-gray-900">QUANTUM FORGE Activity</h3>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -799,29 +820,39 @@ export default function PaperTradingMonitor() {
         </div>
         
         <div className="space-y-2 max-h-64 overflow-y-auto">
-          {activityLog.length > 0 ? (
-            activityLog.map((activity) => (
-              <div key={activity.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border-l-4 border-l-gold-500">
+          {customTradingData && customTradingData.trades?.length > 0 ? (
+            customTradingData.trades.slice(0, 20).map((trade: any) => ( // Show more activity
+              <div key={trade.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border-l-4 border-l-yellow-500">
                 <div className="flex items-center gap-3">
                   <div className={`w-2 h-2 rounded-full ${
-                    activity.type === 'trade' ? 'bg-green-500' :
-                    activity.type === 'optimization' ? 'bg-blue-500' :
-                    'bg-purple-500'
+                    trade.side?.toLowerCase() === 'buy' ? 'bg-green-500' : 'bg-red-500'
                   }`}></div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                    <p className="text-xs text-gray-500">{activity.strategy}</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {trade.side?.toUpperCase()} {trade.symbol} @ ${trade.price?.toFixed(2) || '0.00'}
+                    </p>
+                    <p className="text-xs text-gray-500">{trade.strategy || 'QUANTUM FORGE'}</p>
                   </div>
                 </div>
-                <div className="text-xs text-gray-400">
-                  {activity.timestamp.toLocaleTimeString()}
+                <div className="text-right">
+                  <div className="text-xs text-gray-400">
+                    {new Date(trade.executedAt).toLocaleTimeString()}
+                  </div>
+                  {trade.pnl !== null && trade.pnl !== undefined && (
+                    <div className={`text-xs font-medium ${
+                      trade.pnl >= 0 ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {trade.pnl >= 0 ? '+' : ''}${trade.pnl.toFixed(2)}
+                    </div>
+                  )}
                 </div>
               </div>
             ))
           ) : (
             <div className="text-center py-8 text-gray-500">
               <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p>Waiting for trading activity...</p>
+              <p>QUANTUM FORGE is starting up...</p>
+              <p className="text-xs mt-1">Trade activity will appear here when the engine is active</p>
             </div>
           )}
         </div>

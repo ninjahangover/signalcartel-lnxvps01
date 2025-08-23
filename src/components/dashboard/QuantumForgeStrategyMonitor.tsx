@@ -19,7 +19,10 @@ import {
   Cpu,
   Database,
   Rocket,
-  Gauge
+  Gauge,
+  Calculator,
+  TrendingDown,
+  DollarSign
 } from 'lucide-react';
 import { Alert } from '../ui/alert';
 
@@ -38,6 +41,23 @@ interface QuantumForgeData {
     startingBalance: number;
     totalPnL: number;
     profitPercent: number;
+  };
+  expectancy?: {
+    strategies: Array<{
+      strategyName: string;
+      expectancy: number;
+      winProbability: number;
+      averageWin: number;
+      averageLoss: number;
+      kellyPercent: number;
+      totalTrades: number;
+      profitFactor: number;
+    }>;
+    summary: {
+      avgExpectancy: number;
+      bestStrategy: { name: string; expectancy: number } | null;
+      profitableStrategies: number;
+    };
   };
   recentTrades: Array<{
     tradeId: string;
@@ -70,6 +90,12 @@ interface QuantumForgeData {
       winRate: number;
       lastSignal?: Date;
     };
+    claudeQuantumOscillator: {
+      enabled: boolean;
+      trades: number;
+      winRate: number;
+      lastSignal?: Date;
+    };
   };
   systemHealth: {
     databaseConnected: boolean;
@@ -89,7 +115,7 @@ export default function QuantumForgeStrategyMonitor() {
     try {
       setError(null);
       
-      // Fetch data from our real QUANTUM FORGE™ system API
+      // Fetch data from our real QUANTUM FORGE system API
       const response = await fetch('/api/quantum-forge/dashboard');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -97,26 +123,40 @@ export default function QuantumForgeStrategyMonitor() {
       
       const result = await response.json();
       
+      // Also fetch expectancy data
+      let expectancyData = null;
+      try {
+        const expectancyResponse = await fetch('/api/expectancy/dashboard');
+        if (expectancyResponse.ok) {
+          const expectancyResult = await expectancyResponse.json();
+          if (expectancyResult.success) {
+            expectancyData = expectancyResult.data;
+          }
+        }
+      } catch (expectancyError) {
+        console.warn('Failed to fetch expectancy data:', expectancyError);
+      }
+      
       if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch QUANTUM FORGE™ data');
+        throw new Error(result.error || 'Failed to fetch QUANTUM FORGE data');
       }
 
-      // Transform the data and inject real QUANTUM FORGE™ strategy info from live system
+      // Transform the data from live QUANTUM FORGE system
       const transformedData: QuantumForgeData = {
-        isRunning: result.data?.trades?.length > 0 || result.data?.totalTrades > 0,
+        isRunning: result.data?.systemStatus?.isActive || result.data?.systemStatus?.totalTrades > 0,
         currentSession: {
           sessionId: result.data?.currentSession?.id || 'quantum-forge-active',
           startTime: new Date(result.data?.currentSession?.startTime || Date.now() - 3600000),
           uptime: calculateUptime(result.data?.currentSession?.startTime)
         },
         performance: {
-          totalTrades: result.data?.totalTrades || result.data?.trades?.length || 0,
-          winningTrades: result.data?.trades?.filter((t: any) => t.pnl !== null && t.pnl !== undefined && t.pnl > 0).length || 0,
-          winRate: calculateWinRate(result.data?.trades || []),
-          currentBalance: result.data?.balance || 10000,
-          startingBalance: 10000, // QUANTUM FORGE™ starts with $10K
-          totalPnL: result.data?.trades?.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0) || 0,
-          profitPercent: ((result.data?.balance || 10000) - 10000) / 100
+          totalTrades: result.data?.systemStatus?.totalTrades || 0,
+          winningTrades: Math.floor((result.data?.systemStatus?.totalTrades || 0) * (result.data?.systemStatus?.winRate || 0) / 100),
+          winRate: result.data?.systemStatus?.winRate || 0,
+          currentBalance: result.data?.balance || (10000 + (result.data?.totalPnL || 0)),
+          startingBalance: 10000, // QUANTUM FORGE starts with $10K
+          totalPnL: result.data?.totalPnL || 0,
+          profitPercent: result.data?.totalPnL ? (result.data.totalPnL / 10000) * 100 : 0
         },
         recentTrades: (result.data?.trades || [])
           .slice(-10)
@@ -131,39 +171,46 @@ export default function QuantumForgeStrategyMonitor() {
             strategy: trade.strategy || 'QUANTUM_FORGE_CORE'
           })),
         strategies: {
-          active: result.data?.trades?.length > 0 ? 2 : 0, // We have 2 active strategies
-          total: 2,
+          active: result.data?.trades?.length > 0 ? 3 : 0, // We have 3 active strategies
+          total: 3,
           rsiStrategy: {
             enabled: true,
-            trades: calculateStrategyTrades(result.data?.trades || [], 'QUANTUM FORGE™'),
-            winRate: calculateStrategyWinRate(result.data?.trades || [], 'QUANTUM FORGE™'),
-            lastSignal: getLastStrategySignal(result.data?.trades || [], 'QUANTUM FORGE™')
+            trades: calculateStrategyTrades(result.data?.trades || [], 'Enhanced RSI Pullback Strategy'),
+            winRate: calculateStrategyWinRate(result.data?.trades || [], 'Enhanced RSI Pullback Strategy'),
+            lastSignal: getLastStrategySignal(result.data?.trades || [], 'Enhanced RSI Pullback Strategy')
           },
           quantumOscillator: {
             enabled: true,
-            trades: calculateStrategyTrades(result.data?.trades || [], 'CustomPaperEngine'),
-            winRate: calculateStrategyWinRate(result.data?.trades || [], 'CustomPaperEngine'),
-            lastSignal: getLastStrategySignal(result.data?.trades || [], 'CustomPaperEngine')
+            trades: calculateStrategyTrades(result.data?.trades || [], 'Bollinger Breakout Enhanced Strategy'),
+            winRate: calculateStrategyWinRate(result.data?.trades || [], 'Bollinger Breakout Enhanced Strategy'),
+            lastSignal: getLastStrategySignal(result.data?.trades || [], 'Bollinger Breakout Enhanced Strategy')
           },
           neuralNetwork: {
             enabled: false, // Not currently active as separate strategy
             trades: 0,
             winRate: 0,
             lastSignal: undefined
+          },
+          claudeQuantumOscillator: {
+            enabled: true,
+            trades: calculateStrategyTrades(result.data?.trades || [], 'Claude Quantum Oscillator Strategy'),
+            winRate: calculateStrategyWinRate(result.data?.trades || [], 'Claude Quantum Oscillator Strategy'),
+            lastSignal: getLastStrategySignal(result.data?.trades || [], 'Claude Quantum Oscillator Strategy')
           }
         },
         systemHealth: {
           databaseConnected: result.success,
           marketDataActive: true, // Assumed if we got data
-          tradingEngineStatus: result.data?.totalTrades > 0 ? 'ACTIVE' : 'PAUSED',
+          tradingEngineStatus: result.data?.systemStatus?.totalTrades > 0 ? 'ACTIVE' : 'PAUSED',
           lastHealthCheck: new Date()
-        }
+        },
+        expectancy: expectancyData
       };
 
       setData(transformedData);
       setLastUpdate(new Date());
     } catch (err) {
-      console.error('Error fetching QUANTUM FORGE™ data:', err);
+      console.error('Error fetching QUANTUM FORGE data:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
@@ -229,7 +276,7 @@ export default function QuantumForgeStrategyMonitor() {
         <Card className="p-6">
           <div className="flex items-center justify-center py-8">
             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mr-3" />
-            <span className="text-lg">Loading QUANTUM FORGE™ Data...</span>
+            <span className="text-lg">Loading QUANTUM FORGE Data...</span>
           </div>
         </Card>
       </div>
@@ -242,7 +289,7 @@ export default function QuantumForgeStrategyMonitor() {
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <div className="ml-2">
-            <strong>QUANTUM FORGE™ Connection Error</strong>
+            <strong>QUANTUM FORGE Connection Error</strong>
             <p className="text-sm mt-1">{error}</p>
             <Button onClick={fetchQuantumForgeData} size="sm" className="mt-2">
               Retry Connection
@@ -259,7 +306,7 @@ export default function QuantumForgeStrategyMonitor() {
         <Card className="p-6">
           <div className="text-center py-8 text-gray-500">
             <Settings className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No QUANTUM FORGE™ data available</p>
+            <p>No QUANTUM FORGE data available</p>
           </div>
         </Card>
       </div>
@@ -273,7 +320,7 @@ export default function QuantumForgeStrategyMonitor() {
         <div>
           <h2 className="text-3xl font-bold flex items-center gap-3">
             <Brain className="w-8 h-8 text-purple-600" />
-            QUANTUM FORGE™ Strategy Monitor
+QUANTUM FORGE Strategy Monitor
           </h2>
           <p className="text-gray-600 mt-1">
             Advanced AI Paper Trading Platform • Real-time Strategy Execution
@@ -412,7 +459,7 @@ export default function QuantumForgeStrategyMonitor() {
           Active Trading Strategies
         </h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="border rounded-lg p-4 bg-gradient-to-br from-blue-50 to-blue-100">
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-semibold text-blue-900">RSI Strategy</h4>
@@ -496,14 +543,157 @@ export default function QuantumForgeStrategyMonitor() {
               </div>
             </div>
           </div>
+          <div className="border rounded-lg p-4 bg-gradient-to-br from-yellow-50 to-yellow-100">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-semibold text-yellow-900">Claude's Quantum Oscillator Pro</h4>
+              <Badge className={data.strategies.claudeQuantumOscillator.enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                {data.strategies.claudeQuantumOscillator.enabled ? 'ACTIVE' : 'DISABLED'}
+              </Badge>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-yellow-700">Trades:</span>
+                <span className="font-medium">{data.strategies.claudeQuantumOscillator.trades}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-yellow-700">Win Rate:</span>
+                <span className="font-medium">{(data.strategies.claudeQuantumOscillator.winRate || 0).toFixed(1)}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-yellow-700">Last Signal:</span>
+                <span className="font-medium text-xs">
+                  {data.strategies.claudeQuantumOscillator.lastSignal 
+                    ? data.strategies.claudeQuantumOscillator.lastSignal.toLocaleTimeString()
+                    : 'None'
+                  }
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </Card>
+
+      {/* Expectancy Analysis */}
+      {data.expectancy && (
+        <Card className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Calculator className="w-5 h-5 text-green-600" />
+            Expectancy Analysis - E = (W × A) - (L × B)
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="text-center p-4 bg-white rounded-lg border border-green-200">
+              <DollarSign className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-green-600">
+                ${data.expectancy.summary.avgExpectancy.toFixed(2)}
+              </div>
+              <div className="text-sm text-gray-600">Average Expectancy</div>
+            </div>
+            
+            <div className="text-center p-4 bg-white rounded-lg border border-green-200">
+              <TrendingUp className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-blue-600">
+                {data.expectancy.summary.profitableStrategies}
+              </div>
+              <div className="text-sm text-gray-600">Profitable Strategies</div>
+            </div>
+            
+            <div className="text-center p-4 bg-white rounded-lg border border-green-200">
+              <Target className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+              <div className="text-lg font-bold text-purple-600">
+                {data.expectancy.summary.bestStrategy?.name.split(' ')[0] || 'None'}
+              </div>
+              <div className="text-sm text-gray-600">Best Strategy</div>
+              <div className="text-xs text-green-600 font-mono">
+                ${data.expectancy.summary.bestStrategy?.expectancy.toFixed(2) || '0.00'}
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
+            {data.expectancy.strategies.map((strategy) => (
+              <div key={strategy.strategyName} className="bg-white rounded-lg p-4 border border-gray-200">
+                <h4 className="font-semibold text-gray-900 mb-3 text-sm">
+                  {strategy.strategyName.split(' ').slice(0, 2).join(' ')}
+                </h4>
+                
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Expectancy:</span>
+                    <span className={`font-bold ${
+                      strategy.expectancy >= 0 ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      ${strategy.expectancy.toFixed(2)}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Win Rate:</span>
+                    <span className="font-medium">
+                      {(strategy.winProbability * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Avg Win:</span>
+                    <span className="text-green-600 font-medium">
+                      +${strategy.averageWin.toFixed(2)}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Avg Loss:</span>
+                    <span className="text-red-600 font-medium">
+                      -${strategy.averageLoss.toFixed(2)}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Kelly %:</span>
+                    <span className={`font-medium ${
+                      strategy.kellyPercent > 15 ? 'text-orange-600' : 'text-blue-600'
+                    }`}>
+                      {strategy.kellyPercent.toFixed(1)}%
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Trades:</span>
+                    <span className="font-medium">{strategy.totalTrades}</span>
+                  </div>
+                  
+                  <div className="pt-2 border-t">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Profit Factor:</span>
+                      <span className={`font-bold ${
+                        strategy.profitFactor >= 1.5 ? 'text-green-600' : 
+                        strategy.profitFactor >= 1 ? 'text-yellow-600' : 'text-red-600'
+                      }`}>
+                        {strategy.profitFactor.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-800">
+              <strong>Expectancy Formula:</strong> E = (W × A) - (L × B) where W = Win Probability, A = Average Win, L = Loss Probability, B = Average Loss
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              Kelly % shows optimal position sizing. Values above 15% indicate high-conviction strategies but require careful risk management.
+            </p>
+          </div>
+        </Card>
+      )}
 
       {/* Recent Trades */}
       <Card className="p-6">
         <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
           <Activity className="w-5 h-5 text-green-600" />
-          Recent QUANTUM FORGE™ Trades
+Recent QUANTUM FORGE Trades
         </h3>
         
         {data.recentTrades.length === 0 ? (
@@ -563,7 +753,7 @@ export default function QuantumForgeStrategyMonitor() {
         <div className="text-center">
           <h3 className="text-xl font-bold flex items-center justify-center gap-2">
             <Brain className="w-6 h-6" />
-            QUANTUM FORGE™ AI Trading Platform
+QUANTUM FORGE AI Trading Platform
           </h3>
           <p className="text-sm opacity-90 mt-1">
             Advanced Paper Trading • Real Market Data • AI-Powered Strategies • $10K Starting Balance

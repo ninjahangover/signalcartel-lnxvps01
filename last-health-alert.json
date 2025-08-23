@@ -1,6 +1,6 @@
 {
-  "Data Warehouse": "WARNING",
-  "GPU Strategies": "HEALTHY",
-  "Trade Execution": "HEALTHY",
-  "Database": "HEALTHY"
+  "GPU Strategies": "WARNING",
+  "Trade Execution": "WARNING",
+  "Database": "HEALTHY",
+  "Data Warehouse": "HEALTHY"
 }

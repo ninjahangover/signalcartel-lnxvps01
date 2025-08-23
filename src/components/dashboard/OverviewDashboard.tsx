@@ -79,7 +79,7 @@ export default function OverviewDashboard({
           }
         }
 
-        // Fetch QUANTUM FORGE™ system status
+        // Fetch Stratus Engine system status
         const statusResponse = await fetch('/api/quantum-forge/status');
         if (statusResponse.ok) {
           const statusData = await statusResponse.json();
@@ -88,7 +88,7 @@ export default function OverviewDashboard({
           }
         }
 
-        // Fetch QUANTUM FORGE™ portfolio data
+        // Fetch Quantum Forge portfolio data
         const portfolioResponse = await fetch('/api/quantum-forge/portfolio');
         if (portfolioResponse.ok) {
           const portfolioData = await portfolioResponse.json();
@@ -97,7 +97,7 @@ export default function OverviewDashboard({
           }
         }
       } catch (error) {
-        console.error('Failed to fetch QUANTUM FORGE™ data:', error);
+        console.error('Failed to fetch Stratus Engine data:', error);
       }
     };
 
@@ -109,7 +109,7 @@ export default function OverviewDashboard({
     return () => clearInterval(interval);
   }, []);
 
-  // Use QUANTUM FORGE™ portfolio data or fallback to account data
+  // Use Quantum Forge portfolio data or fallback to account data
   const portfolioData = quantumForgePortfolio || accountData || null;
 
   // NO MOCK DATA - Only show real strategy performance when available
@@ -226,7 +226,7 @@ export default function OverviewDashboard({
             <div className="mt-4 pt-4 border-t border-gray-200">
               <h4 className="font-semibold text-gray-900 mb-2">Latest Trades</h4>
               <div className="flex gap-2 overflow-x-auto">
-                {customTradingData.trades.slice(0, 5).map((trade: any) => (
+                {customTradingData.trades.slice(0, 10).map((trade: any) => ( // Show more trades
                   <div key={trade.id} className="flex-shrink-0 bg-white p-2 rounded border text-xs">
                     <div className="font-medium">{trade.symbol}</div>
                     <div className={`${trade.side === 'buy' ? 'text-green-600' : 'text-red-600'}`}>
@@ -357,7 +357,7 @@ export default function OverviewDashboard({
           
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">QUANTUM FORGE™:</span>
+              <span className="text-gray-600">Quantum Forge:</span>
               <Badge variant={quantumForgeStatus?.quantumForge.isRunning ? 'default' : 'destructive'}>
                 {quantumForgeStatus?.quantumForge.isRunning ? (
                   <><CheckCircle className="mr-1 h-3 w-3" /> Active</>
@@ -453,8 +453,8 @@ export default function OverviewDashboard({
               <p>No open positions</p>
               <p className="text-xs text-gray-400 mt-1">
                 {portfolioData 
-                  ? `${portfolioData.tradingMode === 'quantum_forge' ? 'QUANTUM FORGE™' : portfolioData.tradingMode === 'paper' ? 'Paper' : 'Live'} positions will appear here`
-                  : 'QUANTUM FORGE™ is starting up...'
+                  ? `${portfolioData.tradingMode === 'quantum_forge' ? 'Quantum Forge' : portfolioData.tradingMode === 'paper' ? 'Paper' : 'Live'} positions will appear here`
+                  : 'Quantum Forge is starting up...'
                 }
               </p>
             </div>
