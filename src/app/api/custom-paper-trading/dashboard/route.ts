@@ -6,11 +6,14 @@ const prisma = new PrismaClient();
 export async function GET(request: NextRequest) {
   try {
     // Fetch custom paper trading data from database
-    const [trades, sessions, signals] = await Promise.all([
-      // Recent paper trades from QUANTUM FORGE™
+    const [trades, sessions, signals, totalTradeCount] = await Promise.all([
+      // Recent paper trades from QUANTUM FORGE™ and CustomPaperEngine
       prisma.paperTrade.findMany({
         where: {
-          strategy: 'QUANTUM FORGE™'
+          OR: [
+            { strategy: 'QUANTUM FORGE™' },
+            { strategy: 'CustomPaperEngine' }
+          ]
         },
         orderBy: {
           executedAt: 'desc'
@@ -21,7 +24,10 @@ export async function GET(request: NextRequest) {
       // Paper trading sessions
       prisma.paperTradingSession.findMany({
         where: {
-          strategy: 'QUANTUM FORGE™'
+          OR: [
+            { strategy: 'QUANTUM FORGE™' },
+            { strategy: 'CustomPaperEngine' }
+          ]
         },
         orderBy: {
           sessionStart: 'desc'
@@ -32,12 +38,25 @@ export async function GET(request: NextRequest) {
       // Trading signals for Markov analysis
       prisma.tradingSignal.findMany({
         where: {
-          strategy: 'QUANTUM FORGE™'
+          OR: [
+            { strategy: 'QUANTUM FORGE™' },
+            { strategy: 'CustomPaperEngine' }
+          ]
         },
         orderBy: {
           createdAt: 'desc'
         },
         take: 50 // Last 50 signals
+      }),
+      
+      // Get total trade count
+      prisma.paperTrade.count({
+        where: {
+          OR: [
+            { strategy: 'QUANTUM FORGE™' },
+            { strategy: 'CustomPaperEngine' }
+          ]
+        }
       })
     ]);
 
@@ -85,12 +104,22 @@ export async function GET(request: NextRequest) {
       createdAt: signal.createdAt.toISOString()
     }));
 
+    // Calculate current balance from trades
+    const totalPnL = trades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
+    const currentBalance = 10000 + totalPnL; // Starting balance + P&L
+    
     return NextResponse.json({
       success: true,
       data: {
         trades: transformedTrades,
         sessions: transformedSessions,
-        signals: transformedSignals
+        signals: transformedSignals,
+        totalTrades: totalTradeCount,
+        balance: currentBalance,
+        currentSession: sessions.find(s => s.isActive) ? {
+          id: sessions[0].id,
+          startTime: sessions[0].sessionStart.toISOString()
+        } : null
       },
       timestamp: new Date().toISOString()
     });

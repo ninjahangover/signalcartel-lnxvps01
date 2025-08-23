@@ -103,14 +103,14 @@ export default function QuantumForgeStrategyMonitor() {
 
       // Transform the data and inject real QUANTUM FORGE™ strategy info from live system
       const transformedData: QuantumForgeData = {
-        isRunning: true, // System is clearly running based on logs
+        isRunning: result.data?.trades?.length > 0 || result.data?.totalTrades > 0,
         currentSession: {
           sessionId: result.data?.currentSession?.id || 'quantum-forge-active',
           startTime: new Date(result.data?.currentSession?.startTime || Date.now() - 3600000),
           uptime: calculateUptime(result.data?.currentSession?.startTime)
         },
         performance: {
-          totalTrades: result.data?.trades?.length || 0,
+          totalTrades: result.data?.totalTrades || result.data?.trades?.length || 0,
           winningTrades: result.data?.trades?.filter((t: any) => (t.pnl || 0) > 0).length || 0,
           winRate: calculateWinRate(result.data?.trades || []),
           currentBalance: result.data?.balance || 10000,
@@ -131,31 +131,31 @@ export default function QuantumForgeStrategyMonitor() {
             strategy: trade.strategy || 'QUANTUM_FORGE_CORE'
           })),
         strategies: {
-          active: 4, // Real count from logs: Bollinger, Neural, RSI x2
+          active: result.data?.trades?.length > 0 ? 4 : 0,
           total: 4,
           rsiStrategy: {
             enabled: true,
-            trades: 12, // Estimated from logs activity
-            winRate: 75.0, // Average confidence from RSI strategies in logs
-            lastSignal: new Date(Date.now() - 30000) // 30 seconds ago based on logs
+            trades: calculateStrategyTrades(result.data?.trades || [], 'RSI'),
+            winRate: calculateStrategyWinRate(result.data?.trades || [], 'RSI'),
+            lastSignal: getLastStrategySignal(result.data?.trades || [], 'RSI')
           },
           quantumOscillator: {
-            enabled: true, // This represents Bollinger Bands from logs
-            trades: 8, // Bollinger signals from logs
-            winRate: 70.0, // 70% confidence from logs
-            lastSignal: new Date(Date.now() - 15000) // 15 seconds ago based on logs
+            enabled: true,
+            trades: calculateStrategyTrades(result.data?.trades || [], 'Quantum'),
+            winRate: calculateStrategyWinRate(result.data?.trades || [], 'Quantum'),
+            lastSignal: getLastStrategySignal(result.data?.trades || [], 'Quantum')
           },
           neuralNetwork: {
             enabled: true,
-            trades: 5, // Neural network signals
-            winRate: 50.0, // 50% confidence from logs
-            lastSignal: new Date(Date.now() - 60000) // 1 minute ago
+            trades: calculateStrategyTrades(result.data?.trades || [], 'Neural'),
+            winRate: calculateStrategyWinRate(result.data?.trades || [], 'Neural'),
+            lastSignal: getLastStrategySignal(result.data?.trades || [], 'Neural')
           }
         },
         systemHealth: {
           databaseConnected: result.success,
           marketDataActive: true, // Assumed if we got data
-          tradingEngineStatus: result.data?.trades?.length > 0 ? 'ACTIVE' : 'PAUSED',
+          tradingEngineStatus: result.data?.totalTrades > 0 ? 'ACTIVE' : 'PAUSED',
           lastHealthCheck: new Date()
         }
       };
@@ -190,13 +190,26 @@ export default function QuantumForgeStrategyMonitor() {
     return (winners / trades.length) * 100;
   };
 
+  const calculateStrategyTrades = (trades: any[], strategyType: string): number => {
+    return trades.filter(t => 
+      t.strategy?.includes(strategyType) || 
+      t.signalSource?.includes(strategyType)
+    ).length;
+  };
+
   const calculateStrategyWinRate = (trades: any[], strategyType: string): number => {
-    const strategyTrades = trades.filter(t => t.strategy?.includes(strategyType));
+    const strategyTrades = trades.filter(t => 
+      t.strategy?.includes(strategyType) || 
+      t.signalSource?.includes(strategyType)
+    );
     return calculateWinRate(strategyTrades);
   };
 
   const getLastStrategySignal = (trades: any[], strategyType: string): Date | undefined => {
-    const strategyTrades = trades.filter(t => t.strategy?.includes(strategyType));
+    const strategyTrades = trades.filter(t => 
+      t.strategy?.includes(strategyType) || 
+      t.signalSource?.includes(strategyType)
+    );
     if (strategyTrades.length === 0) return undefined;
     const latest = strategyTrades[strategyTrades.length - 1];
     return new Date(latest.executedAt);

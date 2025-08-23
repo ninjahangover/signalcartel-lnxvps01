@@ -13,6 +13,42 @@ const ACTIVE_STRATEGY_IDS = [
 
 export async function GET(request: NextRequest) {
   try {
+    // Get all paper trades from QUANTUM FORGE™ and CustomPaperEngine
+    const [trades, totalTradeCount, sessions] = await Promise.all([
+      prisma.paperTrade.findMany({
+        where: {
+          OR: [
+            { strategy: 'QUANTUM FORGE™' },
+            { strategy: 'CustomPaperEngine' }
+          ]
+        },
+        orderBy: {
+          executedAt: 'desc'
+        },
+        take: 100
+      }),
+      prisma.paperTrade.count({
+        where: {
+          OR: [
+            { strategy: 'QUANTUM FORGE™' },
+            { strategy: 'CustomPaperEngine' }
+          ]
+        }
+      }),
+      prisma.paperTradingSession.findMany({
+        where: {
+          OR: [
+            { strategy: 'QUANTUM FORGE™' },
+            { strategy: 'CustomPaperEngine' }
+          ]
+        },
+        orderBy: {
+          sessionStart: 'desc'
+        },
+        take: 5
+      })
+    ]);
+
     // Get real trading signals from the actual running QUANTUM FORGE™ strategies
     const signals = await prisma.tradingSignal.findMany({
       where: {
@@ -33,41 +69,6 @@ export async function GET(request: NextRequest) {
       take: 100
     });
 
-    // Get paper trades that might be associated with these strategies
-    const paperTrades = await prisma.paperTrade.findMany({
-      where: {
-        OR: [
-          // Look for the strategy field containing our IDs
-          ...ACTIVE_STRATEGY_IDS.map(id => ({ 
-            strategy: { 
-              contains: id 
-            }
-          })),
-          // Also look in signalSource field
-          ...ACTIVE_STRATEGY_IDS.map(id => ({ 
-            signalSource: { 
-              contains: id 
-            }
-          }))
-        ]
-      },
-      orderBy: {
-        executedAt: 'desc'
-      },
-      take: 50
-    });
-
-    // Get current paper trading sessions
-    const sessions = await prisma.paperTradingSession.findMany({
-      where: {
-        isActive: true
-      },
-      orderBy: {
-        sessionStart: 'desc'
-      },
-      take: 5
-    });
-
     // Calculate performance metrics from real data
     const totalSignals = signals.length;
     const recentSignals = signals.slice(0, 20);
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
         (s.indicators && s.indicators.includes(strategyId))
       );
       
-      const strategyTrades = paperTrades.filter(t => 
+      const strategyTrades = trades.filter(t => 
         t.strategy?.includes(strategyId) || 
         t.signalSource?.includes(strategyId)
       );
@@ -111,16 +112,21 @@ export async function GET(request: NextRequest) {
     }));
 
     // Transform trades for frontend
-    const transformedTrades = paperTrades.map(trade => ({
+    const transformedTrades = trades.map(trade => ({
       id: trade.id,
+      tradeId: trade.id,
       symbol: trade.symbol,
       side: trade.side,
       quantity: trade.quantity,
       price: trade.price,
       pnl: trade.pnl,
-      strategy: getStrategyDisplayName(trade.strategy || ''),
+      strategy: trade.strategy || 'QUANTUM FORGE™',
       executedAt: trade.executedAt.toISOString()
     }));
+
+    // Calculate balance
+    const totalPnL = trades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
+    const currentBalance = 10000 + totalPnL;
 
     return NextResponse.json({
       success: true,
@@ -133,6 +139,12 @@ export async function GET(request: NextRequest) {
         strategies: strategyPerformance,
         signals: transformedSignals,
         trades: transformedTrades,
+        totalTrades: totalTradeCount,
+        balance: currentBalance,
+        currentSession: sessions.find(s => s.isActive) ? {
+          id: sessions[0].id,
+          startTime: sessions[0].sessionStart.toISOString()
+        } : null,
         sessions: sessions.map(s => ({
           id: s.id,
           name: s.sessionName,
