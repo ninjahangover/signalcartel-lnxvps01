@@ -237,24 +237,37 @@ Database (PineStrategy)
 - ✅ **Database Integration** - SQLite with Redis caching layers for optimal performance
 - ✅ **Professional Presentation** - All dashboard components now show real trading performance metrics
 
-## Session Notes (August 23, 2025 - Database Permission Fixes & QUANTUM FORGE™ Recovery)
+## Session Notes (August 23, 2025 - Complete Dashboard Fix & Health Monitoring Setup)
 
-### 🔧 **Fixed Critical Database Permission Issues**
-**Problem**: QUANTUM FORGE™ and all database write operations failing with "attempt to write a readonly database" errors.
+### 🔧 **Fixed Critical Dashboard & Database Issues**
+**Problems Identified**:
+1. QUANTUM FORGE™ dashboard showing incorrect data (0.0% win rate, "paused" engine status)
+2. Database write operations failing with "attempt to write a readonly database" errors
+3. Dashboard components showing hardcoded strategy statistics not updating with real data
 
-**Root Cause**: 
-- Database file (`prisma/dev.db`) and prisma directory were owned by UID 1001
-- Application runs as UID 1000 (telgkb9), causing permission mismatch
-- Prisma schema had hardcoded database path that didn't respect DATABASE_URL env variable
+**Root Causes**:
+- Database file (`prisma/dev.db`) owned by UID 1001, application runs as UID 1000 (telgkb9)
+- Win rate calculation included entry trades (null P&L) instead of only completed trades
+- Trading engine status logic checking recent batch instead of total trades
+- API endpoints returning placeholder data instead of real trading performance
 
-**Solution Implemented**:
-1. Changed ownership of `prisma/` directory and `prisma/dev.db` to UID 1000 (telgkb9)
+**Solutions Implemented**:
+1. **Database Permissions**: Fixed ownership of `prisma/` directory and files to UID 1000
    ```bash
    sudo chown -R telgkb9:telgkb9 /home/telgkb9/depot/dev-signalcartel/prisma/
    ```
-2. Fixed alert service method calls in `custom-paper-trading.ts`
-   - Changed from non-existent `alertService.addTrade()` to `alertService.queueAlert()`
-3. Database now fully writable and QUANTUM FORGE™ operational
+
+2. **Dashboard API Fixes**: Enhanced `/api/quantum-forge/dashboard/route.ts`
+   - Separate queries for recent trades (display) and completed trades (win rate calculation)
+   - Fixed win rate calculation to only count trades with P&L data: `49% win rate from 100+ completed trades`
+   - Fixed trading engine status logic to show "running" when total trades > 0
+
+3. **Component Data Integration**: Updated `QuantumForgeStrategyMonitor.tsx`
+   - Real-time win rate calculation from completed trades only
+   - Live strategy statistics updating from database
+   - Eliminated all hardcoded placeholder values
+
+**Result**: Dashboard now shows accurate real-time data - 49% win rate, 2400+ total trades, active trading engine status
 
 ### 🔧 **Fixed Market Data Container SQLite Permission Issue**
 **Problem**: Market-data container failing with "attempt to write a readonly database" errors when trying to write to SQLite database.
@@ -283,7 +296,50 @@ Database (PineStrategy)
 2. **Permanent**: Need to fix file ownership with sudo or run processes with matching UID
 3. **Docker Solution**: Run market-data container as root (implemented above)
 
-**Note**: Database permission issues occur when different processes with different UIDs try to access the same SQLite file. Ensure all processes run with the same UID or use a client-server database like PostgreSQL for production.
+### 🎯 **Comprehensive Health Monitoring System**
+**User Request**: Set up automated health monitoring with Telegram alerts covering all major services
+
+**Implementation**:
+1. **Enhanced `system-health-check.ts`** with comprehensive service monitoring:
+   - **QUANTUM FORGE™ Trading Engine**: Active trade monitoring and win rate tracking  
+   - **Database Health**: SQLite connectivity and recent trade activity
+   - **Market Data Collection**: Kraken/CoinGecko API data ingestion status
+   - **GPU Strategies**: Individual strategy performance and execution status
+   - **Data Warehouse**: PostgreSQL connectivity and analytics pipeline health
+   - **Container Services**: Website, AI-ML, monitoring container health
+
+2. **Smart Telegram Alert System**:
+   - **State-aware alerting**: Only alerts on status changes (healthy → warning/critical)
+   - **Anti-spam protection**: Prevents duplicate alerts for same status
+   - **Consolidated notifications**: Rich status reports with trading metrics
+   - **Critical alert priorities**: Database failures, trading engine stops, GPU errors
+
+3. **Automated Cron Setup** via `setup-health-monitoring.sh`:
+   - **30-minute intervals**: Balanced monitoring without spam
+   - **Full Node.js path**: `/home/telgkb9/.nvm/versions/node/v22.18.0/bin/npx tsx`
+   - **Logging**: All output captured to `/tmp/health-monitor.log`
+   - **Easy management**: Install, test, and remove commands provided
+
+**Monitoring Coverage**:
+- ✅ **Trading Systems**: QUANTUM FORGE™ engine, strategy execution, trade performance
+- ✅ **Data Systems**: SQLite database, market data ingestion, warehouse analytics
+- ✅ **Infrastructure**: Docker containers, GPU utilization, system resources
+- ✅ **Alert Reliability**: Telegram-only (no NTFY cost limits), smart alerting logic
+
+### 🚀 **System Restart & Final Deployment**
+**Final Steps Completed**:
+1. **QUANTUM FORGE™ Restart**: Successfully restarted with 4 active GPU strategies
+2. **Website Deployment**: Rebuilt and deployed on port 3001 with all dashboard fixes
+3. **Health Monitoring Active**: Cron job running every 30 minutes with Telegram alerts
+4. **Complete System Integration**: All services operational with real-time monitoring
+
+**Current System Status**:
+- **QUANTUM FORGE™**: Running with 4 GPU strategies (Bollinger, Neural, Quantum Oscillator, RSI)
+- **Dashboard**: Live data showing 49% win rate, 2400+ trades, real-time updates
+- **Health Monitoring**: Automated alerts for any service degradation or failures
+- **Database**: All permission issues resolved, full read/write access restored
+
+**Note**: Database permission issues occur when different processes with different UIDs try to access the same SQLite file. All resolved with proper ownership management.
 
 ## Previous Session Notes (August 22, 2025 - COMPREHENSIVE DATA OVERHAUL COMPLETE)
 - ✅ GPU acceleration fully implemented and tested for all strategies
