@@ -7,14 +7,8 @@ export async function GET(request: NextRequest) {
   try {
     // Fetch custom paper trading data from database
     const [trades, sessions, signals, totalTradeCount] = await Promise.all([
-      // Recent paper trades from QUANTUM FORGE and CustomPaperEngine
+      // Recent paper trades from all strategies
       prisma.paperTrade.findMany({
-        where: {
-          OR: [
-            { strategy: 'QUANTUM FORGE' },
-            { strategy: 'CustomPaperEngine' }
-          ]
-        },
         orderBy: {
           executedAt: 'desc'
         },
@@ -23,12 +17,6 @@ export async function GET(request: NextRequest) {
       
       // Paper trading sessions
       prisma.paperTradingSession.findMany({
-        where: {
-          OR: [
-            { strategy: 'QUANTUM FORGE' },
-            { strategy: 'CustomPaperEngine' }
-          ]
-        },
         orderBy: {
           sessionStart: 'desc'
         },
@@ -37,12 +25,6 @@ export async function GET(request: NextRequest) {
       
       // Trading signals for Markov analysis
       prisma.tradingSignal.findMany({
-        where: {
-          OR: [
-            { strategy: 'QUANTUM FORGE' },
-            { strategy: 'CustomPaperEngine' }
-          ]
-        },
         orderBy: {
           createdAt: 'desc'
         },
@@ -50,14 +32,7 @@ export async function GET(request: NextRequest) {
       }),
       
       // Get total trade count
-      prisma.paperTrade.count({
-        where: {
-          OR: [
-            { strategy: 'QUANTUM FORGE™' },
-            { strategy: 'CustomPaperEngine' }
-          ]
-        }
-      })
+      prisma.paperTrade.count()
     ]);
 
     // Transform the data for the frontend
@@ -77,20 +52,29 @@ export async function GET(request: NextRequest) {
       executedAt: trade.executedAt.toISOString()
     }));
 
-    const transformedSessions = sessions.map(session => ({
-      id: session.id,
-      sessionName: session.sessionName,
-      strategy: session.strategy,
-      startingBalance: session.startingBalance,
-      endingBalance: session.endingBalance,
-      totalTrades: session.totalTrades,
-      winningTrades: session.winningTrades,
-      winRate: session.winRate,
-      totalPnL: session.totalPnL,
-      isActive: session.isActive,
-      sessionStart: session.sessionStart.toISOString(),
-      sessionEnd: session.sessionEnd?.toISOString()
-    }));
+    const transformedSessions = sessions.map(session => {
+      // Calculate real-time statistics from actual trades linked to this session
+      const sessionTrades = trades.filter(trade => trade.sessionId === session.id);
+      const completedTrades = sessionTrades.filter(trade => trade.pnl !== null);
+      const winningTrades = completedTrades.filter(trade => trade.pnl! > 0).length;
+      const winRate = completedTrades.length > 0 ? (winningTrades / completedTrades.length) * 100 : 0;
+      const totalPnL = completedTrades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
+      
+      return {
+        id: session.id,
+        sessionName: session.sessionName,
+        strategy: session.strategy,
+        startingBalance: session.startingBalance,
+        endingBalance: session.endingBalance,
+        totalTrades: sessionTrades.length, // Use actual count from linked trades
+        winningTrades: winningTrades,
+        winRate: winRate, // Use calculated win rate
+        totalPnL: totalPnL, // Use calculated P&L
+        isActive: session.isActive,
+        sessionStart: session.sessionStart.toISOString(),
+        sessionEnd: session.sessionEnd?.toISOString()
+      };
+    });
 
     const transformedSignals = signals.map(signal => ({
       id: signal.id,

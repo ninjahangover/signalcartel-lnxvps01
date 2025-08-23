@@ -38,6 +38,7 @@ import RealTradingDashboard from './RealTradingDashboard';
 import StratusBrainDashboard from './StratusBrainDashboard';
 import CustomPaperTradingDashboard from './CustomPaperTradingDashboard';
 import LiveTradingChartDashboard from './LiveTradingChartDashboard';
+import QuantumForgeStrategyMonitor from './QuantumForgeStrategyMonitor';
 
 interface UnifiedDashboardProps {
   isKrakenConnected: boolean;
@@ -224,6 +225,12 @@ export default function UnifiedDashboard({
       description: 'System Status & Performance'
     },
     {
+      id: 'stratus-optimizer',
+      label: 'Stratus Optimizer',
+      icon: Zap,
+      description: 'Active Trading Strategies & Services'
+    },
+    {
       id: 'stratus-brain',
       label: 'Stratus Brain',
       icon: Sparkles,
@@ -270,6 +277,9 @@ export default function UnifiedDashboard({
             engineStatus={engineStatus}
           />
         );
+      
+      case 'stratus-optimizer':
+        return <QuantumForgeStrategyMonitor />;
       
       case 'stratus-brain':
         return <StratusBrainDashboard />;
@@ -524,7 +534,7 @@ export default function UnifiedDashboard({
       <div className="p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           {/* Tab Navigation */}
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-4 xl:grid-cols-12 gap-1 h-auto p-2 mb-6">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-1 h-auto p-2 mb-6">
             {tabItems.map((tab) => {
               const IconComponent = tab.icon;
               return (

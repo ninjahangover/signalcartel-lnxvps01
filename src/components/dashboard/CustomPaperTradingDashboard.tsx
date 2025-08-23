@@ -82,9 +82,14 @@ export default function CustomPaperTradingDashboard() {
       
       const data = await response.json();
       
-      setTrades(data.trades || []);
-      setSessions(data.sessions || []);
-      setSignals(data.signals || []);
+      // Handle both data.trades and data.data.trades formats
+      const tradesData = data.data?.trades || data.trades || [];
+      const sessionsData = data.data?.sessions || data.sessions || [];
+      const signalsData = data.data?.signals || data.signals || [];
+      
+      setTrades(tradesData);
+      setSessions(sessionsData);
+      setSignals(signalsData);
       setLastUpdate(new Date());
       setLoading(false);
       setError(null);
@@ -248,7 +253,7 @@ export default function CustomPaperTradingDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-600 text-sm font-medium">Win Rate</p>
-                <p className="text-2xl font-bold text-green-700">{stats.winRate.toFixed(1)}%</p>
+                <p className="text-2xl font-bold text-green-700">{(stats.winRate || 0).toFixed(1)}%</p>
                 <p className="text-xs text-green-600">{stats.winningTrades} wins</p>
               </div>
               <Target className="w-8 h-8 text-green-600 opacity-50" />
@@ -260,9 +265,9 @@ export default function CustomPaperTradingDashboard() {
               <div>
                 <p className="text-purple-600 text-sm font-medium">Total P&L</p>
                 <p className={`text-2xl font-bold ${stats.totalPnL >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                  ${stats.totalPnL.toFixed(2)}
+                  ${(stats.totalPnL || 0).toFixed(2)}
                 </p>
-                <p className="text-xs text-purple-600">Session P&L: ${stats.totalSessionPnL.toFixed(2)}</p>
+                <p className="text-xs text-purple-600">Session P&L: ${(stats.totalSessionPnL || 0).toFixed(2)}</p>
               </div>
               <DollarSign className="w-8 h-8 text-purple-600 opacity-50" />
             </div>
@@ -272,8 +277,8 @@ export default function CustomPaperTradingDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gold-600 text-sm font-medium">Total Volume</p>
-                <p className="text-2xl font-bold text-gold-700">${(stats.totalVolume / 1000).toFixed(1)}K</p>
-                <p className="text-xs text-gold-600">Avg: ${stats.avgTradeSize.toFixed(0)}</p>
+                <p className="text-2xl font-bold text-gold-700">${((stats.totalVolume || 0) / 1000).toFixed(1)}K</p>
+                <p className="text-xs text-gold-600">Avg: ${(stats.avgTradeSize || 0).toFixed(0)}</p>
               </div>
               <BarChart3 className="w-8 h-8 text-gold-600 opacity-50" />
             </div>
@@ -294,7 +299,9 @@ export default function CustomPaperTradingDashboard() {
               <div key={session.id} className="p-4 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-semibold text-green-800">{session.sessionName}</h4>
+                    <h4 className="font-semibold text-green-800">
+                      {session.sessionName.replace('Custom Paper Trading', 'QUANTUM FORGE™ Session')}
+                    </h4>
                     <p className="text-sm text-green-700">
                       Strategy: {session.strategy} • Started: {new Date(session.sessionStart).toLocaleString()}
                     </p>
@@ -305,12 +312,12 @@ export default function CustomPaperTradingDashboard() {
                       <div className="text-xs text-green-600">Trades</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-green-700">{session.winRate.toFixed(1)}%</div>
+                      <div className="text-lg font-bold text-green-700">{(session.winRate || 0).toFixed(1)}%</div>
                       <div className="text-xs text-green-600">Win Rate</div>
                     </div>
                     <div className="text-center">
                       <div className={`text-lg font-bold ${session.totalPnL >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                        ${session.totalPnL.toFixed(2)}
+                        ${(session.totalPnL || 0).toFixed(2)}
                       </div>
                       <div className="text-xs text-green-600">P&L</div>
                     </div>
@@ -354,15 +361,15 @@ export default function CustomPaperTradingDashboard() {
                       {trade.side.toUpperCase()}
                     </Badge>
                   </td>
-                  <td className="py-2 text-right">{trade.quantity.toFixed(6)}</td>
-                  <td className="py-2 text-right">${trade.price.toFixed(2)}</td>
-                  <td className="py-2 text-right">${trade.value.toFixed(2)}</td>
+                  <td className="py-2 text-right">{(trade.quantity || 0).toFixed(6)}</td>
+                  <td className="py-2 text-right">${(trade.price || 0).toFixed(2)}</td>
+                  <td className="py-2 text-right">${(trade.value || 0).toFixed(2)}</td>
                   <td className={`py-2 text-right font-medium ${
                     trade.pnl === undefined ? 'text-gray-400' :
                     trade.pnl >= 0 ? 'text-green-600' : 'text-red-600'
                   }`}>
                     {trade.pnl === undefined ? 'Open' : 
-                     trade.pnl >= 0 ? `+$${trade.pnl.toFixed(2)}` : `-$${Math.abs(trade.pnl).toFixed(2)}`}
+                     trade.pnl >= 0 ? `+$${(trade.pnl || 0).toFixed(2)}` : `-$${Math.abs(trade.pnl || 0).toFixed(2)}`}
                   </td>
                   <td className="py-2 text-center">
                     <Badge variant={trade.isEntry ? 'outline' : 'secondary'}>
@@ -395,9 +402,9 @@ export default function CustomPaperTradingDashboard() {
                   </Badge>
                 </div>
                 <div className="text-sm text-gray-600">
-                  <p>Price: ${signal.currentPrice.toFixed(2)}</p>
-                  <p>Confidence: {(signal.confidence * 100).toFixed(0)}%</p>
-                  <p>Volume: ${signal.volume.toFixed(0)}</p>
+                  <p>Price: ${(signal.currentPrice || 0).toFixed(2)}</p>
+                  <p>Confidence: {((signal.confidence || 0) * 100).toFixed(0)}%</p>
+                  <p>Volume: ${(signal.volume || 0).toFixed(0)}</p>
                   <p className="text-xs text-gray-500 mt-1">
                     {new Date(signal.createdAt).toLocaleString()}
                   </p>

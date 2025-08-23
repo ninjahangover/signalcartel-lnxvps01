@@ -116,7 +116,7 @@ export default function QuantumForgeStrategyMonitor() {
       setError(null);
       
       // Fetch data from our real QUANTUM FORGE system API
-      const response = await fetch('/api/quantum-forge/dashboard');
+      const response = await fetch('/api/custom-paper-trading/dashboard');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -171,37 +171,43 @@ export default function QuantumForgeStrategyMonitor() {
             strategy: trade.strategy || 'QUANTUM_FORGE_CORE'
           })),
         strategies: {
-          active: result.data?.trades?.length > 0 ? 3 : 0, // We have 3 active strategies
-          total: 3,
+          active: result.data?.trades?.length > 0 ? 4 : 0, // We have 4 active strategies
+          total: 4,
           rsiStrategy: {
             enabled: true,
-            trades: calculateStrategyTrades(result.data?.trades || [], 'Enhanced RSI Pullback Strategy'),
-            winRate: calculateStrategyWinRate(result.data?.trades || [], 'Enhanced RSI Pullback Strategy'),
+            trades: calculateStrategyTrades(result.data?.trades || [], 'Enhanced RSI Pullback Strategy') || 0,
+            winRate: calculateStrategyWinRate(result.data?.trades || [], 'Enhanced RSI Pullback Strategy') || 0,
             lastSignal: getLastStrategySignal(result.data?.trades || [], 'Enhanced RSI Pullback Strategy')
           },
           quantumOscillator: {
             enabled: true,
-            trades: calculateStrategyTrades(result.data?.trades || [], 'Bollinger Breakout Enhanced Strategy'),
-            winRate: calculateStrategyWinRate(result.data?.trades || [], 'Bollinger Breakout Enhanced Strategy'),
+            trades: calculateStrategyTrades(result.data?.trades || [], 'Bollinger Breakout Enhanced Strategy') || 0,
+            winRate: calculateStrategyWinRate(result.data?.trades || [], 'Bollinger Breakout Enhanced Strategy') || 0,
             lastSignal: getLastStrategySignal(result.data?.trades || [], 'Bollinger Breakout Enhanced Strategy')
           },
           neuralNetwork: {
-            enabled: false, // Not currently active as separate strategy
-            trades: 0,
-            winRate: 0,
-            lastSignal: undefined
+            enabled: true,
+            trades: calculateStrategyTrades(result.data?.trades || [], 'Stratus Core Neural Strategy') || 0,
+            winRate: calculateStrategyWinRate(result.data?.trades || [], 'Stratus Core Neural Strategy') || 0,
+            lastSignal: getLastStrategySignal(result.data?.trades || [], 'Stratus Core Neural Strategy')
           },
           claudeQuantumOscillator: {
             enabled: true,
-            trades: calculateStrategyTrades(result.data?.trades || [], 'Claude Quantum Oscillator Strategy'),
-            winRate: calculateStrategyWinRate(result.data?.trades || [], 'Claude Quantum Oscillator Strategy'),
+            trades: calculateStrategyTrades(result.data?.trades || [], 'Claude Quantum Oscillator Strategy') || 0,
+            winRate: calculateStrategyWinRate(result.data?.trades || [], 'Claude Quantum Oscillator Strategy') || 0,
             lastSignal: getLastStrategySignal(result.data?.trades || [], 'Claude Quantum Oscillator Strategy')
+          },
+          quantumForgeCore: {
+            enabled: true,
+            trades: calculateStrategyTrades(result.data?.trades || [], 'CustomPaperEngine') + calculateStrategyTrades(result.data?.trades || [], 'QUANTUM FORGE™'),
+            winRate: Math.max(calculateStrategyWinRate(result.data?.trades || [], 'CustomPaperEngine'), calculateStrategyWinRate(result.data?.trades || [], 'QUANTUM FORGE™')) || 0,
+            lastSignal: getLastStrategySignal(result.data?.trades || [], 'CustomPaperEngine') || getLastStrategySignal(result.data?.trades || [], 'QUANTUM FORGE™')
           }
         },
         systemHealth: {
           databaseConnected: result.success,
           marketDataActive: true, // Assumed if we got data
-          tradingEngineStatus: result.data?.systemStatus?.totalTrades > 0 ? 'ACTIVE' : 'PAUSED',
+          tradingEngineStatus: ((result.data?.trades || []).length > 0) ? 'ACTIVE' : 'PAUSED',
           lastHealthCheck: new Date()
         },
         expectancy: expectancyData

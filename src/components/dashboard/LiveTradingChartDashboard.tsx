@@ -131,27 +131,43 @@ export default function LiveTradingChartDashboard() {
   useEffect(() => {
     const fetchMarketData = async () => {
       try {
-        // Generate realistic market data points for the chart
-        const now = Date.now();
-        const points: MarketDataPoint[] = [];
-        const basePrice = selectedSymbol === 'BTCUSD' ? 67000 : 
-                         selectedSymbol === 'ETHUSD' ? 2400 :
-                         selectedSymbol === 'SOLUSD' ? 150 : 100;
-        
-        // Generate last 100 data points
-        for (let i = 99; i >= 0; i--) {
-          const timestamp = new Date(now - (i * 60 * 1000)); // 1 minute intervals
-          const randomChange = (Math.random() - 0.5) * (basePrice * 0.01); // 1% max change
-          const price = basePrice + randomChange;
-          
-          points.push({
-            timestamp: timestamp.toISOString(),
-            price: Math.max(price, basePrice * 0.95), // Don't go below 95% of base
-            volume: Math.random() * 100000 // Realistic volume
-          });
+        // Fetch real market data from our API
+        const response = await fetch('/api/custom-paper-trading/dashboard');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data.trades) {
+            // Get trades for the selected symbol and create price points
+            const symbolTrades = data.data.trades
+              .filter((trade: any) => trade.symbol === selectedSymbol)
+              .sort((a: any, b: any) => new Date(a.executedAt).getTime() - new Date(b.executedAt).getTime())
+              .slice(-100); // Last 100 trades
+            
+            const points: MarketDataPoint[] = symbolTrades.map((trade: any) => ({
+              timestamp: trade.executedAt,
+              price: trade.price,
+              volume: trade.quantity * trade.price
+            }));
+            
+            // If we have data, use it; otherwise fetch from real price API
+            if (points.length > 0) {
+              setMarketData(points);
+            } else {
+              // Fallback to fetching current price from market API
+              const priceResponse = await fetch('/api/real-btc-price');
+              if (priceResponse.ok) {
+                const priceData = await priceResponse.json();
+                const currentPrice = priceData.price || 67000;
+                
+                // Create a single point with current price
+                setMarketData([{
+                  timestamp: new Date().toISOString(),
+                  price: currentPrice,
+                  volume: 0
+                }]);
+              }
+            }
+          }
         }
-        
-        setMarketData(points);
       } catch (error) {
         console.error('Failed to fetch market data:', error);
       }
