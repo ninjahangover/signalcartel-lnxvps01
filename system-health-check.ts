@@ -7,6 +7,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import { telegramAlerts } from './src/lib/telegram-alert-service';
 
 const prisma = new PrismaClient();
 
@@ -20,6 +21,12 @@ interface HealthCheckResult {
 
 class SystemHealthChecker {
   private results: HealthCheckResult[] = [];
+  private enableAlerts: boolean = false;
+  private lastAlertFile: string = './last-health-alert.json';
+
+  constructor(enableAlerts: boolean = false) {
+    this.enableAlerts = enableAlerts;
+  }
 
   private addResult(component: string, status: 'HEALTHY' | 'WARNING' | 'CRITICAL', message: string, details?: any) {
     this.results.push({
@@ -29,6 +36,75 @@ class SystemHealthChecker {
       details,
       timestamp: new Date()
     });
+
+    // Send alert for critical issues or new warnings
+    if (this.enableAlerts && (status === 'CRITICAL' || this.isNewIssue(component, status))) {
+      this.sendAlert(component, status, message);
+    }
+  }
+
+  private isNewIssue(component: string, status: string): boolean {
+    try {
+      const fs = require('fs');
+      if (!fs.existsSync(this.lastAlertFile)) return true;
+      
+      const lastAlerts = JSON.parse(fs.readFileSync(this.lastAlertFile, 'utf8'));
+      const lastStatus = lastAlerts[component];
+      
+      // Alert on status changes from HEALTHY to WARNING/CRITICAL
+      return lastStatus === 'HEALTHY' && status !== 'HEALTHY';
+    } catch (error) {
+      return true; // Alert on error reading file
+    }
+  }
+
+  private async sendAlert(component: string, status: string, message: string) {
+    try {
+      const health = status === 'HEALTHY' ? 'healthy' : 
+                    status === 'WARNING' ? 'degraded' : 'critical';
+      
+      const recentTrades = await prisma.paperTrade.count({
+        where: {
+          executedAt: { gte: new Date(Date.now() - 30 * 60 * 1000) }
+        }
+      });
+
+      await telegramAlerts.sendStatusAlert({
+        system: `QUANTUM FORGE™ - ${component}`,
+        health: health as 'healthy' | 'degraded' | 'critical',
+        trades: recentTrades,
+        uptime: this.getSystemUptime()
+      });
+
+      console.log(`📱 Alert sent for ${component}: ${status}`);
+    } catch (error) {
+      console.error(`Failed to send alert for ${component}:`, error);
+    }
+  }
+
+  private getSystemUptime(): string {
+    try {
+      const { execSync } = require('child_process');
+      const uptime = execSync('uptime -p').toString().trim();
+      return uptime.replace('up ', '');
+    } catch {
+      return 'unknown';
+    }
+  }
+
+  private saveAlertState() {
+    try {
+      const fs = require('fs');
+      const alertState: { [key: string]: string } = {};
+      
+      this.results.forEach(result => {
+        alertState[result.component] = result.status;
+      });
+      
+      fs.writeFileSync(this.lastAlertFile, JSON.stringify(alertState, null, 2));
+    } catch (error) {
+      console.error('Failed to save alert state:', error);
+    }
   }
 
   async checkDatabase(): Promise<void> {
@@ -134,6 +210,8 @@ class SystemHealthChecker {
     console.log('   🔄 Restart system: ENABLE_GPU_STRATEGIES=true npx tsx -r dotenv/config load-database-strategies.ts');
     console.log('   📈 Dashboard: http://localhost:3002');
     console.log('   🏭 Start warehouse: docker-compose -f containers/database/postgres-warehouse.yml up -d');
+    console.log('   🚨 Test alerts: npx tsx system-health-check.ts --monitor');
+    console.log('   ⚙️  Setup monitoring: ./setup-health-monitoring.sh');
 
     if (overallStatus === 'HEALTHY') {
       console.log('\n🎉 All systems operational! QUANTUM FORGE™ is ready for trading.');
@@ -204,6 +282,17 @@ class SystemHealthChecker {
     ]);
 
     this.generateReport();
+    
+    // Save current state for future alert comparisons
+    if (this.enableAlerts) {
+      this.saveAlertState();
+      
+      // Send summary if there are any critical issues
+      const critical = this.results.filter(r => r.status === 'CRITICAL').length;
+      if (critical > 0) {
+        console.log(`📱 ${critical} critical issues detected - alerts sent`);
+      }
+    }
   }
 
   async cleanup(): Promise<void> {
@@ -212,12 +301,33 @@ class SystemHealthChecker {
 }
 
 async function main() {
-  const checker = new SystemHealthChecker();
+  // Check if running with monitoring flag (for cron jobs)
+  const enableAlerts = process.argv.includes('--monitor') || process.argv.includes('--alerts');
+  const checker = new SystemHealthChecker(enableAlerts);
+  
+  if (enableAlerts) {
+    console.log('🚨 Running in monitoring mode - alerts enabled');
+  }
   
   try {
     await checker.runAllChecks();
   } catch (error) {
     console.error('❌ System health check failed:', error);
+    
+    // Send critical alert about health check failure
+    if (enableAlerts) {
+      try {
+        await telegramAlerts.sendStatusAlert({
+          system: 'QUANTUM FORGE™ - Health Check',
+          health: 'critical',
+          trades: 0,
+          uptime: 'unknown'
+        });
+      } catch (alertError) {
+        console.error('Failed to send health check failure alert:', alertError);
+      }
+    }
+    
     process.exit(1);
   } finally {
     await checker.cleanup();
