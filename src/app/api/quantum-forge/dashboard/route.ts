@@ -14,12 +14,35 @@ const ACTIVE_STRATEGY_IDS = [
 export async function GET(request: NextRequest) {
   try {
     // Get all paper trades from QUANTUM FORGE™ and CustomPaperEngine
-    const [trades, totalTradeCount, sessions] = await Promise.all([
+    const [recentTrades, completedTrades, totalTradeCount, sessions] = await Promise.all([
+      // Recent trades (for activity display)
       prisma.paperTrade.findMany({
         where: {
           OR: [
             { strategy: 'QUANTUM FORGE™' },
             { strategy: 'CustomPaperEngine' }
+          ]
+        },
+        orderBy: {
+          executedAt: 'desc'
+        },
+        take: 50
+      }),
+      // Completed trades with P&L (for win rate calculation)
+      prisma.paperTrade.findMany({
+        where: {
+          AND: [
+            {
+              OR: [
+                { strategy: 'QUANTUM FORGE™' },
+                { strategy: 'CustomPaperEngine' }
+              ]
+            },
+            {
+              pnl: {
+                not: null
+              }
+            }
           ]
         },
         orderBy: {
@@ -80,7 +103,7 @@ export async function GET(request: NextRequest) {
         (s.indicators && s.indicators.includes(strategyId))
       );
       
-      const strategyTrades = trades.filter(t => 
+      const strategyTrades = [...recentTrades, ...completedTrades].filter(t => 
         t.strategy?.includes(strategyId) || 
         t.signalSource?.includes(strategyId)
       );
@@ -111,8 +134,14 @@ export async function GET(request: NextRequest) {
       timestamp: signal.createdAt.toISOString()
     }));
 
-    // Transform trades for frontend
-    const transformedTrades = trades.map(trade => ({
+    // Combine and deduplicate trades for frontend (recent + completed)
+    const allTradesMap = new Map();
+    [...recentTrades, ...completedTrades].forEach(trade => {
+      allTradesMap.set(trade.id, trade);
+    });
+    const allTrades = Array.from(allTradesMap.values());
+    
+    const transformedTrades = allTrades.map(trade => ({
       id: trade.id,
       tradeId: trade.id,
       symbol: trade.symbol,
@@ -124,8 +153,8 @@ export async function GET(request: NextRequest) {
       executedAt: trade.executedAt.toISOString()
     }));
 
-    // Calculate balance
-    const totalPnL = trades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
+    // Calculate balance from completed trades
+    const totalPnL = completedTrades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
     const currentBalance = 10000 + totalPnL;
 
     return NextResponse.json({

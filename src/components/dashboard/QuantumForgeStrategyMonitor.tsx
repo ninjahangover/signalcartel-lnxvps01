@@ -131,25 +131,25 @@ export default function QuantumForgeStrategyMonitor() {
             strategy: trade.strategy || 'QUANTUM_FORGE_CORE'
           })),
         strategies: {
-          active: result.data?.trades?.length > 0 ? 4 : 0,
-          total: 4,
+          active: result.data?.trades?.length > 0 ? 2 : 0, // We have 2 active strategies
+          total: 2,
           rsiStrategy: {
             enabled: true,
-            trades: calculateStrategyTrades(result.data?.trades || [], 'RSI'),
-            winRate: calculateStrategyWinRate(result.data?.trades || [], 'RSI'),
-            lastSignal: getLastStrategySignal(result.data?.trades || [], 'RSI')
+            trades: calculateStrategyTrades(result.data?.trades || [], 'QUANTUM FORGE™'),
+            winRate: calculateStrategyWinRate(result.data?.trades || [], 'QUANTUM FORGE™'),
+            lastSignal: getLastStrategySignal(result.data?.trades || [], 'QUANTUM FORGE™')
           },
           quantumOscillator: {
             enabled: true,
-            trades: calculateStrategyTrades(result.data?.trades || [], 'Quantum'),
-            winRate: calculateStrategyWinRate(result.data?.trades || [], 'Quantum'),
-            lastSignal: getLastStrategySignal(result.data?.trades || [], 'Quantum')
+            trades: calculateStrategyTrades(result.data?.trades || [], 'CustomPaperEngine'),
+            winRate: calculateStrategyWinRate(result.data?.trades || [], 'CustomPaperEngine'),
+            lastSignal: getLastStrategySignal(result.data?.trades || [], 'CustomPaperEngine')
           },
           neuralNetwork: {
-            enabled: true,
-            trades: calculateStrategyTrades(result.data?.trades || [], 'Neural'),
-            winRate: calculateStrategyWinRate(result.data?.trades || [], 'Neural'),
-            lastSignal: getLastStrategySignal(result.data?.trades || [], 'Neural')
+            enabled: false, // Not currently active as separate strategy
+            trades: 0,
+            winRate: 0,
+            lastSignal: undefined
           }
         },
         systemHealth: {
@@ -194,26 +194,26 @@ export default function QuantumForgeStrategyMonitor() {
 
   const calculateStrategyTrades = (trades: any[], strategyType: string): number => {
     return trades.filter(t => 
-      t.strategy?.includes(strategyType) || 
-      t.signalSource?.includes(strategyType)
+      t.strategy === strategyType || 
+      t.signalSource === strategyType
     ).length;
   };
 
   const calculateStrategyWinRate = (trades: any[], strategyType: string): number => {
     const strategyTrades = trades.filter(t => 
-      t.strategy?.includes(strategyType) || 
-      t.signalSource?.includes(strategyType)
+      t.strategy === strategyType || 
+      t.signalSource === strategyType
     );
     return calculateWinRate(strategyTrades);
   };
 
   const getLastStrategySignal = (trades: any[], strategyType: string): Date | undefined => {
     const strategyTrades = trades.filter(t => 
-      t.strategy?.includes(strategyType) || 
-      t.signalSource?.includes(strategyType)
+      t.strategy === strategyType || 
+      t.signalSource === strategyType
     );
     if (strategyTrades.length === 0) return undefined;
-    const latest = strategyTrades[strategyTrades.length - 1];
+    const latest = strategyTrades[0]; // First trade since ordered by desc
     return new Date(latest.executedAt);
   };
 
