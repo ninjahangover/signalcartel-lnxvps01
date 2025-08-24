@@ -13,6 +13,7 @@ function LoginForm() {
 
   const searchParams = useSearchParams();
   const [error, setError] = useState('');
+  const callbackUrl = searchParams.get('callbackUrl') || '/quantum-forge';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,9 +30,9 @@ function LoginForm() {
       if (result?.error) {
         setError('Invalid email or password');
       } else {
-        console.log('Login successful, redirecting to QUANTUM FORGE™...');
+        console.log(`Login successful, redirecting to ${callbackUrl}...`);
         // Use hard redirect to ensure session is properly loaded
-        window.location.href = '/quantum-forge';
+        window.location.href = callbackUrl;
       }
     } catch (error) {
       setError('Login failed. Please try again.');
@@ -41,7 +42,7 @@ function LoginForm() {
   };
 
   const handleGoogleSignIn = () => {
-    signIn('google', { callbackUrl: '/quantum-forge' });
+    signIn('google', { callbackUrl });
   };
 
   return (

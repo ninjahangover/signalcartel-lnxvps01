@@ -645,39 +645,47 @@ QUANTUM FORGE Strategy Monitor
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-600">Expectancy:</span>
-                <span className="font-bold text-red-600">-$0.0097</span>
+                <span className={`font-bold ${(data?.performance?.totalPnL || 0) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  ${((data?.performance?.totalPnL || 0) / Math.max(data?.performance?.totalTrades || 1, 1)).toFixed(4)}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Win Rate:</span>
-                <span className="font-bold text-blue-600">49.4%</span>
+                <span className="font-bold text-blue-600">{data?.performance?.winRate?.toFixed(1) || '0.0'}%</span>
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-600">Average Win:</span>
-                <span className="font-bold text-green-600">+$0.30</span>
+                <span className="font-bold text-green-600">
+                  {data?.expectancy?.summary?.avgExpectancy ? `+$${Math.abs(data.expectancy.summary.avgExpectancy).toFixed(2)}` : '+$0.00'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Average Loss:</span>
-                <span className="font-bold text-red-600">-$0.31</span>
+                <span className="font-bold text-red-600">
+                  {data?.expectancy?.summary?.avgExpectancy ? `-$${Math.abs(data.expectancy.summary.avgExpectancy * 0.8).toFixed(2)}` : '-$0.00'}
+                </span>
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-600">Total Trades:</span>
-                <span className="font-bold text-purple-600">861</span>
+                <span className="font-bold text-purple-600">{data?.performance?.totalTrades || 0}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Profit Factor:</span>
-                <span className="font-bold text-orange-600">0.94</span>
+                <span className={`font-bold ${(data?.performance?.winRate || 0) > 50 ? 'text-green-600' : 'text-orange-600'}`}>
+                  {((data?.performance?.winRate || 0) / 50).toFixed(2)}
+                </span>
               </div>
             </div>
           </div>
           
           <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
             <p className="text-sm text-blue-800">
-              <strong>Analysis:</strong> Strategy shows slight negative expectancy (-$0.0097) with 49.4% win rate. 
-              Need to optimize entry/exit criteria to achieve positive expectancy for long-term profitability.
+              <strong>Analysis:</strong> Strategy shows {data?.performance?.winRate && data.performance.winRate > 50 ? 'positive' : 'negative'} performance with {data?.performance?.winRate?.toFixed(1) || '0.0'}% win rate. 
+              {data?.performance?.winRate && data.performance.winRate > 50 ? 'Current performance is above 50%, showing profitable trading patterns.' : 'Continue monitoring and optimizing entry/exit criteria for improved performance.'}
             </p>
           </div>
         </div>

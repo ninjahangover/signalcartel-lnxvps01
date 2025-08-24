@@ -13,62 +13,35 @@ const ACTIVE_STRATEGY_IDS = [
 
 export async function GET(request: NextRequest) {
   try {
-    // Get all paper trades from Quantum Forge and CustomPaperEngine
+    // Get all paper trades from all QUANTUM FORGE™ strategies
     const [recentTrades, completedTrades, totalTradeCount, sessions] = await Promise.all([
-      // Recent trades (for activity display)
+      // Recent trades (for activity display) - ALL strategies
       prisma.paperTrade.findMany({
-        where: {
-          OR: [
-            { strategy: 'Quantum Forge' },
-            { strategy: 'CustomPaperEngine' }
-          ]
-        },
         orderBy: {
           executedAt: 'desc'
-        }
-        // Get all recent trades
+        },
+        take: 50 // Limit for performance
       }),
-      // Completed trades with P&L (for win rate calculation)
+      // Completed trades with P&L (for win rate calculation) - ALL strategies
       prisma.paperTrade.findMany({
         where: {
-          AND: [
-            {
-              OR: [
-                { strategy: 'Quantum Forge' },
-                { strategy: 'CustomPaperEngine' }
-              ]
-            },
-            {
-              pnl: {
-                not: null
-              }
-            }
-          ]
+          pnl: {
+            not: null
+          }
         },
         orderBy: {
           executedAt: 'desc'
         }
         // Get all completed trades
       }),
-      prisma.paperTrade.count({
-        where: {
-          OR: [
-            { strategy: 'Quantum Forge' },
-            { strategy: 'CustomPaperEngine' }
-          ]
-        }
-      }),
+      // Total count of all trades
+      prisma.paperTrade.count(),
+      // Get all sessions
       prisma.paperTradingSession.findMany({
-        where: {
-          OR: [
-            { strategy: 'Quantum Forge' },
-            { strategy: 'CustomPaperEngine' }
-          ]
-        },
         orderBy: {
           sessionStart: 'desc'
-        }
-        // Get all sessions
+        },
+        take: 10 // Limit for performance
       })
     ]);
 

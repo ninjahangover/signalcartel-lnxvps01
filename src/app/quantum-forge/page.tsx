@@ -15,7 +15,7 @@ export default function QuantumForgePage() {
     if (status === "loading") return;
     
     if (!session) {
-      router.push("/auth/login?message=login_required");
+      router.push("/auth/login?callbackUrl=/quantum-forge&message=login_required");
       return;
     }
   }, [session, status, router]);

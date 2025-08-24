@@ -33,6 +33,33 @@ class CustomPaperTradingEngine {
   private tradeCount = 0;
   private winCount = 0;
   
+  /**
+   * Validates P&L values to prevent extreme/unrealistic amounts
+   * @param pnl - Calculated P&L value
+   * @param quantity - Trade quantity
+   * @param entryPrice - Entry price
+   * @returns Validated P&L within reasonable bounds
+   */
+  validatePnL(pnl: number, quantity: number, entryPrice: number): number {
+    const tradeValue = quantity * entryPrice;
+    const maxPnLPercent = 0.50; // Maximum 50% gain/loss per trade
+    const maxPnLAmount = Math.min(tradeValue * maxPnLPercent, 1000); // Cap at $1,000
+    
+    // Check for extreme values
+    if (Math.abs(pnl) > maxPnLAmount) {
+      console.warn(`⚠️  P&L validation: Extreme value detected (${pnl.toFixed(2)} -> ${Math.sign(pnl) * maxPnLAmount})`);
+      return Math.sign(pnl) * maxPnLAmount;
+    }
+    
+    // Check for NaN or Infinity
+    if (!isFinite(pnl)) {
+      console.warn(`⚠️  P&L validation: Invalid value detected (${pnl}), setting to 0`);
+      return 0;
+    }
+    
+    return parseFloat(pnl.toFixed(2)); // Round to 2 decimal places
+  }
+  
   async initialize() {
     console.log('🚀 CUSTOM PAPER TRADING ENGINE');
     console.log('==============================');
@@ -167,18 +194,21 @@ class CustomPaperTradingEngine {
       pnl = (position.entryPrice - currentPrice) * position.quantity;
     }
     
+    // Validate P&L before updating trade
+    const validatedPnL = this.validatePnL(pnl, position.quantity, position.entryPrice);
+    
     // Update trade
     position.exitPrice = currentPrice;
-    position.pnl = pnl;
+    position.pnl = validatedPnL;
     position.status = 'closed';
-    position.outcome = pnl > 0 ? 'WIN' : 'LOSS';
+    position.outcome = validatedPnL > 0 ? 'WIN' : 'LOSS';
     
-    if (pnl > 0) {
+    if (validatedPnL > 0) {
       this.winCount++;
     }
     
-    // Update balance with P&L
-    this.balance += pnl;
+    // Update balance with validated P&L
+    this.balance += validatedPnL;
     
     // Remove from open positions
     this.openPositions.delete(tradeId);
@@ -188,11 +218,11 @@ class CustomPaperTradingEngine {
     
     console.log(`🎯 CLOSED ${position.symbol} position`);
     console.log(`   Entry: $${position.entryPrice.toFixed(2)} → Exit: $${currentPrice.toFixed(2)}`);
-    console.log(`   P&L: ${pnl > 0 ? '+' : ''}$${pnl.toFixed(2)} (${position.outcome})`);
+    console.log(`   P&L: ${validatedPnL > 0 ? '+' : ''}$${validatedPnL.toFixed(2)} (${position.outcome})`);
     console.log(`   Balance: $${this.balance.toFixed(2)}`);
     
     // Log position close
-    console.log(`📊 CLOSE: ${position.quantity.toFixed(6)} ${position.symbol} @ $${currentPrice.toFixed(2)} | P&L: ${pnl > 0 ? '+' : ''}$${pnl.toFixed(2)}`);
+    console.log(`📊 CLOSE: ${position.quantity.toFixed(6)} ${position.symbol} @ $${currentPrice.toFixed(2)} | P&L: ${validatedPnL > 0 ? '+' : ''}$${validatedPnL.toFixed(2)}`);
     
     return position;
   }
@@ -262,6 +292,10 @@ class CustomPaperTradingEngine {
     try {
       // Create a closing trade record
       if (trade.pnl !== undefined && trade.exitPrice) {
+        // Validate P&L to prevent extreme values
+        const validatedPnL = this.validatePnL(trade.pnl, trade.quantity, trade.entryPrice);
+        const validatedPnLPercent = (validatedPnL / (trade.quantity * trade.entryPrice)) * 100;
+        
         await prisma.paperTrade.create({
           data: {
             sessionId: this.sessionId,
@@ -273,8 +307,8 @@ class CustomPaperTradingEngine {
             commission: 0.0,
             fees: 0.0,
             netValue: trade.quantity * trade.exitPrice,
-            pnl: trade.pnl,
-            pnlPercent: (trade.pnl / (trade.quantity * trade.entryPrice)) * 100,
+            pnl: validatedPnL,
+            pnlPercent: validatedPnLPercent,
             isEntry: false,
             tradeType: 'market',
             strategy: 'QUANTUM FORGE™',

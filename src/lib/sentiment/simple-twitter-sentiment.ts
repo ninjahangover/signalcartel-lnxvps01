@@ -86,24 +86,43 @@ export class SimpleTwitterSentiment {
   }
 
   /**
-   * Analyze array of tweets for sentiment
+   * Analyze array of real sentiment data for overall sentiment
    */
-  private analyzeTweets(symbol: string, tweets: any[]): SimpleSentimentScore {
+  private analyzeTweets(symbol: string, sentimentData: any[]): SimpleSentimentScore {
     let positiveCount = 0;
     let negativeCount = 0;
     let neutralCount = 0;
+    let totalWeightedScore = 0;
+    let totalWeight = 0;
 
-    tweets.forEach(tweet => {
-      const sentiment = this.analyzeTweetSentiment(tweet.text);
+    sentimentData.forEach(item => {
+      // Handle items with pre-calculated sentiment scores
+      let sentiment: number;
+      let weight = 1;
+      
+      if (item.sentiment_score !== undefined) {
+        sentiment = item.sentiment_score;
+        // Weight by source reliability
+        if (item.source === 'fear_greed_index') weight = 3; // High weight for market index
+        else if (item.source?.includes('reddit')) weight = item.upvotes ? Math.min(item.upvotes / 100, 2) : 1;
+        else if (item.source === 'coindesk_news') weight = 2; // Medium weight for news
+        else if (item.source === 'onchain_metrics') weight = 2.5; // High weight for on-chain data
+      } else {
+        // Fallback: analyze text sentiment
+        sentiment = this.analyzeSentimentScore(item.text);
+      }
+      
+      totalWeightedScore += sentiment * weight;
+      totalWeight += weight;
       
       if (sentiment > 0.1) positiveCount++;
       else if (sentiment < -0.1) negativeCount++;
       else neutralCount++;
     });
 
-    const totalTweets = tweets.length;
+    const totalItems = sentimentData.length;
     
-    if (totalTweets === 0) {
+    if (totalItems === 0) {
       return {
         symbol,
         score: 0,
@@ -116,20 +135,30 @@ export class SimpleTwitterSentiment {
       };
     }
 
-    // Calculate overall sentiment score
-    const score = (positiveCount - negativeCount) / totalTweets;
+    // Calculate weighted average sentiment score
+    const score = totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
     
-    // Confidence based on volume and sentiment strength
-    const sentimentActivity = (positiveCount + negativeCount) / totalTweets;
-    const volumeConfidence = Math.min(totalTweets / 50, 1.0); // More tweets = higher confidence
-    const confidence = sentimentActivity * volumeConfidence;
+    // Improved confidence calculation based on:
+    // 1. Data source diversity
+    // 2. Volume of sentiment data
+    // 3. Sentiment strength/agreement
+    const sourceTypes = new Set(sentimentData.map(item => item.source?.split('_')[0] || 'unknown'));
+    const diversityBonus = Math.min(sourceTypes.size / 4, 1.0); // More source types = higher confidence
+    const volumeConfidence = Math.min(totalItems / 10, 1.0); // More data points = higher confidence
+    const sentimentStrength = Math.abs(score); // Stronger sentiment = higher confidence
+    
+    // Base confidence from real data sources
+    let baseConfidence = 0.6; // Start higher than simulated data
+    
+    // Boost confidence based on factors
+    const confidence = Math.min(1.0, baseConfidence + (diversityBonus * 0.2) + (volumeConfidence * 0.15) + (sentimentStrength * 0.05));
 
     return {
       symbol,
       score: Math.max(-1, Math.min(1, score)), // Clamp between -1 and 1
       confidence: Math.max(0, Math.min(1, confidence)), // Clamp between 0 and 1
       timestamp: new Date(),
-      tweetCount: totalTweets,
+      tweetCount: totalItems,
       positiveCount,
       negativeCount,
       neutralCount
@@ -137,9 +166,9 @@ export class SimpleTwitterSentiment {
   }
 
   /**
-   * Analyze individual tweet for sentiment
+   * Analyze individual text for sentiment score
    */
-  private analyzeTweetSentiment(text: string): number {
+  private analyzeSentimentScore(text: string): number {
     const lowerText = text.toLowerCase();
     
     let positiveScore = 0;
@@ -165,47 +194,193 @@ export class SimpleTwitterSentiment {
   }
 
   /**
-   * Fetch tweets from Twitter API (or simulate for testing)
+   * Fetch real sentiment data from multiple sources
    */
   private async fetchTweets(searchTerms: string[]): Promise<any[]> {
-    // TODO: Replace with actual Twitter API v2 call
-    // For now, simulate realistic Twitter data
-    
-    if (!this.config.bearerToken) {
-      console.warn('No Twitter Bearer Token provided, using simulated data');
-      return this.generateSimulatedTweets();
-    }
-
-    // TODO: Implement actual Twitter API v2 call
-    // const query = searchTerms.join(' OR ');
-    // const response = await fetch(`https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=${this.config.maxTweets}`, {
-    //   headers: {
-    //     'Authorization': `Bearer ${this.config.bearerToken}`,
-    //     'Content-Type': 'application/json'
-    //   }
-    // });
-    
-    return this.generateSimulatedTweets();
+    // Use real data sources instead of simulated data
+    const sentimentData = await this.getRealSentimentData(searchTerms[0]);
+    return sentimentData;
   }
 
   /**
-   * Generate simulated tweets for testing (remove when Twitter API is integrated)
+   * Get real sentiment data from multiple sources
    */
-  private generateSimulatedTweets(): any[] {
-    const simulatedTweets = [
-      { text: "Bitcoin is going to the moon! 🚀 Bullish on BTC", created_at: new Date().toISOString() },
-      { text: "BTC dump incoming, this looks bearish 📉", created_at: new Date().toISOString() },
-      { text: "HODL Bitcoin, long term bullish trend", created_at: new Date().toISOString() },
-      { text: "Bitcoin crash? Time to buy the dip! 💎", created_at: new Date().toISOString() },
-      { text: "BTC technical analysis shows strong resistance", created_at: new Date().toISOString() },
-      { text: "Selling my Bitcoin, market looks weak", created_at: new Date().toISOString() },
-      { text: "Bitcoin breakout above resistance! Bull run continues 📈", created_at: new Date().toISOString() },
-      { text: "BTC price action is neutral, waiting for direction", created_at: new Date().toISOString() },
-    ];
+  private async getRealSentimentData(symbol: string): Promise<any[]> {
+    const sentimentSources = [];
+    
+    try {
+      // 1. Fear & Greed Index (real market sentiment)
+      const fearGreedData = await this.getFearGreedIndex();
+      if (fearGreedData) {
+        sentimentSources.push({
+          text: `Market Fear & Greed Index: ${fearGreedData.value_classification} (${fearGreedData.value}/100)`,
+          created_at: new Date().toISOString(),
+          source: 'fear_greed_index',
+          sentiment_score: (fearGreedData.value - 50) / 50 // Convert 0-100 to -1 to 1
+        });
+      }
+      
+      // 2. Reddit sentiment from crypto subreddits
+      const redditData = await this.getRedditSentiment(symbol);
+      sentimentSources.push(...redditData);
+      
+      // 3. News sentiment
+      const newsData = await this.getNewsSentiment(symbol);
+      sentimentSources.push(...newsData);
+      
+      // 4. On-chain metrics sentiment
+      const onChainData = await this.getOnChainSentiment(symbol);
+      if (onChainData) sentimentSources.push(onChainData);
+      
+    } catch (error) {
+      console.error('Error fetching real sentiment data:', error);
+    }
+    
+    // Ensure we always have some data
+    if (sentimentSources.length === 0) {
+      return [{
+        text: "No sentiment data available",
+        created_at: new Date().toISOString(),
+        source: 'fallback',
+        sentiment_score: 0
+      }];
+    }
+    
+    return sentimentSources;
+  }
 
-    // Return random subset for realistic variation
-    const count = Math.floor(Math.random() * 20) + 10; // 10-30 tweets
-    return simulatedTweets.slice(0, count);
+  /**
+   * Get Fear & Greed Index (free API)
+   */
+  private async getFearGreedIndex(): Promise<any> {
+    try {
+      const response = await fetch('https://api.alternative.me/fng/');
+      const data = await response.json();
+      if (data.data && data.data[0]) {
+        return data.data[0];
+      }
+    } catch (error) {
+      console.error('Error fetching Fear & Greed Index:', error);
+    }
+    return null;
+  }
+
+  /**
+   * Get Reddit sentiment from crypto subreddits
+   */
+  private async getRedditSentiment(symbol: string): Promise<any[]> {
+    const sentimentData = [];
+    
+    try {
+      // Use Reddit's JSON API (no auth required for public posts)
+      const subreddits = ['Bitcoin', 'CryptoCurrency', 'ethereum'];
+      
+      for (const subreddit of subreddits) {
+        try {
+          const response = await fetch(`https://www.reddit.com/r/${subreddit}/hot.json?limit=10`);
+          const data = await response.json();
+          
+          if (data.data && data.data.children) {
+            data.data.children.forEach((post: any) => {
+              const title = post.data.title.toLowerCase();
+              const selftext = post.data.selftext.toLowerCase();
+              const text = `${title} ${selftext}`;
+              
+              // Only include posts mentioning our symbol
+              if (text.includes(symbol.toLowerCase()) || text.includes('btc') || text.includes('bitcoin')) {
+                const sentimentScore = this.analyzeSentimentScore(text);
+                sentimentData.push({
+                  text: post.data.title,
+                  created_at: new Date(post.data.created_utc * 1000).toISOString(),
+                  source: `reddit_${subreddit}`,
+                  sentiment_score: sentimentScore,
+                  upvotes: post.data.ups,
+                  comments: post.data.num_comments
+                });
+              }
+            });
+          }
+        } catch (error) {
+          console.warn(`Error fetching from r/${subreddit}:`, error);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching Reddit sentiment:', error);
+    }
+    
+    return sentimentData;
+  }
+
+  /**
+   * Get news sentiment from financial APIs
+   */
+  private async getNewsSentiment(symbol: string): Promise<any[]> {
+    const sentimentData = [];
+    
+    try {
+      // Use free news API or RSS feeds
+      const keywords = symbol === 'BTC' ? 'Bitcoin' : symbol;
+      
+      // CoinDesk RSS feed (free)
+      const response = await fetch('https://www.coindesk.com/arc/outboundfeeds/rss/');
+      const text = await response.text();
+      
+      // Simple RSS parsing to extract headlines
+      const titleMatches = text.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g);
+      
+      if (titleMatches) {
+        titleMatches.slice(0, 10).forEach(match => {
+          const title = match.replace(/<title><!\[CDATA\[/, '').replace(/\]\]><\/title>/, '');
+          
+          if (title.toLowerCase().includes(keywords.toLowerCase()) || 
+              title.toLowerCase().includes('crypto') || 
+              title.toLowerCase().includes('bitcoin')) {
+            
+            const sentimentScore = this.analyzeSentimentScore(title);
+            sentimentData.push({
+              text: title,
+              created_at: new Date().toISOString(),
+              source: 'coindesk_news',
+              sentiment_score: sentimentScore
+            });
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching news sentiment:', error);
+    }
+    
+    return sentimentData;
+  }
+
+  /**
+   * Get on-chain metrics sentiment
+   */
+  private async getOnChainSentiment(symbol: string): Promise<any> {
+    try {
+      if (symbol === 'BTC') {
+        // Use free blockchain.info API for basic metrics
+        const response = await fetch('https://blockchain.info/q/24hrtransactioncount');
+        const txCount = parseInt(await response.text());
+        
+        // Simple sentiment based on transaction volume
+        // Higher tx count = more activity = more bullish sentiment
+        const avgTxCount = 300000; // Approximate daily average
+        const sentimentScore = Math.min(1, Math.max(-1, (txCount - avgTxCount) / avgTxCount));
+        
+        return {
+          text: `Bitcoin network activity: ${txCount.toLocaleString()} transactions in 24h`,
+          created_at: new Date().toISOString(),
+          source: 'onchain_metrics',
+          sentiment_score: sentimentScore,
+          tx_count: txCount
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching on-chain sentiment:', error);
+    }
+    
+    return null;
   }
 
   /**

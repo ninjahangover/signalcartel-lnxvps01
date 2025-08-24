@@ -142,14 +142,11 @@ class RSIStrategyOptimizer {
           improvement: `${((this.calculateScore(bestResult) - 0.5) * 100).toFixed(1)}%`
         });
 
-        // Send Telegram notification for strategy optimization
-        await console.log
+        // Log strategy optimization
+        console.log('🎯 RSI Strategy Optimized:', {
           type: 'STRATEGY_OPTIMIZED',
           strategy: 'RSI Strategy Optimizer',
           symbol: 'BTCUSD',
-          action: 'BUY', // Not relevant for optimization
-          price: 0, // Not relevant for optimization
-          quantity: 0, // Not relevant for optimization
           confidence: Math.round(this.calculateScore(bestResult) * 100),
           timestamp: new Date(),
           details: {

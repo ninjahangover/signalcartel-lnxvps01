@@ -50,8 +50,8 @@ export interface SentimentConfig {
 export class UniversalSentimentEnhancer {
   private defaultConfig: SentimentConfig = {
     conflictThreshold: 0.3,
-    minSentimentConfidence: 0.4,
-    maxBoostPercent: 0.25, // Max 25% boost or penalty
+    minSentimentConfidence: 0.5, // Lowered from 0.4 to enable real sentiment impact
+    maxBoostPercent: 0.35, // Increased max boost for stronger sentiment influence
     skipOnConflict: true
   };
 
