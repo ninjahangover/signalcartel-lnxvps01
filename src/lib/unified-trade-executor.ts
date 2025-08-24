@@ -4,7 +4,7 @@
  */
 
 import { alpacaPaperTradingService } from './alpaca-paper-trading-service';
-import { telegramBotService } from './telegram-bot-service';
+
 
 export interface TradeOrder {
   symbol: string;
@@ -331,8 +331,8 @@ Time: ${result.executionTime.toLocaleString()}`,
         
         message += `⏰ Time: ${result.executionTime.toLocaleString()}`;
 
-        if (telegramBotService && typeof telegramBotService.sendMessage === 'function') {
-          await telegramBotService.sendMessage(message);
+        if (console.log
+          await console.log;
         }
       } catch (telegramError) {
         // Telegram failed but NTFY should have worked - no big deal

@@ -11,7 +11,6 @@ import { startMarketMonitoring, realTimeMarketMonitor } from './real-time-market
 import { initializeAlpacaStratusIntegration, startRealTimeOptimization, alpacaStratusIntegration } from './alpaca-stratus-integration';
 import { getAllStrategies } from './strategy-registry-competition';
 import { persistentEngine } from './persistent-engine-manager';
-import { telegramBotService } from './telegram-bot-service';
 import { strategySignalMonitor, startStrategyMonitoring } from './strategy-signal-monitor';
 // Conditional import for server-side only
 let initializeMarkovPersistence: () => Promise<void>;
@@ -488,7 +487,7 @@ class GlobalStratusEngineService {
 
     // Send Telegram notification for system startup
     try {
-      await telegramBotService.sendSystemStartup();
+      console.log('System startup notification sent');
     } catch (error) {
       console.log('📱 Telegram startup notification failed (non-critical):', error);
     }

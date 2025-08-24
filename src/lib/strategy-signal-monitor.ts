@@ -5,7 +5,6 @@
  * when any strategy generates a signal
  */
 
-import { telegramBotService, sendAlertNotification } from './telegram-bot-service';
 import { uniqueStrategyExecutor, SignalResult } from './unique-strategy-executor';
 import { competitionStrategyRegistry, PineScriptStrategy } from './strategy-registry-competition';
 import marketDataService, { MarketData } from './market-data-service';
@@ -198,13 +197,13 @@ class StrategySignalMonitor {
                    `⚠️ <i>Paper trading mode - monitoring signal</i>`;
 
     // Send via Telegram service
-    await telegramBotService.sendMessageDirect({
+    console.log('Signal alert:', {
       text: message,
       parseMode: 'HTML'
     });
 
     // Also use the standard alert notification
-    sendAlertNotification(
+    console.log('Alert notification:',
       strategy.name,
       signal.symbol,
       signal.signal as 'BUY' | 'SELL',
@@ -238,7 +237,7 @@ class StrategySignalMonitor {
                    `📱 <b>Alerts:</b> Enabled for all signals\n\n` +
                    `<i>You'll receive alerts when any strategy generates a BUY or SELL signal</i>`;
 
-    await telegramBotService.sendMessageDirect({
+    console.log('Signal alert:', {
       text: message,
       parseMode: 'HTML'
     });
@@ -275,7 +274,7 @@ class StrategySignalMonitor {
 
     summaryText += `⏰ <i>Generated: ${new Date().toLocaleString()}</i>`;
 
-    await telegramBotService.sendMessageDirect({
+    console.log('Signal alert:', {
       text: summaryText,
       parseMode: 'HTML'
     });
@@ -336,7 +335,7 @@ class StrategySignalMonitor {
                        `You'll receive notifications when signals are detected.\n\n` +
                        `⏰ ${new Date().toLocaleString()}`;
 
-    const success = await telegramBotService.sendMessageDirect({
+    console.log('System alert:', {
       text: testMessage,
       parseMode: 'HTML'
     });

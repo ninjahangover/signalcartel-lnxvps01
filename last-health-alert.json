@@ -1,6 +1,6 @@
 {
-  "GPU Strategies": "CRITICAL",
-  "Trade Execution": "CRITICAL",
-  "Database": "CRITICAL",
+  "GPU Strategies": "WARNING",
+  "Trade Execution": "WARNING",
+  "Database": "HEALTHY",
   "Data Warehouse": "HEALTHY"
 }

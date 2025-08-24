@@ -55,6 +55,10 @@ export default withAuth(
           pathname.startsWith('/contact') ||
           pathname.startsWith('/security') ||
           pathname.startsWith('/careers') ||
+          pathname.startsWith('/access') ||
+          pathname.startsWith('/legacy') ||
+          pathname.startsWith('/stratus-engine') ||
+          pathname.startsWith('/platform') ||
           pathname.startsWith('/_next') ||
           pathname.startsWith('/images')
         ) {

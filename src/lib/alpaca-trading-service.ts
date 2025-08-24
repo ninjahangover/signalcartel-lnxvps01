@@ -129,7 +129,7 @@ class AlpacaTradingService {
       console.log(`   🆔 Order ID: ${order.id}`);
       
       // Send Telegram notification
-      await this.sendTradeNotification(signal, alpacaSymbol, order);
+      await this.console.log(signal, alpacaSymbol, order);
       
       return {
         orderId: order.id,
@@ -205,10 +205,10 @@ class AlpacaTradingService {
     }
   }
   
-  private async sendTradeNotification(signal: TradingSignal, symbol: string, order: any): Promise<void> {
+  private async console.log(signal: TradingSignal, symbol: string, order: any): Promise<void> {
     try {
-      const { telegramBotService } = await import('./telegram-bot-service');
-      const bot = telegramBotService;
+      const { console.log
+      const bot = console.log;
       
       await bot.sendTradeAlert({
         type: 'TRADE_EXECUTED',

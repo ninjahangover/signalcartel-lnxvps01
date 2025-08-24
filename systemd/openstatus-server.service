@@ -1,0 +1,33 @@
+[Unit]
+Description=OpenStatus API Server
+Documentation=https://github.com/openstatusHQ/openstatus
+After=network.target
+
+[Service]
+Type=simple
+User=telgkb9
+Group=telgkb9
+WorkingDirectory=/home/telgkb9/depot/dev-signalcartel/openstatus
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=PATH=/home/telgkb9/.bun/bin:/home/telgkb9/.nvm/versions/node/v22.18.0/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/telgkb9/.local/share/pnpm/.tools/pnpm/10.12.4/bin/pnpm run --filter './apps/server' start
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=openstatus-server
+
+# Resource limits
+LimitNOFILE=65536
+MemoryMax=512M
+
+# Security
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/home/telgkb9/depot/dev-signalcartel
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

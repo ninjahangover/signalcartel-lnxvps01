@@ -1,7 +1,6 @@
 import { Strategy } from './strategy-manager';
 import marketDataService, { MarketData } from './market-data-service';
 import { alpacaStratusIntegration } from './alpaca-stratus-integration';
-import { telegramBotService, sendAlertNotification, sendTradeNotification } from './telegram-bot-service';
 
 interface AlertConfig {
   strategyId: string;
@@ -225,7 +224,7 @@ class AlertGenerationEngine {
     console.log(`🚨 Generated Alert: ${alert.action} ${alert.symbol} at ${alert.price} (${alert.confidence}% confidence)`);
 
     // Send Telegram notification for alert generation
-    sendAlertNotification(
+    console.log('Alert notification:',
       strategy.name,
       alert.symbol,
       alert.action,
@@ -280,7 +279,7 @@ class AlertGenerationEngine {
         console.log(`✅ Paper trade executed successfully: ${execution.alpacaOrderId}`);
         
         // Send Telegram notification for successful trade execution
-        sendTradeNotification(
+        console.log('Trade notification:',
           execution.strategyId,
           execution.symbol,
           execution.action,

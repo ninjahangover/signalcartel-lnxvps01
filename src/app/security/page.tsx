@@ -356,7 +356,7 @@ export default function SecurityPage() {
               <ul className="space-y-2 text-gray-400">
                 <li><Link href="/features" className="hover:text-white">Features</Link></li>
                 <li><Link href="/pricing" className="hover:text-white">Pricing</Link></li>
-                <li><Link href="/dashboard" className="hover:text-white">Dashboard</Link></li>
+                <li><Link href="/access" className="hover:text-white">Dashboard</Link></li>
               </ul>
             </div>
             <div>

@@ -13,7 +13,7 @@ import {
   mergeParameters
 } from './unified-strategy-config';
 import marketDataService, { MarketData } from './market-data-service';
-import { telegramBotService } from './telegram-bot-service';
+
 import { rsiOptimizationEngine } from './strategy-optimization-engines/rsi-optimization-engine';
 import StrategyExecutionEngine from './strategy-execution-engine';
 import { PineScriptInputOptimizer } from './pine-script-input-optimizer';
@@ -285,7 +285,7 @@ class UnifiedStrategyController {
     });
 
     // Send Telegram alert for mode change
-    telegramBotService.sendTradeAlert({
+    console.log
       type: mode === 'live' ? 'LIVE_TRADING_ENABLED' : 'PAPER_TRADING_ENABLED',
       strategy: strategy.name,
       symbol: 'BTCUSD',
@@ -446,7 +446,7 @@ class UnifiedStrategyController {
       console.log(`📋 Paper trade order:`, tradeOrder);
       
       // Send to Telegram
-      await telegramBotService.sendTradeAlert({
+      await console.log
         type: 'PAPER_TRADE_EXECUTED',
         strategy: strategy.name,
         symbol: signal.symbol,
@@ -496,7 +496,7 @@ class UnifiedStrategyController {
       console.log(`🔗 Webhook payload prepared for Kraken:`, webhookPayload);
       
       // Send to Telegram
-      await telegramBotService.sendTradeAlert({
+      await console.log
         type: 'LIVE_TRADE_SIGNAL',
         strategy: strategy.name,
         symbol: signal.symbol,
@@ -659,7 +659,7 @@ class UnifiedStrategyController {
         this.updateStrategyParameters(strategyId, result.optimizedParams, 'optimization');
         
         // Send notification about optimization
-        await telegramBotService.sendTradeAlert({
+        await console.log
           type: 'STRATEGY_OPTIMIZED',
           strategy: strategy.name,
           symbol: 'BTCUSD',
@@ -771,7 +771,7 @@ class UnifiedStrategyController {
 
     // Send alert for significant market condition changes
     if (previousConditions && previousConditions.regime !== regime) {
-      telegramBotService.sendTradeAlert({
+      console.log
         type: 'MARKET_CONDITION_CHANGE',
         strategy: 'Market Analysis',
         symbol: 'BTCUSD',
@@ -891,7 +891,7 @@ class UnifiedStrategyController {
     this.strategies.set(strategyId, strategy);
 
     // Send Telegram alert for trade result
-    await telegramBotService.sendTradeAlert({
+    await console.log
       type: tradeResult.won ? 'TRADE_WIN' : 'TRADE_LOSS',
       strategy: strategy.name,
       symbol: 'BTCUSD',
@@ -914,7 +914,7 @@ class UnifiedStrategyController {
 
     // Send alert for milestone achievements
     if (strategy.performance.totalTrades % 10 === 0) {
-      await telegramBotService.sendTradeAlert({
+      await console.log
         type: 'MILESTONE_REACHED',
         strategy: strategy.name,
         symbol: 'BTCUSD',
@@ -934,7 +934,7 @@ class UnifiedStrategyController {
 
     // Send alert for consecutive losses
     if (strategy.performance.consecutiveLosses >= 3) {
-      await telegramBotService.sendTradeAlert({
+      await console.log
         type: 'POOR_PERFORMANCE_ALERT',
         strategy: strategy.name,
         symbol: 'BTCUSD',
@@ -956,7 +956,7 @@ class UnifiedStrategyController {
 
     // Send alert for winning streaks
     if (strategy.performance.consecutiveWins >= 5) {
-      await telegramBotService.sendTradeAlert({
+      await console.log
         type: 'WINNING_STREAK',
         strategy: strategy.name,
         symbol: 'BTCUSD',

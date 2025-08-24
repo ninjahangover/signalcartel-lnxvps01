@@ -132,7 +132,7 @@ export default function StrategiesPage() {
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/dashboard" className="text-gray-400 hover:text-white transition-colors">
+              <Link href="/access" className="text-gray-400 hover:text-white transition-colors">
                 ← Back to Dashboard
               </Link>
               <button

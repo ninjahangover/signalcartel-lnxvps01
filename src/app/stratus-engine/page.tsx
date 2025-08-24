@@ -114,7 +114,7 @@ export default function StratusEnginePage() {
                 Start Free Trial
               </button>
             </Link>
-            <Link href="/dashboard">
+            <Link href="/access">
               <button className="border-2 border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white px-8 py-4 text-lg rounded">
                 View Live Dashboard
               </button>

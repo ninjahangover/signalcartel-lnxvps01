@@ -29,12 +29,9 @@ function LoginForm() {
       if (result?.error) {
         setError('Invalid email or password');
       } else {
-        const session = await getSession();
-        if (session?.user.role === 'admin' || session?.user.role === 'super_admin') {
-          router.push('/admin');
-        } else {
-          router.push('/dashboard');
-        }
+        console.log('Login successful, redirecting to QUANTUM FORGE™...');
+        // Use hard redirect to ensure session is properly loaded
+        window.location.href = '/quantum-forge';
       }
     } catch (error) {
       setError('Login failed. Please try again.');
@@ -44,7 +41,7 @@ function LoginForm() {
   };
 
   const handleGoogleSignIn = () => {
-    signIn('google', { callbackUrl: '/dashboard' });
+    signIn('google', { callbackUrl: '/quantum-forge' });
   };
 
   return (

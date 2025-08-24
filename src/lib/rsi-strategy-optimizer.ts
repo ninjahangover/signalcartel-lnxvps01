@@ -1,7 +1,7 @@
 import { Strategy } from './strategy-manager';
 import marketDataService, { MarketData } from './market-data-service';
 import { StrategyState } from './strategy-execution-engine';
-import { telegramBotService } from './telegram-bot-service';
+
 
 interface RSIParameters {
   rsi_period: number;           // 5-50
@@ -143,7 +143,7 @@ class RSIStrategyOptimizer {
         });
 
         // Send Telegram notification for strategy optimization
-        await telegramBotService.sendTradeAlert({
+        await console.log
           type: 'STRATEGY_OPTIMIZED',
           strategy: 'RSI Strategy Optimizer',
           symbol: 'BTCUSD',

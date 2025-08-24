@@ -13,7 +13,7 @@ export default function MarketingNav({ currentPage }: MarketingNavProps) {
   
   const navItems = [
     { href: '/features', label: 'Features' },
-    { href: '/stratus-engine', label: 'The Stratus Engine™' },
+    { href: '/legacy', label: 'Platform Details' },
     { href: '/pricing', label: 'Pricing' },
     { href: '/about', label: 'About' }
   ];
@@ -31,7 +31,7 @@ export default function MarketingNav({ currentPage }: MarketingNavProps) {
               className="w-10 h-10"
               priority
             />
-            <span className="text-xl md:text-2xl font-bold text-white bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">Signal Cartel</span>
+            <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-yellow-400 to-purple-400 bg-clip-text text-transparent">QUANTUM FORGE™</span>
           </Link>
           
           {/* Desktop Navigation */}
@@ -54,9 +54,9 @@ export default function MarketingNav({ currentPage }: MarketingNavProps) {
                 Sign In
               </button>
             </Link>
-            <Link href="/auth/signup">
+            <Link href="/access">
               <button className="bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-black font-semibold px-4 py-2 rounded">
-                Start Trading
+                Request Access
               </button>
             </Link>
           </div>
@@ -100,9 +100,9 @@ export default function MarketingNav({ currentPage }: MarketingNavProps) {
                     Sign In
                   </button>
                 </Link>
-                <Link href="/auth/signup" onClick={() => setIsMenuOpen(false)}>
+                <Link href="/access" onClick={() => setIsMenuOpen(false)}>
                   <button className="bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-black font-semibold px-4 py-2 rounded w-fit">
-                    Start Trading
+                    Request Access
                   </button>
                 </Link>
               </div>
