@@ -140,17 +140,17 @@ class DataDrivenSupremacy {
     // Analyze signals that occurred within same time window
     const signals = await prisma.tradingSignal.findMany({
       where: {
-        timestamp: {
+        createdAt: {
           gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
         }
       },
       select: {
         strategy: true,
         signalType: true,
-        timestamp: true,
+        createdAt: true,
         confidence: true
       },
-      orderBy: { timestamp: 'desc' }
+      orderBy: { createdAt: 'desc' }
     });
 
     console.log('🎪 STRATEGY COMBINATION ANALYSIS:');
@@ -159,7 +159,7 @@ class DataDrivenSupremacy {
     const timeWindows = new Map<number, any[]>();
     
     for (const signal of signals) {
-      const windowKey = Math.floor(new Date(signal.timestamp).getTime() / (5 * 60 * 1000));
+      const windowKey = Math.floor(new Date(signal.createdAt).getTime() / (5 * 60 * 1000));
       if (!timeWindows.has(windowKey)) {
         timeWindows.set(windowKey, []);
       }
