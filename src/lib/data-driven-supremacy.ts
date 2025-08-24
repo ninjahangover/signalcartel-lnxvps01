@@ -218,6 +218,17 @@ class DataDrivenSupremacy {
 
     console.log('🔮 REAL-TIME PATTERN ANALYSIS:');
 
+    // Early return if no recent activity
+    if (recentActivity.length === 0) {
+      console.log('   No recent activity in the last hour');
+      return {
+        alternatingRatio: 0,
+        avgVolatility: 0,
+        dominantStrategy: 'NONE',
+        insight: 'No recent trades to analyze'
+      };
+    }
+
     // Analyze price action patterns
     const priceSequence = recentActivity.map(t => t.price);
     const sideSequence = recentActivity.map(t => t.side);
@@ -230,7 +241,7 @@ class DataDrivenSupremacy {
       }
     }
     
-    const alternatingRatio = alternatingCount / (sideSequence.length - 1);
+    const alternatingRatio = sideSequence.length > 1 ? alternatingCount / (sideSequence.length - 1) : 0;
 
     console.log(`   Alternating BUY/SELL pattern: ${(alternatingRatio * 100).toFixed(1)}%`);
 
@@ -240,7 +251,7 @@ class DataDrivenSupremacy {
       priceChanges.push(Math.abs(priceSequence[i] - priceSequence[i-1]) / priceSequence[i-1]);
     }
 
-    const avgVolatility = priceChanges.reduce((a, b) => a + b, 0) / priceChanges.length;
+    const avgVolatility = priceChanges.length > 0 ? priceChanges.reduce((a, b) => a + b, 0) / priceChanges.length : 0;
     console.log(`   Average price volatility: ${(avgVolatility * 100).toFixed(3)}%`);
 
     // Strategy dominance
@@ -249,16 +260,20 @@ class DataDrivenSupremacy {
       strategyCount.set(trade.strategy, (strategyCount.get(trade.strategy) || 0) + 1);
     }
 
-    const dominantStrategy = Array.from(strategyCount.entries())
-      .sort((a, b) => b[1] - a[1])[0];
+    const strategyEntries = Array.from(strategyCount.entries()).sort((a, b) => b[1] - a[1]);
+    const dominantStrategy = strategyEntries.length > 0 ? strategyEntries[0] : null;
 
-    console.log(`   Dominant strategy: ${dominantStrategy[0]} (${dominantStrategy[1]} trades)`);
+    if (dominantStrategy) {
+      console.log(`   Dominant strategy: ${dominantStrategy[0]} (${dominantStrategy[1]} trades)`);
+    } else {
+      console.log('   No strategy data available');
+    }
 
     return {
       alternatingRatio,
       avgVolatility,
-      dominantStrategy: dominantStrategy[0],
-      insight: 'RSI strategy is dominating with perfect scalping patterns!'
+      dominantStrategy: dominantStrategy ? dominantStrategy[0] : 'NONE',
+      insight: dominantStrategy ? 'RSI strategy is dominating with perfect scalping patterns!' : 'No recent strategy activity'
     };
   }
 
