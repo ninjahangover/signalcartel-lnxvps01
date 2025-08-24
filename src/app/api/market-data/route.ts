@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '../../../lib/prisma';
+import { marketDataPrisma } from '../../../lib/prisma-market-data';
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const startTime = new Date(Date.now() - (hoursBack * 60 * 60 * 1000));
 
     // Fetch market data from our database
-    const marketData = await prisma.marketData.findMany({
+    const marketData = await marketDataPrisma.marketData.findMany({
       where: {
         symbol: symbol,
         timestamp: {

@@ -4,10 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { marketDataPrisma } from '../../../lib/prisma-market-data';
 import { marketDataCollector } from '@/lib/market-data-collector';
-
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,7 +35,7 @@ export async function POST(request: NextRequest) {
             // Create data point with timestamp spread over last hour
             const timestamp = new Date(Date.now() - (i * 3 * 60 * 1000)); // Every 3 minutes
             
-            await prisma.marketData.create({
+            await marketDataPrisma.marketData.create({
               data: {
                 symbol,
                 timestamp,
@@ -57,7 +55,7 @@ export async function POST(request: NextRequest) {
         
         // Update collection status
         for (const symbol of symbols) {
-          const dataCount = await prisma.marketData.count({ where: { symbol } });
+          const dataCount = await marketDataPrisma.marketData.count({ where: { symbol } });
           
           // Ensure collection record exists
           await prisma.marketDataCollection.upsert({
@@ -100,7 +98,7 @@ export async function POST(request: NextRequest) {
         
       case 'clear_data':
         console.log('🧹 Clearing all market data...');
-        const deletedData = await prisma.marketData.deleteMany();
+        const deletedData = await marketDataPrisma.marketData.deleteMany();
         const deletedCollections = await prisma.marketDataCollection.deleteMany();
         
         return NextResponse.json({
@@ -129,16 +127,16 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Get current database stats
-    const totalData = await prisma.marketData.count();
+    const totalData = await marketDataPrisma.marketData.count();
     const totalCollections = await prisma.marketDataCollection.count();
     
-    const symbolStats = await prisma.marketData.groupBy({
+    const symbolStats = await marketDataPrisma.marketData.groupBy({
       by: ['symbol'],
       _count: { symbol: true },
       orderBy: { _count: { symbol: 'desc' } }
     });
     
-    const recentData = await prisma.marketData.findMany({
+    const recentData = await marketDataPrisma.marketData.findMany({
       orderBy: { timestamp: 'desc' },
       take: 5,
       select: {

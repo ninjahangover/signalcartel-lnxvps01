@@ -1,0 +1,80 @@
+// PostgreSQL schema for market data service
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../../../node_modules/.prisma/market-data-client"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Market data collection
+model MarketData {
+  id         Int      @id @default(autoincrement())
+  symbol     String
+  timestamp  DateTime @default(now())
+  open       Float
+  high       Float
+  low        Float
+  close      Float
+  volume     Float?
+  rsi        Float?
+  ema20      Float?
+  source     String?  // kraken, binance, coingecko, etc.
+  
+  @@index([symbol, timestamp])
+  @@index([timestamp])
+}
+
+// Track collection status
+model MarketDataCollection {
+  id             Int      @id @default(autoincrement())
+  symbol         String   @unique
+  status         String   @default("ACTIVE") // ACTIVE, PAUSED, ERROR
+  dataPoints     Int      @default(0)
+  oldestData     DateTime?
+  newestData     DateTime?
+  completeness   Float     @default(0)
+  interval       Int?     // Collection interval in seconds
+  enabled        Boolean  @default(true)
+  lastError      String?
+  errorCount     Int      @default(0)
+  lastCollected  DateTime @default(now())
+  
+  @@index([symbol])
+}
+
+// Historical OHLCV data
+model OHLCV {
+  id        Int      @id @default(autoincrement())
+  symbol    String
+  open      Float
+  high      Float
+  low       Float
+  close     Float
+  volume    Float
+  timestamp DateTime
+  interval  String   // 1m, 5m, 1h, 1d, etc.
+  
+  @@unique([symbol, timestamp, interval])
+  @@index([symbol, interval, timestamp])
+}
+
+// Market statistics
+model MarketStats {
+  id               Int      @id @default(autoincrement())
+  symbol           String
+  period           String   // 1h, 24h, 7d, 30d
+  avgPrice         Float
+  minPrice         Float
+  maxPrice         Float
+  volatility       Float?
+  totalVolume      Float?
+  dataPoints       Int
+  calculatedAt     DateTime @default(now())
+  
+  @@unique([symbol, period, calculatedAt])
+  @@index([symbol, period])
+}

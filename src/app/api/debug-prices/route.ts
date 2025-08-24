@@ -4,16 +4,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { marketDataPrisma } from '../../../lib/prisma-market-data';
 
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 Debugging price data...');
     
     // Get latest BTC prices from database
-    const btcData = await prisma.marketData.findMany({
+    const btcData = await marketDataPrisma.marketData.findMany({
       where: { symbol: 'BTCUSD' },
       orderBy: { timestamp: 'desc' },
       take: 10,
@@ -25,7 +23,7 @@ export async function GET(request: NextRequest) {
     });
     
     // Get latest data for all symbols
-    const latestBySymbol = await prisma.marketData.groupBy({
+    const latestBySymbol = await marketDataPrisma.marketData.groupBy({
       by: ['symbol'],
       _max: { timestamp: true },
       _avg: { close: true },
@@ -35,7 +33,7 @@ export async function GET(request: NextRequest) {
     // Get the actual latest price for each symbol
     const latestPrices = await Promise.all(
       latestBySymbol.map(async (group) => {
-        const latest = await prisma.marketData.findFirst({
+        const latest = await marketDataPrisma.marketData.findFirst({
           where: { 
             symbol: group.symbol,
             timestamp: group._max.timestamp || new Date()
@@ -61,7 +59,7 @@ export async function GET(request: NextRequest) {
     const statusData = await statusApiResponse.json();
     
     // Find any suspicious 43k prices
-    const suspiciousPrices = await prisma.marketData.findMany({
+    const suspiciousPrices = await marketDataPrisma.marketData.findMany({
       where: {
         close: {
           gte: 42000,

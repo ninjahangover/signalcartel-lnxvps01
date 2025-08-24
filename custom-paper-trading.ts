@@ -8,11 +8,9 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { telegramAlerts } from './src/lib/telegram-alert-service';
 import { PAPER_TRADING_CONFIG } from './src/lib/paper-trading-config';
 
 const prisma = new PrismaClient();
-const alertService = telegramAlerts;
 
 interface TradeExecutionResult {
   id: string;
@@ -52,13 +50,10 @@ class CustomPaperTradingEngine {
     console.log(`📊 Session ID: ${this.sessionId}`);
     console.log('🎯 Ready for LLN and Markov data generation!\n');
     
-    // Send startup alert
-    await alertService.sendAlert(
-      '🚀 <b>Custom Trading Engine Started</b>\n' +
-      `Session initialized with $${this.balance.toLocaleString()} balance.\n` +
-      'Telegram alerts active with 5-minute summaries.',
-      'medium'
-    );
+    // Log startup
+    console.log('🚀 Custom Trading Engine Started');
+    console.log(`   Session initialized with $${this.balance.toLocaleString()} balance`);
+    console.log('   System ready for LLN and Markov data generation');
   }
   
   async createTradingSession() {
@@ -149,12 +144,8 @@ class CustomPaperTradingEngine {
     console.log(`   Value: $${tradeValue.toFixed(2)}`);
     console.log(`   Balance: $${this.balance.toFixed(2)}`);
     
-    // Queue trade alert for batching
-    alertService.queueAlert(
-      `${params.side.toUpperCase()} ${params.quantity.toFixed(6)} ${params.symbol} @ $${executionPrice.toFixed(2)}`,
-      'low',
-      'QUANTUM FORGE™'
-    );
+    // Log trade execution
+    console.log(`📊 TRADE: ${params.side.toUpperCase()} ${params.quantity.toFixed(6)} ${params.symbol} @ $${executionPrice.toFixed(2)}`);
     
     return trade;
   }
@@ -200,12 +191,8 @@ class CustomPaperTradingEngine {
     console.log(`   P&L: ${pnl > 0 ? '+' : ''}$${pnl.toFixed(2)} (${position.outcome})`);
     console.log(`   Balance: $${this.balance.toFixed(2)}`);
     
-    // Queue position close alert for batching
-    alertService.queueAlert(
-      `CLOSE ${position.quantity.toFixed(6)} ${position.symbol} @ $${currentPrice.toFixed(2)} | P&L: ${pnl > 0 ? '+' : ''}$${pnl.toFixed(2)}`,
-      pnl > 0 ? 'medium' : 'low',
-      'QUANTUM FORGE™'
-    );
+    // Log position close
+    console.log(`📊 CLOSE: ${position.quantity.toFixed(6)} ${position.symbol} @ $${currentPrice.toFixed(2)} | P&L: ${pnl > 0 ? '+' : ''}$${pnl.toFixed(2)}`);
     
     return position;
   }
@@ -354,29 +341,29 @@ class CustomPaperTradingEngine {
         const winRate = this.tradeCount > 0 ? (this.winCount / this.tradeCount) * 100 : 0;
         console.log(`📊 Total trades: ${this.tradeCount} | Win rate: ${winRate.toFixed(1)}% | Balance: $${this.balance.toFixed(2)}`);
         
-        // Check milestones with ntfy alerts
+        // Check milestones
         if (this.tradeCount === 10) {
           console.log('\n🔄 MARKOV CHAIN READY!');
           console.log('✅ 10+ trades completed - pattern analysis can begin');
           
-          alertService.addSystemEvent('🔄 MARKOV CHAIN ACTIVATED!', 
-            `10 trades completed! Pattern analysis now available. Win rate: ${winRate.toFixed(1)}%`);
+          console.log('🔄 MARKOV CHAIN ACTIVATED!');
+          console.log(`   10 trades completed! Pattern analysis now available. Win rate: ${winRate.toFixed(1)}%`);
         }
         
         if (this.tradeCount === 50) {
           console.log('\n🎯 LAW OF LARGE NUMBERS ACTIVATED!');
           console.log('✅ 50+ trades completed - statistical optimization enabled');
           
-          alertService.addSystemEvent('🎯 LAW OF LARGE NUMBERS!', 
-            `50 trades completed! Statistical optimization activated. Win rate: ${winRate.toFixed(1)}%`);
+          console.log('🎯 LAW OF LARGE NUMBERS!');
+          console.log(`   50 trades completed! Statistical optimization activated. Win rate: ${winRate.toFixed(1)}%`);
         }
         
         if (this.tradeCount >= 100) {
           console.log('\n🏆 OPTIMIZATION DATASET COMPLETE!');
           console.log('✅ 100+ trades completed - ready for advanced algorithms');
           
-          alertService.addSystemEvent('🏆 DATASET COMPLETE!', 
-            `100+ trades completed! Ready for advanced AI algorithms. Final win rate: ${winRate.toFixed(1)}%`);
+          console.log('🏆 DATASET COMPLETE!');
+          console.log(`   100+ trades completed! Ready for advanced AI algorithms. Final win rate: ${winRate.toFixed(1)}%`);
           
           clearInterval(tradingInterval);
           await this.printFinalResults();

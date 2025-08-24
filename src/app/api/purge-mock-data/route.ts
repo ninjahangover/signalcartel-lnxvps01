@@ -4,10 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { marketDataPrisma } from '../../../lib/prisma-market-data';
 import { marketDataCollector } from '@/lib/market-data-collector';
-
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +15,7 @@ export async function POST(request: NextRequest) {
     marketDataCollector.stopCollection();
     
     // Clear all market data (start fresh with real data only)
-    const deletedData = await prisma.marketData.deleteMany();
+    const deletedData = await marketDataPrisma.marketData.deleteMany();
     const deletedCollections = await prisma.marketDataCollection.deleteMany();
     
     console.log(`🗑️ Deleted ${deletedData.count} data points and ${deletedCollections.count} collection records`);
@@ -57,7 +55,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Check database for any data that might be simulated
-    const allData = await prisma.marketData.findMany({
+    const allData = await marketDataPrisma.marketData.findMany({
       select: {
         symbol: true,
         close: true,
@@ -68,7 +66,7 @@ export async function GET(request: NextRequest) {
       take: 50
     });
     
-    const dataStats = await prisma.marketData.groupBy({
+    const dataStats = await marketDataPrisma.marketData.groupBy({
       by: ['symbol'],
       _count: { symbol: true },
       _min: { timestamp: true },

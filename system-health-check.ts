@@ -7,7 +7,6 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { telegramAlerts } from './src/lib/telegram-alert-service';
 
 const prisma = new PrismaClient();
 
@@ -37,9 +36,9 @@ class SystemHealthChecker {
       timestamp: new Date()
     });
 
-    // Send alert for critical issues or new warnings
+    // Log alert for critical issues or new warnings
     if (this.enableAlerts && (status === 'CRITICAL' || this.isNewIssue(component, status))) {
-      this.sendAlert(component, status, message);
+      this.logAlert(component, status, message);
     }
   }
 
@@ -58,7 +57,7 @@ class SystemHealthChecker {
     }
   }
 
-  private async sendAlert(component: string, status: string, message: string) {
+  private async logAlert(component: string, status: string, message: string) {
     try {
       const health = status === 'HEALTHY' ? 'healthy' : 
                     status === 'WARNING' ? 'degraded' : 'critical';
@@ -69,16 +68,13 @@ class SystemHealthChecker {
         }
       });
 
-      await telegramAlerts.sendStatusAlert({
-        system: `QUANTUM FORGE™ - ${component}`,
-        health: health as 'healthy' | 'degraded' | 'critical',
-        trades: recentTrades,
-        uptime: this.getSystemUptime()
-      });
-
-      console.log(`📱 Alert sent for ${component}: ${status}`);
+      console.log(`🚨 SYSTEM ALERT: ${component} - ${status}`);
+      console.log(`   Message: ${message}`);
+      console.log(`   Recent trades: ${recentTrades}`);
+      console.log(`   System uptime: ${this.getSystemUptime()}`);
+      console.log(`   Timestamp: ${new Date().toISOString()}`);
     } catch (error) {
-      console.error(`Failed to send alert for ${component}:`, error);
+      console.error(`Failed to log alert for ${component}:`, error);
     }
   }
 
@@ -314,18 +310,11 @@ async function main() {
   } catch (error) {
     console.error('❌ System health check failed:', error);
     
-    // Send critical alert about health check failure
+    // Log critical health check failure
     if (enableAlerts) {
-      try {
-        await telegramAlerts.sendStatusAlert({
-          system: 'QUANTUM FORGE™ - Health Check',
-          health: 'critical',
-          trades: 0,
-          uptime: 'unknown'
-        });
-      } catch (alertError) {
-        console.error('Failed to send health check failure alert:', alertError);
-      }
+      console.log('🚨 CRITICAL SYSTEM ALERT: Health Check Failed');
+      console.log(`   Error: ${error}`);
+      console.log(`   Timestamp: ${new Date().toISOString()}`);
     }
     
     process.exit(1);

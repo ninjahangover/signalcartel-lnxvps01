@@ -8,7 +8,8 @@ WORKDIR /app
 
 # Copy package files (context is set to root in docker-compose)
 COPY package*.json ./
-COPY prisma ./prisma/
+# Use PostgreSQL-specific schema for market data
+COPY prisma/schema-postgres.prisma ./prisma/schema.prisma
 
 # Install production dependencies
 RUN npm ci --only=production && \
@@ -24,6 +25,8 @@ COPY --from=deps /app/prisma ./prisma
 
 # Copy all source files
 COPY . .
+# Restore PostgreSQL schema that may have been overwritten
+COPY prisma/schema-postgres.prisma ./prisma/schema.prisma
 
 # Build TypeScript files if build script exists
 RUN if [ -f "package.json" ] && grep -q '"build"' package.json; then \

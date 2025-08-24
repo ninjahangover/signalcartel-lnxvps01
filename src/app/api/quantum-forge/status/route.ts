@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { marketDataPrisma } from '../../../../lib/prisma-market-data';
 
 const prisma = new PrismaClient();
 
@@ -23,14 +24,22 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Check market data collection
-    const recentMarketData = await prisma.marketData.count({
-      where: {
-        timestamp: {
-          gte: new Date(Date.now() - 5 * 60 * 1000) // Last 5 minutes
+    // Check market data collection - use PostgreSQL database
+    console.log('Checking market data collection status...');
+    let recentMarketData = 0;
+    try {
+      recentMarketData = await marketDataPrisma.marketData.count({
+        where: {
+          timestamp: {
+            gte: new Date(Date.now() - 10 * 60 * 1000) // Last 10 minutes
+          }
         }
-      }
-    });
+      });
+      console.log('Market data recent count:', recentMarketData);
+    } catch (error) {
+      console.error('Failed to check market data:', error);
+      recentMarketData = 0;
+    }
 
     // Get total trades and calculate win rate
     const totalTrades = await prisma.paperTrade.count({
