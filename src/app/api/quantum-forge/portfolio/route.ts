@@ -16,17 +16,29 @@ export async function GET(request: NextRequest) {
     const startingBalance = PAPER_TRADING_CONFIG.STARTING_BALANCE;
     const currentBalance = startingBalance + totalPnL;
 
-    // Get recent trades for analysis
+    // Get ALL trades for accurate statistics (not just recent 100)
+    const allTradesStats = await prisma.paperTrade.aggregate({
+      _count: { id: true },
+      where: { pnl: { not: null } }
+    });
+    
+    const winningTradesCount = await prisma.paperTrade.count({
+      where: { 
+        pnl: { gt: 0 }
+      }
+    });
+
+    // Calculate win rate based on ALL trades
+    const totalTrades = allTradesStats._count.id;
+    const winningTrades = winningTradesCount;
+    const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
+
+    // Get recent trades for daily P&L calculation
     const recentTrades = await prisma.paperTrade.findMany({
-      take: 100,
+      take: 1000, // Increased to get better daily P&L calculation
       orderBy: { executedAt: 'desc' },
       where: { pnl: { not: null } }
     });
-
-    // Calculate win rate
-    const totalTrades = recentTrades.length;
-    const winningTrades = recentTrades.filter(t => t.pnl && t.pnl > 0).length;
-    const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
 
     // Calculate unrealized P&L (since we're paper trading, this is just recent performance)
     const last24hTrades = recentTrades.filter(t => 
