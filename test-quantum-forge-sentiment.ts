@@ -1,180 +1,135 @@
+#!/usr/bin/env npx tsx
 /**
- * QUANTUM FORGE Sentiment Integration Test
- * Tests sentiment enhancement with the live running QUANTUM FORGE system
+ * Test QUANTUM FORGE™ Multi-Source Sentiment Intelligence
+ * GPU-accelerated sentiment analysis with Reddit, On-chain, and Twitter data
  */
 
-import { PrismaClient } from '@prisma/client';
-import { universalSentimentEnhancer } from './src/lib/sentiment/universal-sentiment-enhancer';
+import { quantumForgeSentimentEngine } from './src/lib/sentiment/quantum-forge-sentiment-engine';
 
-async function testQuantumForgeSentimentIntegration() {
-  console.log('🚀 QUANTUM FORGE Sentiment Integration Test');
-  console.log('===========================================\n');
-
-  const prisma = new PrismaClient();
-
+async function testQuantumForgeSentiment() {
+  console.log('🚀 QUANTUM FORGE™ SENTIMENT INTELLIGENCE TEST');
+  console.log('=' .repeat(60));
+  console.log('Testing GPU-accelerated multi-source sentiment analysis');
+  console.log('Sources: Twitter (existing) + Reddit + On-chain Data');
+  console.log('=' .repeat(60));
+  
   try {
-    // Check current QUANTUM FORGE system status
-    console.log('📊 Checking QUANTUM FORGE system status...');
+    // Test Bitcoin sentiment
+    console.log('\n📊 Analyzing Bitcoin (BTC) Sentiment...');
+    console.log('-'.repeat(40));
     
-    const recentTrades = await prisma.paperTrade.findMany({
-      where: {
-        executedAt: {
-          gte: new Date(Date.now() - 60 * 60 * 1000) // Last hour
-        }
-      },
-      orderBy: { executedAt: 'desc' },
-      take: 10
-    });
-
-    console.log(`✅ Found ${recentTrades.length} trades in the last hour`);
-
-    if (recentTrades.length > 0) {
-      console.log('Recent QUANTUM FORGE trades:');
-      recentTrades.slice(0, 3).forEach((trade, index) => {
-        console.log(`   ${index + 1}. ${trade.strategy}: ${trade.side.toUpperCase()} ${trade.quantity.toFixed(6)} ${trade.symbol} at $${trade.price.toFixed(2)} (${trade.executedAt.toLocaleTimeString()})`);
-      });
+    const btcSentiment = await quantumForgeSentimentEngine.analyzeSentiment('BTC');
+    
+    console.log('\n✅ QUANTUM FORGE SENTIMENT RESULTS:');
+    console.log(`Symbol: ${btcSentiment.symbol}`);
+    console.log(`Overall Sentiment: ${btcSentiment.sentiment}`);
+    console.log(`Overall Score: ${btcSentiment.overallScore.toFixed(4)}`);
+    console.log(`Overall Confidence: ${(btcSentiment.overallConfidence * 100).toFixed(1)}%`);
+    
+    console.log('\n📈 SOURCE BREAKDOWN:');
+    console.log(`• Twitter Score: ${btcSentiment.sources.twitter.score.toFixed(4)} (${(btcSentiment.sources.twitter.confidence * 100).toFixed(1)}% conf)`);
+    console.log(`  - Positive: ${btcSentiment.sources.twitter.positiveCount}`);
+    console.log(`  - Negative: ${btcSentiment.sources.twitter.negativeCount}`);
+    console.log(`  - Neutral: ${btcSentiment.sources.twitter.neutralCount}`);
+    
+    console.log(`\n• Reddit Score: ${btcSentiment.sources.reddit.score.toFixed(4)} (${(btcSentiment.sources.reddit.confidence * 100).toFixed(1)}% conf)`);
+    console.log(`  - Volume: ${btcSentiment.sources.reddit.volume} posts analyzed`);
+    console.log(`  - Trending: ${btcSentiment.sources.reddit.trending ? 'YES 🔥' : 'NO'}`);
+    console.log(`  - WSB Activity: ${((btcSentiment.sources.reddit.wsb_activity || 0) * 100).toFixed(1)}%`);
+    if (btcSentiment.sources.reddit.topPosts.length > 0) {
+      console.log(`  - Top Post: "${btcSentiment.sources.reddit.topPosts[0].title.substring(0, 60)}..."`);
     }
-
-    // Check for existing enhanced signals
-    console.log('\n🔮 Checking for sentiment-enhanced signals...');
     
-    const enhancedSignals = await prisma.enhancedTradingSignal.findMany({
-      where: {
-        signalTime: {
-          gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
-        }
-      },
-      orderBy: { signalTime: 'desc' },
-      take: 5
-    });
-
-    console.log(`✅ Found ${enhancedSignals.length} enhanced signals in the last 24 hours`);
-
-    if (enhancedSignals.length > 0) {
-      console.log('Recent sentiment-enhanced signals:');
-      enhancedSignals.forEach((signal, index) => {
-        console.log(`   ${index + 1}. ${signal.strategy}: ${signal.technicalAction} → ${signal.finalAction}`);
-        console.log(`      Confidence: ${(signal.technicalScore * 100).toFixed(1)}% → ${(signal.combinedConfidence * 100).toFixed(1)}%`);
-        console.log(`      Sentiment: ${signal.sentimentScore?.toFixed(3)} | Executed: ${signal.wasExecuted ? '✅' : '❌'}`);
+    console.log(`\n• On-Chain Score: ${btcSentiment.sources.onChain.sentimentScore.toFixed(4)} (${(btcSentiment.sources.onChain.confidence * 100).toFixed(1)}% conf)`);
+    console.log(`  - Whale Transfers: ${btcSentiment.sources.onChain.whaleActivity.largeTransfers}`);
+    console.log(`  - Whale Accumulation: $${btcSentiment.sources.onChain.whaleActivity.whaleAccumulation.toFixed(2)}M`);
+    console.log(`  - Exchange Net Flow: $${(btcSentiment.sources.onChain.exchangeFlows.netFlow / 1000000).toFixed(2)}M`);
+    console.log(`  - Network Tx Count: ${btcSentiment.sources.onChain.networkMetrics.transactionCount.toLocaleString()}`);
+    console.log(`  - Mempool Size: ${btcSentiment.sources.onChain.networkMetrics.mempoolSize.toLocaleString()}`);
+    
+    console.log('\n🚨 CRITICAL EVENTS:');
+    if (btcSentiment.criticalEvents.length > 0) {
+      btcSentiment.criticalEvents.forEach(event => {
+        const icon = event.impact > 0 ? '✅' : '⚠️';
+        console.log(`${icon} [${event.type}] ${event.severity}: ${event.description}`);
+        console.log(`   Source: ${event.source} | Impact: ${event.impact > 0 ? '+' : ''}${event.impact}`);
       });
-    }
-
-    // Test sentiment enhancement on a simulated signal
-    console.log('\n🧪 Testing sentiment enhancement system...');
-    
-    const testSignal = {
-      action: 'BUY' as const,
-      confidence: 0.75,
-      symbol: 'BTC',
-      price: 115000,
-      reason: 'Test signal for integration verification',
-      timestamp: new Date()
-    };
-
-    console.log('Enhancing test signal:', testSignal);
-    const enhancedSignal = await universalSentimentEnhancer.enhanceSignal(testSignal);
-    
-    console.log('\n🔮 Sentiment Enhancement Result:');
-    console.log(`   Original: ${enhancedSignal.originalAction} (${(enhancedSignal.originalConfidence * 100).toFixed(1)}%)`);
-    console.log(`   Enhanced: ${enhancedSignal.finalAction} (${(enhancedSignal.confidence * 100).toFixed(1)}%)`);
-    console.log(`   Sentiment Score: ${enhancedSignal.sentimentScore.toFixed(3)}`);
-    console.log(`   Sentiment Conflict: ${enhancedSignal.sentimentConflict ? '⚠️ YES' : '✅ NO'}`);
-    console.log(`   Should Execute: ${enhancedSignal.shouldExecute ? '✅ YES' : '❌ NO'}`);
-    console.log(`   Reason: ${enhancedSignal.executionReason}`);
-
-    // Store the test enhanced signal
-    console.log('\n💾 Storing test enhanced signal to database...');
-    
-    const storedSignal = await prisma.enhancedTradingSignal.create({
-      data: {
-        symbol: enhancedSignal.symbol,
-        strategy: 'TEST_INTEGRATION',
-        technicalScore: enhancedSignal.originalConfidence,
-        technicalAction: enhancedSignal.originalAction,
-        sentimentScore: enhancedSignal.sentimentScore,
-        sentimentConfidence: enhancedSignal.sentimentConfidence,
-        sentimentConflict: enhancedSignal.sentimentConflict,
-        combinedConfidence: enhancedSignal.confidence,
-        finalAction: enhancedSignal.finalAction,
-        confidenceBoost: enhancedSignal.confidenceModifier,
-        wasExecuted: enhancedSignal.shouldExecute,
-        executeReason: enhancedSignal.executionReason
-      }
-    });
-
-    console.log(`✅ Stored enhanced signal with ID: ${storedSignal.id}`);
-
-    // Check system integration status
-    console.log('\n🔍 Integration Status Check:');
-    console.log('===========================');
-
-    // Check if the strategy execution engine file has sentiment integration
-    const fs = await import('fs');
-    const engineFile = await fs.promises.readFile('./src/lib/strategy-execution-engine.ts', 'utf8');
-    const hasSentimentIntegration = engineFile.includes('universalSentimentEnhancer');
-    
-    console.log(`✅ Strategy Execution Engine has sentiment integration: ${hasSentimentIntegration ? 'YES' : 'NO'}`);
-
-    // Check if database schema supports enhanced signals
-    const tableExists = enhancedSignals.length >= 0; // If query worked, table exists
-    console.log(`✅ Database schema supports enhanced signals: ${tableExists ? 'YES' : 'NO'}`);
-
-    // Check if sentiment enhancement is working
-    const sentimentWorking = enhancedSignal.sentimentScore !== undefined;
-    console.log(`✅ Sentiment enhancement system working: ${sentimentWorking ? 'YES' : 'NO'}`);
-
-    console.log('\n🎯 INTEGRATION ASSESSMENT:');
-    console.log('==========================');
-
-    if (hasSentimentIntegration && tableExists && sentimentWorking) {
-      console.log('✅ SUCCESS: QUANTUM FORGE sentiment integration is COMPLETE!');
-      console.log('🔮 All trading signals will now be enhanced with sentiment validation');
-      console.log('📊 Enhanced signals are being stored for performance analysis');
-      console.log('🚀 System is ready to improve win rates through sentiment intelligence');
-      
-      if (enhancedSignals.length > 0) {
-        console.log(`📈 ${enhancedSignals.length} real enhanced signals already generated!`);
-      } else {
-        console.log('⏱️  No enhanced signals yet - system will activate when strategies generate signals');
-      }
-      
     } else {
-      console.log('⚠️  INCOMPLETE: Integration needs attention');
-      if (!hasSentimentIntegration) console.log('   • Strategy execution engine needs sentiment integration');
-      if (!tableExists) console.log('   • Database schema needs enhanced signal table');
-      if (!sentimentWorking) console.log('   • Sentiment enhancement system needs debugging');
+      console.log('No critical events detected');
     }
-
-    // Performance projection
-    if (recentTrades.length > 0) {
-      const totalTrades = await prisma.paperTrade.count();
-      const completedTrades = await prisma.paperTrade.count({
-        where: { isEntry: false }
+    
+    console.log('\n🐋 WHALE ALERTS:');
+    if (btcSentiment.whaleAlerts.length > 0) {
+      btcSentiment.whaleAlerts.forEach(alert => {
+        const icon = alert.type === 'ACCUMULATION' || alert.type === 'EXCHANGE_OUT' ? '📈' : '📉';
+        console.log(`${icon} ${alert.type}: $${(alert.amount / 1000000).toFixed(2)}M ${alert.token}`);
+        console.log(`   From: ${alert.from} → To: ${alert.to}`);
       });
-      
-      if (completedTrades > 0) {
-        const profitableTrades = await prisma.paperTrade.count({
-          where: { 
-            isEntry: false,
-            pnl: { gt: 0 }
-          }
-        });
-        
-        const currentWinRate = (profitableTrades / completedTrades) * 100;
-        console.log(`\n📊 Current QUANTUM FORGE Performance:`);
-        console.log(`   Total Trades: ${totalTrades}`);
-        console.log(`   Completed Trades: ${completedTrades}`);
-        console.log(`   Current Win Rate: ${currentWinRate.toFixed(1)}%`);
-        console.log(`   Projected with Sentiment: ${(currentWinRate + 3).toFixed(1)}% - ${(currentWinRate + 7).toFixed(1)}%`);
-      }
+    } else {
+      console.log('No significant whale movements');
     }
-
+    
+    console.log('\n📊 MARKET CONTEXT:');
+    console.log(`• Trend: ${btcSentiment.marketContext.trend}`);
+    console.log(`• Volatility: ${btcSentiment.marketContext.volatility}`);
+    console.log(`• Volume: ${btcSentiment.marketContext.volume}`);
+    
+    console.log('\n💡 TRADING SIGNAL:');
+    const signalIcon = btcSentiment.tradingSignal.action.includes('BUY') ? '🟢' : 
+                      btcSentiment.tradingSignal.action.includes('SELL') ? '🔴' : '🟡';
+    console.log(`${signalIcon} Action: ${btcSentiment.tradingSignal.action}`);
+    console.log(`• Confidence: ${(btcSentiment.tradingSignal.confidence * 100).toFixed(1)}%`);
+    console.log(`• Risk Level: ${btcSentiment.tradingSignal.riskLevel}`);
+    console.log(`• Reason: ${btcSentiment.tradingSignal.reason}`);
+    
+    console.log('\n⚡ GPU PROCESSING METRICS:');
+    console.log(`• Total Time: ${btcSentiment.processingMetrics.totalTimeMs}ms`);
+    console.log(`• GPU Time: ${btcSentiment.processingMetrics.gpuTimeMs}ms`);
+    console.log(`• Sources Processed: ${btcSentiment.processingMetrics.sourcesProcessed}`);
+    console.log(`• Tokens Analyzed: ${btcSentiment.processingMetrics.tokensAnalyzed}`);
+    console.log(`• GPU Acceleration: ${btcSentiment.processingMetrics.gpuTimeMs > 0 ? '✅ ACTIVE' : '❌ FALLBACK TO CPU'}`);
+    
+    // Test sentiment alignment
+    console.log('\n🔄 SENTIMENT ALIGNMENT TEST:');
+    const sources = [
+      { name: 'Twitter', score: btcSentiment.sources.twitter.score },
+      { name: 'Reddit', score: btcSentiment.sources.reddit.score },
+      { name: 'On-Chain', score: btcSentiment.sources.onChain.sentimentScore }
+    ];
+    
+    const alignedSources = sources.filter(s => 
+      (btcSentiment.overallScore > 0 && s.score > 0) || 
+      (btcSentiment.overallScore < 0 && s.score < 0)
+    );
+    
+    const alignmentPercent = (alignedSources.length / sources.length) * 100;
+    console.log(`• Alignment: ${alignmentPercent.toFixed(0)}% (${alignedSources.length}/${sources.length} sources agree)`);
+    
+    if (alignmentPercent >= 66) {
+      console.log('• Status: ✅ STRONG CONSENSUS');
+    } else if (alignmentPercent >= 33) {
+      console.log('• Status: ⚠️ MIXED SIGNALS');
+    } else {
+      console.log('• Status: ❌ CONFLICTING SIGNALS');
+    }
+    
+    // Success summary
+    console.log('\n' + '='.repeat(60));
+    console.log('✅ QUANTUM FORGE SENTIMENT TEST COMPLETE');
+    console.log('🎯 Multi-source sentiment analysis operational');
+    console.log('🚀 GPU acceleration: ' + (btcSentiment.processingMetrics.gpuTimeMs > 0 ? 'ACTIVE' : 'CPU FALLBACK'));
+    console.log('📊 Ready for integration with trading strategies');
+    console.log('='.repeat(60));
+    
   } catch (error) {
-    console.error('❌ Error in QUANTUM FORGE sentiment integration test:', error);
+    console.error('\n❌ ERROR:', error);
+    console.error('Stack:', error.stack);
   } finally {
-    await prisma.$disconnect();
+    // Cleanup GPU resources
+    quantumForgeSentimentEngine.destroy();
+    process.exit(0);
   }
 }
 
-// Run the test
-testQuantumForgeSentimentIntegration().catch(console.error);
+// Run test
+testQuantumForgeSentiment();

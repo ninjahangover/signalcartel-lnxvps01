@@ -128,11 +128,11 @@ export default function OverviewDashboard({
     <div className="space-y-6">
       {/* Trading Mode Status */}
       {accountData && (
-        <Card className="p-4 border-blue-200 bg-blue-50">
+        <Card className="p-4 bg-gray-900 border-purple-500/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <CheckCircle className="h-5 w-5 text-blue-500" />
-              <p className="text-sm text-blue-700">
+              <CheckCircle className="h-5 w-5 text-purple-400" />
+              <p className="text-sm text-gray-300">
                 <strong>{accountData.tradingMode === 'paper' ? '📝 Paper Trading Mode' : '💰 Live Trading Mode'}</strong> - 
                 {accountData.tradingMode === 'paper' 
                   ? ' Safe testing environment with simulated funds'
@@ -151,14 +151,14 @@ export default function OverviewDashboard({
 
       {/* Live Custom Trading Data */}
       {customTradingData && (
-        <Card className="p-6 border-gold-200 bg-gradient-to-r from-gold-50 to-green-50">
+        <Card className="p-6 bg-gradient-to-r from-gray-900 via-purple-900/20 to-pink-900/20 border-purple-500/30">
           <div className="flex items-center gap-3 mb-4">
-            <Zap className="w-8 h-8 text-gold-600" />
+            <Zap className="w-8 h-8 text-purple-400" />
             <div>
-              <h3 className="text-xl font-bold text-gray-900">🚀 Live QUANTUM FORGE™</h3>
-              <p className="text-gray-600">Real-time LLN & Markov Data Generation</p>
+              <h3 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">🚀 Live QUANTUM FORGE™</h3>
+              <p className="text-gray-300">Real-time LLN & Markov Data Generation</p>
             </div>
-            <div className="ml-auto text-sm text-green-600 flex items-center gap-2">
+            <div className="ml-auto text-sm text-green-400 flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <span>Live Updates</span>
             </div>
@@ -166,28 +166,28 @@ export default function OverviewDashboard({
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-700">{customTradingData.trades?.length || 0}</div>
-              <div className="text-sm text-blue-600">Total Trades</div>
+              <div className="text-2xl font-bold text-purple-400">{customTradingData.trades?.length || 0}</div>
+              <div className="text-sm text-purple-300">Total Trades</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-700">
+              <div className="text-2xl font-bold text-green-400">
                 {customTradingData.trades?.length > 0 ? 
                   ((customTradingData.trades.filter((t: any) => t.pnl > 0).length / customTradingData.trades.filter((t: any) => t.pnl !== null).length) * 100).toFixed(1) 
                   : '0.0'}%
               </div>
-              <div className="text-sm text-green-600">Win Rate</div>
+              <div className="text-sm text-green-300">Win Rate</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-700">
+              <div className="text-2xl font-bold text-pink-400">
                 ${(customTradingData.trades?.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0) || 0).toFixed(0)}
               </div>
-              <div className="text-sm text-purple-600">Total P&L</div>
+              <div className="text-sm text-pink-300">Total P&L</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gold-700">
+              <div className="text-2xl font-bold text-cyan-400">
                 ${((customTradingData.trades?.reduce((sum: number, t: any) => sum + t.value, 0) || 0) / 1000).toFixed(0)}K
               </div>
-              <div className="text-sm text-gold-600">Volume</div>
+              <div className="text-sm text-cyan-300">Volume</div>
             </div>
           </div>
           
@@ -243,10 +243,10 @@ export default function OverviewDashboard({
 
       {/* Connection Status for Live Trading */}
       {accountData?.tradingMode === 'live' && !isKrakenConnected && (
-        <Card className="p-4 border-orange-200 bg-orange-50">
+        <Card className="p-4 bg-gray-900 border-orange-500/30">
           <div className="flex items-center space-x-2">
             <AlertCircle className="h-5 w-5 text-orange-500" />
-            <p className="text-sm text-orange-700">
+            <p className="text-sm text-orange-300">
               Connect your Kraken API in the Account tab for live trading data
             </p>
           </div>
@@ -255,24 +255,24 @@ export default function OverviewDashboard({
 
       {/* Error State */}
       {error && (
-        <Card className="p-4 border-red-200 bg-red-50">
+        <Card className="p-4 bg-gray-900 border-red-500/30">
           <div className="flex items-center space-x-2">
             <AlertCircle className="h-5 w-5 text-red-500" />
-            <p className="text-sm text-red-700">Error loading account data: {error}</p>
+            <p className="text-sm text-red-300">Error loading account data: {error}</p>
           </div>
         </Card>
       )}
 
       {/* Top Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-6">
+        <Card className="p-6 bg-gray-900 border-purple-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Portfolio Value</p>
+              <p className="text-sm text-gray-400">Portfolio Value</p>
               {loading ? (
-                <div className="h-8 w-24 bg-gray-200 animate-pulse rounded"></div>
+                <div className="h-8 w-24 bg-gray-700 animate-pulse rounded"></div>
               ) : (
-                <p className="text-2xl font-bold">
+                <p className="text-2xl font-bold text-white">
                   {portfolioData 
                     ? formatCurrency(portfolioData.totalValue)
                     : '--'
@@ -283,20 +283,20 @@ export default function OverviewDashboard({
             <DollarSign className="h-8 w-8 text-blue-500" />
           </div>
           {portfolioData && (
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-400 mt-1">
               {portfolioData.tradingMode === 'quantum_forge' ? 'QUANTUM FORGE™' : portfolioData.tradingMode} • {new Date(portfolioData.lastUpdated).toLocaleTimeString()}
             </p>
           )}
         </Card>
         
-        <Card className="p-6">
+        <Card className="p-6 bg-gray-900 border-purple-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Available Balance</p>
+              <p className="text-sm text-gray-400">Available Balance</p>
               {loading ? (
-                <div className="h-8 w-24 bg-gray-200 animate-pulse rounded"></div>
+                <div className="h-8 w-24 bg-gray-700 animate-pulse rounded"></div>
               ) : (
-                <p className="text-2xl font-bold">
+                <p className="text-2xl font-bold text-white">
                   {portfolioData 
                     ? formatCurrency(portfolioData.availableBalance)
                     : '--'
@@ -308,12 +308,12 @@ export default function OverviewDashboard({
           </div>
         </Card>
         
-        <Card className="p-6">
+        <Card className="p-6 bg-gray-900 border-purple-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Unrealized P&L</p>
+              <p className="text-sm text-gray-400">Unrealized P&L</p>
               {loading ? (
-                <div className="h-8 w-24 bg-gray-200 animate-pulse rounded"></div>
+                <div className="h-8 w-24 bg-gray-700 animate-pulse rounded"></div>
               ) : (
                 <p className={`text-2xl font-bold ${
                   portfolioData && portfolioData.unrealizedPnL >= 0 ? 'text-green-500' : 'text-red-500'
@@ -332,10 +332,10 @@ export default function OverviewDashboard({
           </div>
         </Card>
         
-        <Card className="p-6">
+        <Card className="p-6 bg-gray-900 border-purple-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">24h Alerts</p>
+              <p className="text-sm text-gray-400">24h Alerts</p>
               <p className="text-2xl font-bold">
                 {quantumForgeStatus?.quantumForge?.last24hTrades 
                   ?? engineStatus.totalAlerts
@@ -349,8 +349,8 @@ export default function OverviewDashboard({
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* System Status */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
+        <Card className="p-6 bg-gray-900 border-purple-500/30">
+          <h3 className="text-lg font-semibold mb-4 flex items-center text-white">
             <Zap className="mr-2 h-5 w-5 text-yellow-500" />
             System Status
           </h3>
@@ -416,8 +416,8 @@ export default function OverviewDashboard({
         </Card>
 
         {/* Current Positions */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">📊 Current Positions</h3>
+        <Card className="p-6 bg-gray-900 border-purple-500/30">
+          <h3 className="text-lg font-semibold mb-4 text-white">📊 Current Positions</h3>
           
           {portfolioData && portfolioData.positions.length > 0 ? (
             <div className="space-y-3">
@@ -428,7 +428,7 @@ export default function OverviewDashboard({
                 >
                   <div>
                     <div className="font-medium">{position.symbol}</div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-gray-400">
                       {position.side} • {position.size} @ ${(position.entryPrice || 0).toFixed(2)}
                     </div>
                   </div>
@@ -448,7 +448,7 @@ export default function OverviewDashboard({
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-400">
               <Target className="mx-auto h-12 w-12 mb-2 text-gray-300" />
               <p>No open positions</p>
               <p className="text-xs text-gray-400 mt-1">
@@ -462,44 +462,44 @@ export default function OverviewDashboard({
         </Card>
 
         {/* QUANTUM FORGE™ Strategy Performance */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
+        <Card className="p-6 bg-gray-900 border-purple-500/30">
+          <h3 className="text-lg font-semibold mb-4 flex items-center text-white">
             🧠 QUANTUM FORGE™ Strategy Performance
           </h3>
           
           {quantumForgeStatus?.quantumForge.totalTrades > 0 ? (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{quantumForgeStatus.quantumForge.totalTrades}</div>
-                  <div className="text-sm text-blue-800">Total Trades</div>
+                <div className="text-center p-3 bg-gray-800 border border-purple-500/30 rounded-lg">
+                  <div className="text-2xl font-bold text-purple-400">{quantumForgeStatus.quantumForge.totalTrades}</div>
+                  <div className="text-sm text-purple-300">Total Trades</div>
                 </div>
-                <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{quantumForgeStatus.quantumForge.winRate}%</div>
-                  <div className="text-sm text-green-800">Win Rate</div>
+                <div className="text-center p-3 bg-gray-800 border border-green-500/30 rounded-lg">
+                  <div className="text-2xl font-bold text-green-400">{quantumForgeStatus.quantumForge.winRate}%</div>
+                  <div className="text-sm text-green-300">Win Rate</div>
                 </div>
               </div>
-              <div className="text-center p-3 bg-purple-50 rounded-lg">
+              <div className="text-center p-3 bg-gray-800 border border-pink-500/30 rounded-lg">
                 <div className={`text-2xl font-bold ${
-                  quantumForgeStatus.quantumForge.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'
+                  quantumForgeStatus.quantumForge.totalPnL >= 0 ? 'text-green-400' : 'text-red-400'
                 }`}>
                   ${quantumForgeStatus.quantumForge.totalPnL >= 0 ? '+' : ''}${quantumForgeStatus.quantumForge.totalPnL}
                 </div>
-                <div className="text-sm text-purple-800">Total P&L</div>
+                <div className="text-sm text-pink-300">Total P&L</div>
               </div>
               
               {quantumForgeStatus.aiServices.neuralNetworkActive && (
-                <div className="mt-3 p-3 bg-gold-50 border border-gold-200 rounded-lg">
+                <div className="mt-3 p-3 bg-gray-800 border border-cyan-500/30 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-gold-600" />
-                    <span className="text-sm font-medium text-gold-800">Neural Network Learning Active</span>
+                    <Activity className="w-4 h-4 text-cyan-400" />
+                    <span className="text-sm font-medium text-cyan-300">Neural Network Learning Active</span>
                   </div>
-                  <p className="text-xs text-gold-700 mt-1">AI is analyzing trade patterns for optimization</p>
+                  <p className="text-xs text-cyan-400 mt-1">AI is analyzing trade patterns for optimization</p>
                 </div>
               )}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-400">
               <Target className="mx-auto h-12 w-12 mb-2 text-gray-300" />
               <p className="text-sm">QUANTUM FORGE™ is starting up...</p>
               <p className="text-xs text-gray-400 mt-1">Strategy performance will appear after first trades</p>
@@ -584,7 +584,7 @@ export default function OverviewDashboard({
 
       {/* Live Market Chart - QUANTUM FORGE™ Data */}
       {quantumForgeStatus?.marketData.isCollecting && (
-        <Card className="p-6">
+        <Card className="p-6 bg-gray-900 border-purple-500/30">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold flex items-center">
               <BarChart3 className="mr-2 h-5 w-5 text-green-500" />
@@ -632,8 +632,8 @@ export default function OverviewDashboard({
 
       {/* Market Insights - Real Data */}
       {customTradingData && customTradingData.trades?.length >= 10 && (
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">📈 Market Insights</h3>
+        <Card className="p-6 bg-gray-900 border-purple-500/30">
+          <h3 className="text-lg font-semibold mb-4 text-white">📈 Market Insights</h3>
           
           <div className="grid md:grid-cols-2 gap-6">
             <div>

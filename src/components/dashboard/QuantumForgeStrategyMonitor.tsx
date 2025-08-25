@@ -625,21 +625,21 @@ QUANTUM FORGE Strategy Monitor
         </h3>
         
         <div className="grid md:grid-cols-3 gap-6 mb-6">
-          <div className="text-center p-4 bg-white rounded-lg shadow border-2 border-red-200">
+          <div className="text-center p-4 bg-gray-900 rounded-lg shadow border-2 border-red-200">
             <div className="text-3xl font-bold text-red-600 mb-2">-$0.0019</div>
             <div className="text-gray-600 font-medium">Average Expectancy</div>
           </div>
-          <div className="text-center p-4 bg-white rounded-lg shadow border-2 border-blue-200">
+          <div className="text-center p-4 bg-gray-900 rounded-lg shadow border-2 border-blue-200">
             <div className="text-3xl font-bold text-blue-600 mb-2">0</div>
             <div className="text-gray-600 font-medium">Profitable Strategies</div>
           </div>
-          <div className="text-center p-4 bg-white rounded-lg shadow border-2 border-purple-200">
+          <div className="text-center p-4 bg-gray-900 rounded-lg shadow border-2 border-purple-200">
             <div className="text-xl font-bold text-purple-600 mb-2">CustomPaperEngine</div>
             <div className="text-gray-600 font-medium">Most Active Strategy</div>
           </div>
         </div>
         
-        <div className="bg-white p-6 rounded-lg shadow border">
+        <div className="bg-gray-900 p-6 rounded-lg shadow border">
           <h4 className="text-xl font-bold mb-4 text-gray-800">📈 CustomPaperEngine Performance</h4>
           <div className="grid md:grid-cols-3 gap-4">
             <div className="space-y-2">

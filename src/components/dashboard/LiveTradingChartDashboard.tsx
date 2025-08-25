@@ -54,7 +54,7 @@ interface StrategyPerformance {
   active: boolean;
 }
 
-export default function LiveTradingChartDashboard() {
+export default function QuantumForgeAnalyticsHub() {
   const [selectedSymbol, setSelectedSymbol] = useState('BTCUSD');
   const [timeRange, setTimeRange] = useState('1H'); // 1H, 4H, 1D, 1W
   const [isLive, setIsLive] = useState(true);
@@ -225,14 +225,14 @@ export default function LiveTradingChartDashboard() {
   const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-900">
       {/* Header Controls */}
-      <div className="p-4 bg-white border-b shadow-sm">
+      <div className="p-4 bg-gray-800 border-b border-purple-500/30 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Activity className="w-6 h-6 text-blue-500" />
-              Live Trading Charts
+            <h1 className="text-2xl font-bold text-purple-300 flex items-center gap-2">
+              <Activity className="w-6 h-6 text-purple-400" />
+              QUANTUM FORGE Analytics Hub
             </h1>
             <Badge variant={isLive ? "default" : "secondary"}>
               {isLive ? 'LIVE' : 'PAUSED'}
@@ -244,7 +244,7 @@ export default function LiveTradingChartDashboard() {
             <select 
               value={selectedSymbol} 
               onChange={(e) => setSelectedSymbol(e.target.value)}
-              className="px-3 py-2 border rounded-lg bg-white"
+              className="px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg"
             >
               <option value="BTCUSD">BTC/USD</option>
               <option value="ETHUSD">ETH/USD</option>
@@ -257,7 +257,7 @@ export default function LiveTradingChartDashboard() {
             <select 
               value={timeRange} 
               onChange={(e) => setTimeRange(e.target.value)}
-              className="px-3 py-2 border rounded-lg bg-white"
+              className="px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg"
             >
               <option value="1H">1 Hour</option>
               <option value="4H">4 Hours</option>
@@ -276,7 +276,7 @@ export default function LiveTradingChartDashboard() {
                   setSelectedStrategies([value]);
                 }
               }}
-              className="px-3 py-2 border rounded-lg bg-white text-sm"
+              className="px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg text-sm"
             >
               <option value="all">All Strategies</option>
               <option value="RSI">RSI Strategy</option>
@@ -313,15 +313,15 @@ export default function LiveTradingChartDashboard() {
       <div className="flex-1 flex">
         {/* Chart Area */}
         <div className="flex-1 p-4">
-          <Card className="h-full">
+          <Card className="h-full bg-gray-800 border border-cyan-500/30">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5" />
+                <CardTitle className="text-cyan-300 flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-cyan-400" />
                   {selectedSymbol} Price Chart
                 </CardTitle>
                 <div className="flex items-center gap-4">
-                  <div className="text-2xl font-bold">
+                  <div className="text-2xl font-bold text-white">
                     ${currentPrice.toLocaleString()}
                   </div>
                   <div className={`flex items-center gap-1 ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -344,7 +344,7 @@ export default function LiveTradingChartDashboard() {
         </div>
 
         {/* Sidebar */}
-        <div className="w-80 p-4 bg-white border-l">
+        <div className="w-80 p-4 bg-gray-800 border-l border-purple-500/30">
           <Tabs defaultValue="performance" className="h-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="performance">Performance</TabsTrigger>
@@ -353,41 +353,41 @@ export default function LiveTradingChartDashboard() {
 
             <TabsContent value="performance" className="space-y-4">
               {/* Overall Performance */}
-              <Card>
+              <Card className="bg-gray-900 border border-green-500/30">
                 <CardHeader>
-                  <CardTitle className="text-lg">Overall Performance</CardTitle>
+                  <CardTitle className="text-lg text-green-300">Overall Performance</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Total P&L:</span>
-                    <span className={`font-bold ${totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className="text-gray-400">Total P&L:</span>
+                    <span className={`font-bold ${totalPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {totalPnL >= 0 ? '+' : ''}${totalPnL.toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Win Rate:</span>
-                    <span className="font-bold">{winRate.toFixed(1)}%</span>
+                    <span className="text-gray-400">Win Rate:</span>
+                    <span className="font-bold text-white">{winRate.toFixed(1)}%</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Total Trades:</span>
-                    <span className="font-bold">{totalTrades}</span>
+                    <span className="text-gray-400">Total Trades:</span>
+                    <span className="font-bold text-white">{totalTrades}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Winning Trades:</span>
-                    <span className="font-bold text-green-600">{winningTrades}</span>
+                    <span className="text-gray-400">Winning Trades:</span>
+                    <span className="font-bold text-green-400">{winningTrades}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Losing Trades:</span>
-                    <span className="font-bold text-red-600">{totalTrades - winningTrades}</span>
+                    <span className="text-gray-400">Losing Trades:</span>
+                    <span className="font-bold text-red-400">{totalTrades - winningTrades}</span>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Recent Activity */}
-              <Card>
+              <Card className="bg-gray-900 border border-cyan-500/30">
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
+                  <CardTitle className="text-lg text-cyan-300 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-cyan-400" />
                     Recent Activity
                   </CardTitle>
                 </CardHeader>
@@ -396,14 +396,14 @@ export default function LiveTradingChartDashboard() {
                     {trades.slice(0, 5).map((trade) => (
                       <div key={trade.id} className="text-sm">
                         <div className="flex items-center justify-between">
-                          <span className={trade.side === 'BUY' ? 'text-green-600' : 'text-red-600'}>
+                          <span className={trade.side === 'BUY' ? 'text-green-400' : 'text-red-400'}>
                             {trade.side} {trade.symbol}
                           </span>
-                          <span className="text-gray-500">
+                          <span className="text-gray-400">
                             {new Date(trade.timestamp).toLocaleTimeString()}
                           </span>
                         </div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-gray-500">
                           ${trade.price.toLocaleString()} • {trade.confidence.toFixed(0)}% confidence
                         </div>
                       </div>
@@ -416,7 +416,7 @@ export default function LiveTradingChartDashboard() {
             <TabsContent value="strategies" className="space-y-4">
               {/* Strategy Performance List */}
               {strategies.map((strategy) => (
-                <Card key={strategy.name}>
+                <Card key={strategy.name} className="bg-gray-900 border border-purple-500/30">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
@@ -424,7 +424,7 @@ export default function LiveTradingChartDashboard() {
                           className="w-3 h-3 rounded-full" 
                           style={{ backgroundColor: strategy.color }}
                         />
-                        <span className="font-medium">{strategy.name}</span>
+                        <span className="font-medium text-white">{strategy.name}</span>
                       </div>
                       <Badge variant={strategy.active ? "default" : "secondary"}>
                         {strategy.active ? 'Active' : 'Inactive'}
@@ -433,22 +433,22 @@ export default function LiveTradingChartDashboard() {
                     
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Trades:</span>
-                        <span>{strategy.totalTrades}</span>
+                        <span className="text-gray-400">Trades:</span>
+                        <span className="text-white">{strategy.totalTrades}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Win Rate:</span>
-                        <span>{strategy.winRate.toFixed(1)}%</span>
+                        <span className="text-gray-400">Win Rate:</span>
+                        <span className="text-white">{strategy.winRate.toFixed(1)}%</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">P&L:</span>
-                        <span className={strategy.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}>
+                        <span className="text-gray-400">P&L:</span>
+                        <span className={strategy.totalPnL >= 0 ? 'text-green-400' : 'text-red-400'}>
                           {strategy.totalPnL >= 0 ? '+' : ''}${strategy.totalPnL.toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Avg Trade:</span>
-                        <span>${strategy.avgTradeSize.toFixed(0)}</span>
+                        <span className="text-gray-400">Avg Trade:</span>
+                        <span className="text-white">${strategy.avgTradeSize.toFixed(0)}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -456,9 +456,9 @@ export default function LiveTradingChartDashboard() {
               ))}
               
               {strategies.length === 0 && (
-                <div className="text-center text-gray-500 py-8">
-                  <Target className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                  <div>No strategies found</div>
+                <div className="text-center text-gray-400 py-8">
+                  <Target className="w-8 h-8 mx-auto mb-2 text-gray-500" />
+                  <div className="text-white">No strategies found</div>
                   <div className="text-sm">Start trading to see strategy performance</div>
                 </div>
               )}

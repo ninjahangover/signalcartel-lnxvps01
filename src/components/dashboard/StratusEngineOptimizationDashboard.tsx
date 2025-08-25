@@ -99,7 +99,7 @@ interface MarketDataStatus {
   message: string;
 }
 
-export default function StratusEngineOptimizationDashboard() {
+export default function QuantumForgeNeuralEngine() {
   const [engineStatus, setEngineStatus] = useState<StratusEngineStatus | null>(null);
   const [strategies, setStrategies] = useState<PineScriptStrategy[]>([]);
   const [isInitializing, setIsInitializing] = useState(false);
@@ -137,7 +137,7 @@ export default function StratusEngineOptimizationDashboard() {
   const initializeGlobalEngine = async () => {
     try {
       setIsInitializing(true);
-      console.log('🧠 Ensuring Stratus Engine is running...');
+      console.log('🧠 Initializing QUANTUM FORGE Neural Engine...');
       
       const status = await ensureStratusEngineRunning();
       setEngineStatus(status);
@@ -319,19 +319,19 @@ export default function StratusEngineOptimizationDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold flex items-center gap-3">
-            <Brain className="w-8 h-8 text-purple-600" />
-            Stratus Engine Optimization
+          <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+            <Brain className="w-8 h-8 text-purple-400" />
+            QUANTUM FORGE Neural Engine
           </h2>
-          <p className="text-gray-600 mt-1">
-            Real-time Pine Script optimization targeting 100% win rate
+          <p className="text-gray-400 mt-1">
+            Real-time AI-powered strategy optimization targeting 100% win rate
           </p>
         </div>
         
         <div className="flex items-center gap-4">
           <div className="text-right text-sm">
-            <div className="text-gray-500">Last Update</div>
-            <div className="font-mono">{lastUpdate.toLocaleTimeString()}</div>
+            <div className="text-gray-400">Last Update</div>
+            <div className="font-mono text-white">{lastUpdate.toLocaleTimeString()}</div>
           </div>
           
           <Button
@@ -367,10 +367,10 @@ export default function StratusEngineOptimizationDashboard() {
       <MarketDataStatusIndicator />
 
       {/* Market Data Collection Control */}
-      <Card className="p-4 bg-blue-50 border-blue-200">
+      <Card className="p-4 bg-gray-900 border-purple-500/30">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-blue-900">7-Day Market Data Collection for AI</h3>
+            <h3 className="font-semibold text-purple-300">7-Day Market Data Collection for AI</h3>
             <p className="text-sm text-blue-700">
               Collect and store real market data in database for AI strategy optimization
             </p>
@@ -396,7 +396,7 @@ export default function StratusEngineOptimizationDashboard() {
                   alert('❌ Error: ' + error.message);
                 }
               }}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-purple-600 hover:bg-purple-700 text-white"
             >
               🚀 Start Real Data Collection
             </Button>
@@ -752,66 +752,66 @@ Error: ${result.error || 'Unknown error'}
       </Card>
 
       {/* Telegram Alerts Status */}
-      <Card className="p-4 bg-blue-50 border-blue-200">
-        <h3 className="font-semibold text-blue-900 mb-3">📱 Telegram Strategy Alerts</h3>
+      <Card className="p-4 bg-gray-900 border-purple-500/30">
+        <h3 className="font-semibold text-cyan-300 mb-3">📱 QUANTUM FORGE Alert System</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div className="bg-white p-3 rounded border">
-            <div className="font-semibold text-blue-800">All 3 Strategies Monitored</div>
-            <div className="text-blue-600">✅ RSI Pullback Pro</div>
-            <div className="text-blue-600">✅ Claude Quantum Oscillator</div>
-            <div className="text-blue-600">✅ Stratus Core Neural</div>
+          <div className="bg-gray-800 p-3 rounded border border-cyan-500/30">
+            <div className="font-semibold text-cyan-300">All 3 Strategies Monitored</div>
+            <div className="text-cyan-400">✅ RSI Pullback Pro</div>
+            <div className="text-cyan-400">✅ Claude Quantum Oscillator</div>
+            <div className="text-cyan-400">✅ Stratus Core Neural</div>
           </div>
-          <div className="bg-white p-3 rounded border">
-            <div className="font-semibold text-blue-800">Alert Details</div>
-            <div className="text-xs text-gray-600 mt-1">Signal type (BUY/SELL)</div>
-            <div className="text-xs text-gray-600">Confidence level</div>
-            <div className="text-xs text-gray-600">Strategy-specific parameters</div>
-            <div className="text-xs text-gray-600">Entry price & timestamp</div>
+          <div className="bg-gray-800 p-3 rounded border border-cyan-500/30">
+            <div className="font-semibold text-cyan-300">Alert Details</div>
+            <div className="text-xs text-gray-400 mt-1">Signal type (BUY/SELL)</div>
+            <div className="text-xs text-gray-400">Confidence level</div>
+            <div className="text-xs text-gray-400">Strategy-specific parameters</div>
+            <div className="text-xs text-gray-400">Entry price & timestamp</div>
           </div>
-          <div className="bg-white p-3 rounded border">
-            <div className="font-semibold text-blue-800">Real-time Monitoring</div>
-            <div className="text-blue-600">✅ 30-second signal checks</div>
-            <div className="text-xs text-gray-600 mt-1">Alerts sent when strategies detect tradeable signals</div>
+          <div className="bg-gray-800 p-3 rounded border border-cyan-500/30">
+            <div className="font-semibold text-cyan-300">Real-time Monitoring</div>
+            <div className="text-cyan-400">✅ 30-second signal checks</div>
+            <div className="text-xs text-gray-400 mt-1">Alerts sent when strategies detect tradeable signals</div>
           </div>
         </div>
-        <div className="mt-3 p-2 bg-blue-100 rounded text-sm text-blue-800">
-          <strong>📱 TELEGRAM ALERTS ACTIVE</strong> - You'll receive notifications for all strategy signals
+        <div className="mt-3 p-2 bg-cyan-900/30 rounded text-sm text-cyan-300">
+          <strong>📱 QUANTUM FORGE ALERTS ACTIVE</strong> - Neural network monitoring all strategy signals
         </div>
       </Card>
 
       {/* AI Services Status */}
-      <Card className="p-4 bg-green-50 border-green-200">
-        <h3 className="font-semibold text-green-900 mb-3">🧠 AI Optimization Services Status</h3>
+      <Card className="p-4 bg-gray-900 border-green-500/30">
+        <h3 className="font-semibold text-green-300 mb-3">🧠 QUANTUM FORGE Neural Intelligence Status</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div className="bg-white p-3 rounded border">
-            <div className="font-semibold text-green-800">Pine Script Input Optimizer</div>
-            <div className="text-green-600">✅ Connected to Real Database</div>
-            <div className="text-xs text-gray-600 mt-1">Uses 7-day rolling market data for strategy optimization</div>
+          <div className="bg-gray-800 p-3 rounded border border-cyan-500/30">
+            <div className="font-semibold text-green-300">Pine Script Input Optimizer</div>
+            <div className="text-green-400">✅ Connected to Real Database</div>
+            <div className="text-xs text-gray-400 mt-1">Uses 7-day rolling market data for strategy optimization</div>
           </div>
-          <div className="bg-white p-3 rounded border">
-            <div className="font-semibold text-green-800">Real-Time Market Monitor</div>
-            <div className="text-green-600">✅ Connected to Real Database</div>
-            <div className="text-xs text-gray-600 mt-1">Monitors live market conditions from stored data</div>
+          <div className="bg-gray-800 p-3 rounded border border-cyan-500/30">
+            <div className="font-semibold text-green-300">Real-Time Market Monitor</div>
+            <div className="text-green-400">✅ Connected to Real Database</div>
+            <div className="text-xs text-gray-400 mt-1">Monitors live market conditions from stored data</div>
           </div>
-          <div className="bg-white p-3 rounded border">
-            <div className="font-semibold text-green-800">Custom Paper Trading Integration</div>
-            <div className="text-green-600">✅ Connected to Real Database</div>
-            <div className="text-xs text-gray-600 mt-1">Executes trades based on real market analysis</div>
+          <div className="bg-gray-800 p-3 rounded border border-cyan-500/30">
+            <div className="font-semibold text-green-300">Custom Paper Trading Integration</div>
+            <div className="text-green-400">✅ Connected to Real Database</div>
+            <div className="text-xs text-gray-400 mt-1">Executes trades based on real market analysis</div>
           </div>
         </div>
-        <div className="mt-3 p-2 bg-green-100 rounded text-sm text-green-800">
-          <strong>🎯 ALL AI SERVICES NOW USE REAL MARKET DATA</strong> - No more fake data or mock displays!
+        <div className="mt-3 p-2 bg-green-900/30 rounded text-sm text-green-300">
+          <strong>🎯 QUANTUM FORGE NEURAL ENGINE ACTIVE</strong> - Real-time intelligence processing market data!
         </div>
       </Card>
 
       {/* Global Engine Status Alert */}
       {engineStatus?.isRunning && (
-        <Card className="p-4 mb-6 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+        <Card className="p-4 mb-6 bg-gradient-to-r from-purple-900/20 via-cyan-900/20 to-green-900/20 border-green-500/30">
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
             <div>
-              <h3 className="font-semibold text-green-900">🧠 Global Stratus Engine Active</h3>
-              <p className="text-sm text-green-700">
+              <h3 className="font-semibold text-green-300">🧠 QUANTUM FORGE Neural Engine Online</h3>
+              <p className="text-sm text-green-400">
                 Running continuously across all screens • 
                 Uptime: {engineStatus.startedAt ? Math.floor((Date.now() - engineStatus.startedAt.getTime()) / 1000 / 60) : 0} minutes
               </p>
@@ -821,12 +821,12 @@ Error: ${result.error || 'Unknown error'}
       )}
       
       {isInitializing && (
-        <Card className="p-4 mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+        <Card className="p-4 mb-6 bg-gradient-to-r from-yellow-900/20 to-orange-900/20 border-yellow-500/30">
           <div className="flex items-center gap-3">
             <div className="w-4 h-4 border-2 border-yellow-600 border-t-transparent rounded-full animate-spin"></div>
             <div>
-              <h3 className="font-semibold text-yellow-900">⏳ Connecting to Global Stratus Engine</h3>
-              <p className="text-sm text-yellow-700">Initializing engine components...</p>
+              <h3 className="font-semibold text-yellow-300">⏳ Connecting to QUANTUM FORGE Neural Engine</h3>
+              <p className="text-sm text-yellow-400">Initializing engine components...</p>
             </div>
           </div>
         </Card>
@@ -834,11 +834,11 @@ Error: ${result.error || 'Unknown error'}
 
       {/* System Status Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-4">
+        <Card className="p-4 bg-gray-800 border border-purple-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Input Optimizer</p>
-              <p className="text-2xl font-bold">
+              <p className="text-sm text-gray-400">Input Optimizer</p>
+              <p className="text-2xl font-bold text-purple-300">
                 {engineStatus?.components?.inputOptimizer?.active ? 'ACTIVE' : 'STOPPED'}
               </p>
             </div>
@@ -846,7 +846,7 @@ Error: ${result.error || 'Unknown error'}
               engineStatus?.components?.inputOptimizer?.active ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
             }`} />
           </div>
-          <div className="mt-2 text-xs text-gray-500">
+          <div className="mt-2 text-xs text-gray-400">
             {engineStatus?.components?.inputOptimizer?.strategyCount || 0} strategies • 
             {engineStatus?.components?.inputOptimizer?.optimizationCount || 0} optimizations
           </div>
@@ -863,11 +863,11 @@ Error: ${result.error || 'Unknown error'}
           )}
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-4 bg-gray-800 border border-cyan-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Market Monitor</p>
-              <p className="text-2xl font-bold">
+              <p className="text-sm text-gray-400">Market Monitor</p>
+              <p className="text-2xl font-bold text-cyan-300">
                 {engineStatus?.components?.marketMonitor?.active ? 'MONITORING' : 'OFFLINE'}
               </p>
             </div>
@@ -875,17 +875,17 @@ Error: ${result.error || 'Unknown error'}
               engineStatus?.components?.marketMonitor?.active ? 'bg-blue-500 animate-pulse' : 'bg-gray-400'
             }`} />
           </div>
-          <div className="mt-2 text-xs text-gray-500">
+          <div className="mt-2 text-xs text-gray-400">
             {engineStatus?.components?.marketMonitor?.symbolCount || 0} symbols • 
             {engineStatus?.components?.marketMonitor?.eventCount || 0} events
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-4 bg-gray-800 border border-green-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Market Data</p>
-              <p className="text-2xl font-bold">
+              <p className="text-sm text-gray-400">Market Data</p>
+              <p className="text-2xl font-bold text-green-300">
                 {engineStatus?.components?.marketData?.confidence?.toFixed(0) || 0}%
               </p>
             </div>
@@ -893,16 +893,16 @@ Error: ${result.error || 'Unknown error'}
               engineStatus?.components?.marketData?.active ? 'bg-yellow-500 animate-pulse' : 'bg-gray-400'
             }`} />
           </div>
-          <div className="mt-2 text-xs text-gray-500">
+          <div className="mt-2 text-xs text-gray-400">
             7-day analysis • {engineStatus?.components?.marketData?.symbolCount || 0} symbols
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-4 bg-gray-800 border border-pink-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Custom Paper Trading</p>
-              <p className="text-2xl font-bold">
+              <p className="text-sm text-gray-400">Custom Paper Trading</p>
+              <p className="text-2xl font-bold text-pink-300">
                 {engineStatus?.components?.customPaperTrading?.winRate?.toFixed(1) || 0}%
               </p>
             </div>
@@ -910,24 +910,24 @@ Error: ${result.error || 'Unknown error'}
               engineStatus?.components?.customPaperTrading?.active ? 'bg-purple-500 animate-pulse' : 'bg-gray-400'
             }`} />
           </div>
-          <div className="mt-2 text-xs text-gray-500">
+          <div className="mt-2 text-xs text-gray-400">
             {engineStatus?.components?.customPaperTrading?.tradeCount || 0} trades • custom engine
           </div>
         </Card>
       </div>
 
       {/* Strategy Overview */}
-      <Card className="p-6">
+      <Card className="p-6 bg-gray-800 border border-purple-500/30">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold flex items-center gap-2">
-            <Target className="w-5 h-5 text-gold-600" />
+          <h3 className="text-xl font-bold text-purple-300 flex items-center gap-2">
+            <Target className="w-5 h-5 text-purple-400" />
             Active Strategies
           </h3>
           <Button
             onClick={() => setShowAddStrategy(true)}
             variant="outline"
             size="sm"
-            className="border-blue-300 text-blue-700 hover:bg-blue-50"
+            className="border-purple-500/30 text-purple-300 hover:bg-purple-900/20"
           >
             <span className="mr-2">+</span>
             Add Your Strategy
@@ -935,14 +935,14 @@ Error: ${result.error || 'Unknown error'}
         </div>
         
         {(!engineStatus || !engineStatus.isRunning) ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-400">
             <Settings className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Global Stratus Engine not running. Click "Start System" to activate strategy optimization.</p>
+            <p>QUANTUM FORGE Neural Engine not running. Click "Start System" to activate strategy optimization.</p>
           </div>
         ) : strategies.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-400">
             <Settings className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Loading strategies from Global Stratus Engine...</p>
+            <p>Loading strategies from QUANTUM FORGE Neural Engine...</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -952,18 +952,18 @@ Error: ${result.error || 'Unknown error'}
               .map((strategy, index) => (
               <div 
                 key={index} 
-                className={`border rounded-lg p-4 ${
+                className={`border rounded-lg p-4 bg-gray-900 ${
                   strategy.id === 'rsi_macd_scalper_v3' 
-                    ? 'border-gold-300 bg-gradient-to-r from-gold-50 to-yellow-50 shadow-lg' 
-                    : ''
+                    ? 'border-yellow-500/50 bg-gradient-to-r from-yellow-900/20 to-orange-900/20 shadow-lg' 
+                    : 'border-cyan-500/30'
                 }`}
               >
                 {strategy.id === 'rsi_macd_scalper_v3' && (
                   <div className="mb-3 flex items-center gap-2">
-                    <Badge className="bg-gold-100 text-gold-800 border-gold-300">
+                    <Badge className="bg-yellow-900/30 text-yellow-300 border-yellow-500/30">
                       🏆 SHOWCASE STRATEGY
                     </Badge>
-                    <Badge className="bg-green-100 text-green-800">
+                    <Badge className="bg-green-900/30 text-green-300 border-green-500/30">
                       2 Years Tested
                     </Badge>
                   </div>
@@ -971,9 +971,9 @@ Error: ${result.error || 'Unknown error'}
                 
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h4 className="font-semibold">{strategy.name}</h4>
+                    <h4 className="font-semibold text-white">{strategy.name}</h4>
                     <div className="flex items-center gap-2">
-                      <p className="text-sm text-gray-600">{strategy.id}</p>
+                      <p className="text-sm text-gray-400">{strategy.id}</p>
                       <Button
                         variant="outline"
                         size="sm"
@@ -987,15 +987,15 @@ Error: ${result.error || 'Unknown error'}
                   <div className="flex items-center gap-3">
                     <Badge 
                       variant={strategy.status === 'OPTIMIZING' ? 'default' : 'secondary'}
-                      className={strategy.status === 'OPTIMIZING' ? 'bg-blue-100 text-blue-800' : ''}
+                      className={strategy.status === 'OPTIMIZING' ? 'bg-purple-900/30 text-purple-300' : ''}
                     >
                       {strategy.status}
                     </Badge>
                     <div className="text-right">
-                      <div className="text-lg font-bold text-green-600">
+                      <div className="text-lg font-bold text-green-400">
                         {strategy.performance.winRate.toFixed(1)}%
                       </div>
-                      <div className="text-xs text-gray-500">{strategy.performance.totalTrades} trades</div>
+                      <div className="text-xs text-gray-400">{strategy.performance.totalTrades} trades</div>
                     </div>
                   </div>
                 </div>
@@ -1003,7 +1003,7 @@ Error: ${result.error || 'Unknown error'}
                 {/* Display unique parameters for each strategy */}
                 <StrategyParameterDisplay strategy={strategy} />
 
-                <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+                <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
                   <span>Last optimized: {strategy.optimization.lastOptimized.toLocaleString()}</span>
                   <span>AI Confidence: {(strategy.optimization.aiConfidence * 100).toFixed(1)}%</span>
                 </div>
@@ -1016,38 +1016,38 @@ Error: ${result.error || 'Unknown error'}
       {/* Recent Optimizations and Market Events */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Optimizations */}
-        <Card className="p-6">
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-green-600" />
+        <Card className="p-6 bg-gray-800 border border-green-500/30">
+          <h3 className="text-xl font-bold mb-4 text-green-300 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-green-400" />
             Recent Optimizations
           </h3>
           
           {recentOptimizations.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-400">
               <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <p>No optimizations yet</p>
             </div>
           ) : (
             <div className="space-y-3">
               {recentOptimizations.map((opt, index) => (
-                <div key={index} className="border-l-4 border-green-500 pl-4 py-2">
+                <div key={index} className="border-l-4 border-green-500 bg-gray-900/50 pl-4 py-2 rounded-r">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium">{opt.strategyId}</h4>
-                      <p className="text-sm text-gray-600">{opt.symbol}</p>
+                      <h4 className="font-medium text-white">{opt.strategyId}</h4>
+                      <p className="text-sm text-gray-400">{opt.symbol}</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-green-600 font-bold">
+                      <div className="text-green-400 font-bold">
                         +{opt.expectedWinRateImprovement.toFixed(1)}%
                       </div>
-                      <div className="text-xs text-gray-500">expected</div>
+                      <div className="text-xs text-gray-400">expected</div>
                     </div>
                   </div>
                   <div className="mt-2">
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs text-gray-500">
                       {opt.optimizationReason.slice(0, 2).join(', ')}
                     </div>
-                    <div className="text-xs text-gray-400 mt-1">
+                    <div className="text-xs text-gray-500 mt-1">
                       {opt.timestamp.toLocaleString()}
                     </div>
                   </div>
@@ -1058,29 +1058,29 @@ Error: ${result.error || 'Unknown error'}
         </Card>
 
         {/* Market Events */}
-        <Card className="p-6">
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-orange-600" />
+        <Card className="p-6 bg-gray-800 border border-orange-500/30">
+          <h3 className="text-xl font-bold mb-4 text-orange-300 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-orange-400" />
             Market Events
           </h3>
           
           {marketEvents.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-400">
               <BarChart3 className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <p>No recent market events</p>
             </div>
           ) : (
             <div className="space-y-3">
               {marketEvents.map((event, index) => (
-                <div key={index} className={`border-l-4 pl-4 py-2 ${
+                <div key={index} className={`border-l-4 bg-gray-900/50 rounded-r pl-4 py-2 ${
                   event.severity === 'CRITICAL' ? 'border-red-500' :
                   event.severity === 'HIGH' ? 'border-orange-500' :
                   event.severity === 'MEDIUM' ? 'border-yellow-500' : 'border-blue-500'
                 }`}>
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium">{event.type.replace('_', ' ')}</h4>
-                      <p className="text-sm text-gray-600">{event.symbol}</p>
+                      <h4 className="font-medium text-white">{event.type.replace('_', ' ')}</h4>
+                      <p className="text-sm text-gray-400">{event.symbol}</p>
                     </div>
                     <Badge 
                       variant="outline"
@@ -1095,8 +1095,8 @@ Error: ${result.error || 'Unknown error'}
                     </Badge>
                   </div>
                   <div className="mt-2">
-                    <p className="text-sm text-gray-600">{event.description}</p>
-                    <div className="text-xs text-gray-400 mt-1">
+                    <p className="text-sm text-gray-300">{event.description}</p>
+                    <div className="text-xs text-gray-500 mt-1">
                       {event.timestamp.toLocaleString()}
                     </div>
                   </div>
@@ -1108,9 +1108,9 @@ Error: ${result.error || 'Unknown error'}
       </div>
 
       {/* Win Rate Progress */}
-      <Card className="p-6">
-        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <Target className="w-5 h-5 text-purple-600" />
+      <Card className="p-6 bg-gray-800 border border-purple-500/30">
+        <h3 className="text-xl font-bold mb-4 text-purple-300 flex items-center gap-2">
+          <Target className="w-5 h-5 text-purple-400" />
           Win Rate Optimization Progress
         </h3>
         
@@ -1121,12 +1121,12 @@ Error: ${result.error || 'Unknown error'}
             <div key={index}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{strategy.name}</span>
+                  <span className="font-medium text-white">{strategy.name}</span>
                   {strategy.id === 'rsi_macd_scalper_v3' && (
-                    <Badge className="bg-gold-100 text-gold-600 text-xs">🏆</Badge>
+                    <Badge className="bg-yellow-900/30 text-yellow-300 text-xs">🏆</Badge>
                   )}
                 </div>
-                <span className="text-lg font-bold">
+                <span className="text-lg font-bold text-purple-300">
                   {strategy.performance.winRate.toFixed(1)}% / 100%
                 </span>
               </div>
@@ -1137,8 +1137,8 @@ Error: ${result.error || 'Unknown error'}
                   background: 'linear-gradient(to right, #ef4444 0%, #f97316 25%, #eab308 50%, #84cc16 75%, #22c55e 100%)'
                 }}
               />
-              <div className="text-xs text-gray-500 mt-1">
-                Target: 100% win rate • Global engine optimization active
+              <div className="text-xs text-gray-400 mt-1">
+                Target: 100% win rate • QUANTUM FORGE Neural Engine optimization active
               </div>
             </div>
           ))}
@@ -1148,9 +1148,9 @@ Error: ${result.error || 'Unknown error'}
       {/* Add Custom Strategy Modal */}
       {showAddStrategy && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-gray-900 border border-purple-500/30 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">Add Your Custom Pine Script Strategy</h2>
+              <h2 className="text-2xl font-bold text-purple-300">Add Your Custom QUANTUM FORGE Strategy</h2>
               <Button
                 onClick={() => setShowAddStrategy(false)}
                 variant="outline"
@@ -1163,24 +1163,24 @@ Error: ${result.error || 'Unknown error'}
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Strategy Name *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Strategy Name *</label>
                   <input
                     type="text"
                     value={strategyName}
                     onChange={(e) => setStrategyName(e.target.value)}
                     placeholder="My RSI Killer v2"
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Trading Pair *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Trading Pair *</label>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={strategySymbol}
                       onChange={(e) => setStrategySymbol(e.target.value)}
                       placeholder="BTCUSD"
-                      className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
                     <Button
                       type="button"
@@ -1196,11 +1196,11 @@ Error: ${result.error || 'Unknown error'}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Timeframe</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Timeframe</label>
                   <select
                     value={strategyTimeframe}
                     onChange={(e) => setStrategyTimeframe(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                   >
                     <option value="1m">1 minute</option>
                     <option value="5m">5 minutes</option>
@@ -1213,7 +1213,7 @@ Error: ${result.error || 'Unknown error'}
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Pine Script Code *</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Pine Script Code *</label>
                 <textarea
                   value={customPineScript}
                   onChange={(e) => setCustomPineScript(e.target.value)}
@@ -1240,13 +1240,13 @@ if short_condition
 
 // Note: Stratus Engine automatically handles webhook alerts and trade execution
 // No need to add alert() calls - the engine monitors strategy signals directly`}
-                  className="w-full h-96 px-3 py-2 border rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full h-96 px-3 py-2 bg-gray-800 border border-gray-600 text-white rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-semibold text-blue-900 mb-2">🧠 Stratus Engine Fully Automated System</h4>
-                <div className="text-sm text-blue-800">
+              <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4">
+                <h4 className="font-semibold text-purple-300 mb-2">🧠 QUANTUM FORGE Neural Processing System</h4>
+                <div className="text-sm text-purple-200">
                   <div>• AI automatically extracts and optimizes all input parameters</div>
                   <div>• Your strategy competes against existing strategies for best performance</div>
                   <div>• Real-time parameter adjustments based on 7-day market analysis</div>
@@ -1274,9 +1274,9 @@ if short_condition
                     setShowAddStrategy(false);
                     
                     // Would integrate with strategy registry here
-                    alert(`Strategy "${strategyName}" added successfully! It will appear in the Stratus Engine after the next update.`);
+                    alert(`Strategy "${strategyName}" added successfully! It will appear in the QUANTUM FORGE Neural Engine after the next update.`);
                   }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
                 >
                   Add Strategy to Engine
                 </Button>
@@ -1289,7 +1289,7 @@ if short_condition
       {/* Trading Pair Selector Modal */}
       {showTradingPairSelector && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-gray-900 border border-cyan-500/30 rounded-lg p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto">
             <TradingPairSelector
               selectedPair={selectedStrategyForPairChange ? 
                 strategies.find(s => s.id === selectedStrategyForPairChange)?.symbol : 

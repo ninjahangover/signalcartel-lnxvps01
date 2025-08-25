@@ -93,7 +93,7 @@ export default function RealTradingDashboard() {
 
   if (!account) {
     return (
-      <Card className="p-6">
+      <Card className="p-6 bg-gray-900 border-purple-500/30">
         <div className="flex items-center gap-3">
           <RefreshCw className="w-5 h-5 animate-spin" />
           <span>Connecting to Alpaca...</span>
@@ -125,12 +125,12 @@ export default function RealTradingDashboard() {
       </div>
 
       {/* Warning Banner */}
-      <Card className="p-4 bg-gradient-to-r from-red-50 to-orange-50 border-red-200">
+      <Card className="p-4 bg-gradient-to-r from-gray-900 via-red-900/20 to-orange-900/20 border-red-500/30">
         <div className="flex items-center gap-3">
           <AlertCircle className="w-6 h-6 text-red-600" />
           <div>
-            <h3 className="font-semibold text-red-900">⚠️ LIVE TRADING MODE - REAL MONEY AT RISK</h3>
-            <p className="text-sm text-red-700">
+            <h3 className="font-semibold text-red-300">⚠️ LIVE TRADING MODE - REAL MONEY AT RISK</h3>
+            <p className="text-sm text-red-400">
               This tab shows live Kraken trading with your actual funds. All trades execute with real money.
               Ensure you have tested strategies thoroughly in Paper Trading first.
             </p>
@@ -140,10 +140,10 @@ export default function RealTradingDashboard() {
 
       {/* Account Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-4">
+        <Card className="p-4 bg-gray-900 border-purple-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Portfolio Value</p>
+              <p className="text-sm text-gray-400">Portfolio Value</p>
               <p className="text-2xl font-bold text-red-600">
                 ${parseFloat(account.portfolio_value).toLocaleString()}
               </p>
@@ -153,10 +153,10 @@ export default function RealTradingDashboard() {
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-4 bg-gray-900 border-purple-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Available Balance</p>
+              <p className="text-sm text-gray-400">Available Balance</p>
               <p className="text-2xl font-bold text-red-600">
                 ${parseFloat(account.buying_power).toLocaleString()}
               </p>
@@ -166,10 +166,10 @@ export default function RealTradingDashboard() {
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-4 bg-gray-900 border-purple-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Cash Balance</p>
+              <p className="text-sm text-gray-400">Cash Balance</p>
               <p className="text-2xl font-bold text-red-600">
                 ${parseFloat(account.cash).toLocaleString()}
               </p>
@@ -179,10 +179,10 @@ export default function RealTradingDashboard() {
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-4 bg-gray-900 border-purple-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Positions</p>
+              <p className="text-sm text-gray-400">Positions</p>
               <p className="text-2xl font-bold">{positions.length}</p>
             </div>
             <TrendingUp className="w-8 h-8 text-purple-500" />
@@ -191,11 +191,11 @@ export default function RealTradingDashboard() {
       </div>
 
       {/* Live Trading Warning */}
-      <Card className="p-6 bg-yellow-50 border-yellow-200">
-        <h3 className="text-lg font-semibold mb-4 text-yellow-900">🚨 Live Trading via Kraken Webhooks</h3>
+      <Card className="p-6 bg-gray-900 border-yellow-500/30">
+        <h3 className="text-lg font-semibold mb-4 text-yellow-300">🚨 Live Trading via Kraken Webhooks</h3>
         <div className="space-y-3">
-          <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4">
-            <h4 className="font-semibold text-yellow-900 mb-2">How Live Trading Works:</h4>
+          <div className="bg-gray-800 border border-yellow-500/30 rounded-lg p-4">
+            <h4 className="font-semibold text-yellow-300 mb-2">How Live Trading Works:</h4>
             <div className="space-y-2 text-sm text-yellow-800">
               <div>• <strong>Stratus Engine AI:</strong> Analyzes market data and generates trading signals</div>
               <div>• <strong>Webhook System:</strong> Sends trade signals to kraken.circuitcartel.com/webhook</div>
@@ -203,9 +203,9 @@ export default function RealTradingDashboard() {
               <div>• <strong>Real-time Monitoring:</strong> Track all trades and performance here</div>
             </div>
           </div>
-          <div className="bg-red-100 border border-red-300 rounded-lg p-4">
-            <h4 className="font-semibold text-red-900 mb-2">⚠️ IMPORTANT:</h4>
-            <div className="space-y-2 text-sm text-red-800">
+          <div className="bg-gray-800 border border-red-500/30 rounded-lg p-4">
+            <h4 className="font-semibold text-red-300 mb-2">⚠️ IMPORTANT:</h4>
+            <div className="space-y-2 text-sm text-red-300">
               <div>• This uses your REAL MONEY from Kraken account</div>
               <div>• Only proceed if paper trading showed consistent profits</div>
               <div>• AI trades automatically when confidence is high</div>
@@ -236,10 +236,10 @@ export default function RealTradingDashboard() {
       </Card>
 
       {/* Open Positions */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">🔴 Live Positions (Real Money)</h3>
+      <Card className="p-6 bg-gray-900 border-purple-500/30">
+        <h3 className="text-lg font-semibold mb-4 text-white">🔴 Live Positions (Real Money)</h3>
         {positions.length === 0 ? (
-          <p className="text-gray-500">No open positions</p>
+          <p className="text-gray-400">No open positions</p>
         ) : (
           <div className="space-y-2">
             {positions.map((pos, idx) => (
@@ -268,10 +268,10 @@ export default function RealTradingDashboard() {
       </Card>
 
       {/* Recent Orders */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">🔴 Live Order History (Real Money)</h3>
+      <Card className="p-6 bg-gray-900 border-purple-500/30">
+        <h3 className="text-lg font-semibold mb-4 text-white">🔴 Live Order History (Real Money)</h3>
         {orders.length === 0 ? (
-          <p className="text-gray-500">No recent orders</p>
+          <p className="text-gray-400">No recent orders</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -319,10 +319,10 @@ export default function RealTradingDashboard() {
       </Card>
 
       {/* Manual Override */}
-      <Card className="p-6 bg-red-50 border-red-200">
-        <h3 className="text-lg font-semibold mb-4 text-red-900">🚨 Emergency Manual Override</h3>
-        <div className="bg-red-100 border border-red-300 rounded-lg p-4 mb-4">
-          <p className="text-sm text-red-800">
+      <Card className="p-6 bg-gray-900 border-red-500/30">
+        <h3 className="text-lg font-semibold mb-4 text-red-300">🚨 Emergency Manual Override</h3>
+        <div className="bg-gray-800 border border-red-500/30 rounded-lg p-4 mb-4">
+          <p className="text-sm text-red-300">
             <strong>WARNING:</strong> Manual trades override AI system and execute immediately with real money.
             Only use in emergency situations or when you're 100% confident in the trade.
           </p>

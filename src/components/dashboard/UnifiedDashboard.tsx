@@ -40,6 +40,7 @@ import CustomPaperTradingDashboard from './CustomPaperTradingDashboard';
 import LiveTradingChartDashboard from './LiveTradingChartDashboard';
 import QuantumForgeStrategyMonitor from './QuantumForgeStrategyMonitor';
 import SentimentAnalysisDashboard from './SentimentAnalysisDashboard';
+import QuantumForgeSentimentDashboard from './QuantumForgeSentimentDashboard';
 
 interface UnifiedDashboardProps {
   isKrakenConnected: boolean;
@@ -239,9 +240,9 @@ export default function UnifiedDashboard({
     },
     {
       id: 'sentiment-analysis',
-      label: 'Sentiment Intelligence',
+      label: 'QUANTUM FORGE™ Sentiment',
       icon: Activity,
-      description: 'Live Sentiment Analysis & Signal Enhancement'
+      description: 'Multi-Source GPU-Accelerated Sentiment Intelligence'
     },
     {
       id: 'paper-trading',
@@ -292,7 +293,7 @@ export default function UnifiedDashboard({
         return <StratusBrainDashboard />;
       
       case 'sentiment-analysis':
-        return <SentimentAnalysisDashboard />;
+        return <QuantumForgeSentimentDashboard />;
       
       case 'paper-trading':
         return <CustomPaperTradingDashboard />;
@@ -442,13 +443,15 @@ export default function UnifiedDashboard({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-950">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 lg:px-6 py-3 lg:py-4">
+      <div className="bg-gradient-to-r from-gray-900 via-purple-900/20 to-pink-900/20 border-b border-purple-500/30 px-4 lg:px-6 py-3 lg:py-4">
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
           <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Signal Cartel Dashboard</h1>
-            <p className="text-sm lg:text-base text-gray-600">
+            <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              🧠 QUANTUM FORGE™ Trading Platform
+            </h1>
+            <p className="text-sm lg:text-base text-gray-400">
               Unified trading platform powered by The Stratus Engine™
             </p>
           </div>
@@ -456,14 +459,14 @@ export default function UnifiedDashboard({
           <div className="flex flex-wrap items-center gap-2 lg:gap-4">
             {/* Trading Mode Selector */}
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Mode:</span>
-              <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+              <span className="text-sm text-gray-300">Mode:</span>
+              <div className="flex items-center space-x-1 bg-gray-800 border border-purple-500/30 rounded-lg p-1">
                 <button
                   onClick={() => handleTradingModeChange('paper')}
                   className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                     tradingMode === 'paper'
-                      ? 'bg-blue-500 text-white'
-                      : 'text-gray-600 hover:bg-gray-200'
+                      ? 'bg-purple-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-700'
                   }`}
                 >
                   📝 Paper
@@ -472,8 +475,8 @@ export default function UnifiedDashboard({
                   onClick={() => handleTradingModeChange('live')}
                   className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                     tradingMode === 'live'
-                      ? 'bg-red-500 text-white'
-                      : 'text-gray-600 hover:bg-gray-200'
+                      ? 'bg-red-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-700'
                   }`}
                 >
                   💰 Live
@@ -487,7 +490,7 @@ export default function UnifiedDashboard({
                 <div className="text-sm font-semibold text-gray-900">
                   ${(accountData.totalValue || 0).toLocaleString()}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-400">
                   {tradingMode === 'paper' ? 'Paper Balance' : 'Live Balance'}
                 </div>
               </div>
@@ -498,7 +501,7 @@ export default function UnifiedDashboard({
               <div className={`w-3 h-3 rounded-full ${
                 engineStatus.isRunning ? 'bg-green-400' : 'bg-gray-400'
               }`} />
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-gray-300">
                 {engineStatus.isRunning ? 'Engine Active' : 'Engine Stopped'}
               </span>
             </div>
@@ -509,7 +512,7 @@ export default function UnifiedDashboard({
                 <div className="text-sm font-semibold text-gray-900">
                   {session?.user?.name || session?.user?.email}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-400">
                   {session?.user?.role === 'super_admin' ? 'Super Admin' : 
                    session?.user?.role === 'admin' ? 'Admin' : 
                    'Professional Trader'}
@@ -524,13 +527,13 @@ export default function UnifiedDashboard({
                       router.push('/');
                     }
                   }}
-                  className="text-gold-600 hover:text-gold-700 text-xs px-2 py-1 border border-gold-200 rounded hover:bg-gold-50 transition-colors"
+                  className="text-cyan-400 hover:text-cyan-300 text-xs px-2 py-1 border border-cyan-500/30 rounded hover:bg-cyan-500/20 transition-colors"
                 >
                   {session?.user?.role === 'admin' || session?.user?.role === 'super_admin' ? 'Admin' : 'Home'}
                 </button>
                 <button
                   onClick={() => signOut({ callbackUrl: '/' })}
-                  className="text-red-600 hover:text-red-700 text-xs px-2 py-1 border border-red-200 rounded hover:bg-red-50 transition-colors"
+                  className="text-red-400 hover:text-red-300 text-xs px-2 py-1 border border-red-500/30 rounded hover:bg-red-500/20 transition-colors"
                 >
                   Logout
                 </button>
@@ -541,21 +544,21 @@ export default function UnifiedDashboard({
       </div>
 
       {/* Main Content with Tabs */}
-      <div className="p-6">
+      <div className="p-6 bg-gray-950">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           {/* Tab Navigation */}
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-1 h-auto p-2 mb-6">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-1 h-auto p-2 mb-6 bg-gray-900 border border-purple-500/30">
             {tabItems.map((tab) => {
               const IconComponent = tab.icon;
               return (
                 <TabsTrigger 
                   key={tab.id} 
                   value={tab.id}
-                  className="flex flex-col items-center justify-center space-y-1 py-3 px-2 h-auto"
+                  className="flex flex-col items-center justify-center space-y-1 py-3 px-2 h-auto text-gray-300 data-[state=active]:bg-purple-600 data-[state=active]:text-white hover:bg-gray-800 transition-colors"
                 >
                   <IconComponent size={18} />
                   <span className="text-xs font-medium">{tab.label}</span>
-                  <span className="hidden lg:block text-[10px] text-gray-500">{tab.description}</span>
+                  <span className="hidden lg:block text-[10px] text-gray-400 data-[state=active]:text-gray-200">{tab.description}</span>
                 </TabsTrigger>
               );
             })}
@@ -569,7 +572,7 @@ export default function UnifiedDashboard({
       </div>
 
       {/* Status Bar */}
-      <div className="bg-gray-900 text-white px-4 lg:px-6 py-2 mt-6">
+      <div className="bg-gradient-to-r from-gray-900 via-purple-900/30 to-pink-900/30 border-t border-purple-500/30 text-white px-4 lg:px-6 py-2 mt-6">
         <div className="flex flex-col lg:flex-row lg:justify-between items-start lg:items-center text-xs lg:text-sm gap-2">
           <div className="flex flex-wrap items-center gap-2 lg:gap-6">
             <span className="flex items-center space-x-2">
