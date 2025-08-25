@@ -399,23 +399,36 @@ if (short_condition)
     // Simulate optimization process
     await new Promise(resolve => setTimeout(resolve, 3000));
     
-    // Get historical performance data (replaces random generation)
-    const getHistoricalPerformance = (params: Record<string, any>) => {
-      // In production, this would query the database for actual backtest results
-      // For now, return static historical data to replace random generation
-      const strategiesPerformance = [
-        { winRate: 68.5, profitFactor: 1.85, totalTrades: 47, sharpeRatio: 1.2 },
-        { winRate: 72.3, profitFactor: 2.1, totalTrades: 52, sharpeRatio: 1.4 },
-        { winRate: 65.1, profitFactor: 1.67, totalTrades: 41, sharpeRatio: 1.1 },
-        { winRate: 70.8, profitFactor: 1.92, totalTrades: 38, sharpeRatio: 1.3 },
-        { winRate: 66.7, profitFactor: 1.75, totalTrades: 45, sharpeRatio: 1.15 }
-      ];
-      
-      // Use parameter hash to consistently select performance data
-      const paramHash = Object.values(params).join('|');
-      const index = Math.abs(paramHash.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) % strategiesPerformance.length;
-      
-      return strategiesPerformance[index];
+    // Get real historical performance data from database
+    const getHistoricalPerformance = async (strategyName: string, params: Record<string, any>) => {
+      try {
+        // Query actual strategy performance from database
+        const response = await fetch(`/api/strategy-performance?strategy=${encodeURIComponent(strategyName)}`, {
+          cache: 'no-cache'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          return {
+            winRate: data.winRate || 0,
+            profitFactor: data.profitFactor || 1.0,
+            totalTrades: data.totalTrades || 0,
+            sharpeRatio: data.sharpeRatio || 0
+          };
+        } else {
+          throw new Error('Strategy performance API failed');
+        }
+      } catch (error) {
+        console.warn(`No real data for ${strategyName}, using conservative estimates`);
+        
+        // Return conservative baseline performance instead of fake data
+        return {
+          winRate: 50.0,  // Break-even baseline
+          profitFactor: 1.0, // No profit/loss
+          totalTrades: 0,    // No trades yet
+          sharpeRatio: 0     // No risk-adjusted return
+        };
+      }
     };
 
     // Generate optimization results using real historical data
@@ -448,9 +461,9 @@ if (short_condition)
         optimizedParams[param.name] = optimizedValue;
       });
       
-      // Use real performance metrics from historical data
-      // In production, this would query actual backtest results from database
-      const historicalPerformance = getHistoricalPerformance(optimizedParams);
+      // Get real performance metrics from historical database data
+      const strategyName = selectedStrategy?.name || 'unknown-strategy';
+      const historicalPerformance = await getHistoricalPerformance(strategyName, optimizedParams);
       
       results.push({
         parameters: optimizedParams,

@@ -49,17 +49,24 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // If we don't have enough recent data, generate realistic simulated data
+    // If we don't have enough recent data, return what we have with a warning
     if (marketData.length < 20) {
-      console.log(`Limited market data for ${symbol}, generating simulated data`);
+      console.log(`⚠️ Limited real market data for ${symbol}: only ${marketData.length} points available`);
       
-      const simulatedData = generateSimulatedMarketData(symbol, limit, hoursBack);
+      // Return the real data we have, even if limited
+      const formattedLimitedData = marketData.map(tick => ({
+        timestamp: tick.timestamp.toISOString(),
+        price: tick.close,
+        volume: tick.volume || 0,
+        symbol: tick.symbol
+      }));
       
       return NextResponse.json({
         success: true,
-        data: simulatedData,
-        source: 'simulated',
-        message: `Generated ${simulatedData.length} simulated data points for ${symbol}`
+        data: formattedLimitedData,
+        source: 'database_limited',
+        message: `Limited real data: only ${formattedLimitedData.length} real market data points available for ${symbol}. No simulated data provided.`,
+        warning: 'Insufficient data - consider running market data collector'
       });
     }
 
@@ -79,19 +86,17 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Market data API error:', error);
+    console.error('❌ Market data API error - no fallback provided:', error);
     
-    // Fallback to simulated data on any error
-    const symbol = 'BTCUSD';
-    const simulatedData = generateSimulatedMarketData(symbol, 100, 1);
-    
+    // Return error instead of simulated data
     return NextResponse.json({
-      success: true,
-      data: simulatedData,
-      source: 'simulated_fallback',
-      message: 'Database error, using simulated data',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
+      success: false,
+      data: [],
+      source: 'error',
+      message: 'Real market data unavailable - database error occurred',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      noSimulatedData: true
+    }, { status: 500 });
   }
 }
 

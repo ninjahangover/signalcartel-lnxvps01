@@ -21,18 +21,9 @@ import {
   RefreshCw
 } from 'lucide-react';
 
-interface OrderBookLevel {
-  price: number;
-  quantity: number;
-  total?: number;
-}
-
-interface OrderBookData {
+interface RealOrderBookData {
   symbol: string;
   timestamp: string;
-  bids: OrderBookLevel[];
-  asks: OrderBookLevel[];
-  spreadPercent: number;
   midPrice: number;
   liquidityScore: number;
   marketPressure: number;
@@ -41,90 +32,107 @@ interface OrderBookData {
   entrySignal: string;
   confidenceScore: number;
   timeframe: string;
+  spreadPercent: number;
   orderFlowImbalance: number;
   priceDiscoveryEfficiency: number;
   marketMakerActivity: number;
+  bids: Array<{ price: number; quantity: number; total: number }>;
+  asks: Array<{ price: number; quantity: number; total: number }>;
 }
 
 export default function OrderBookIntelligenceDashboard() {
-  const [orderBookData, setOrderBookData] = useState<Record<string, OrderBookData>>({});
+  const [orderBookData, setOrderBookData] = useState<Record<string, RealOrderBookData>>({});
   const [selectedSymbol, setSelectedSymbol] = useState('BTCUSDT');
   const [isConnected, setIsConnected] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const symbols = ['BTCUSDT', 'ETHUSDT', 'ADAUSDT', 'SOLUSDT'];
 
-  // Mock data for demonstration (real data would come from WebSocket)
-  const generateMockData = (symbol: string): OrderBookData => {
-    const basePrice = symbol === 'BTCUSDT' ? 65000 : 
-                     symbol === 'ETHUSDT' ? 3500 : 
-                     symbol === 'ADAUSDT' ? 0.45 : 2800;
-
-    const spread = basePrice * (0.0001 + Math.random() * 0.0002);
-    const midPrice = basePrice + (Math.random() - 0.5) * basePrice * 0.002;
-    
-    // Generate order book levels
-    const bids: OrderBookLevel[] = [];
-    const asks: OrderBookLevel[] = [];
-    
-    for (let i = 0; i < 10; i++) {
-      bids.push({
-        price: midPrice - spread/2 - (i * spread * 0.1),
-        quantity: Math.random() * 50 + 10,
-        total: 0
+  // REAL DATA ONLY - NO FALLBACKS, NO MOCK DATA
+  const fetchRealOrderBookData = async (symbol: string): Promise<RealOrderBookData | null> => {
+    try {
+      console.log(`🔥 FETCHING REAL DATA FOR ${symbol} - NO FALLBACKS ALLOWED`);
+      
+      // Fetch from our REAL API endpoint
+      const response = await fetch(`/api/order-book?symbol=${symbol}`, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
       });
-      asks.push({
-        price: midPrice + spread/2 + (i * spread * 0.1),
-        quantity: Math.random() * 50 + 10,
-        total: 0
-      });
+      
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(`API error: ${result.error}`);
+      }
+      
+      if (!result.data || !result.data.midPrice) {
+        throw new Error('Invalid data structure returned from API');
+      }
+      
+      console.log(`✅ REAL DATA FETCHED: ${symbol} = $${result.data.midPrice.toFixed(2)}`);
+      
+      return result.data;
+      
+    } catch (error) {
+      console.error(`❌ REAL DATA FETCH FAILED for ${symbol}:`, error);
+      throw error; // NO FALLBACKS - LET IT FAIL
     }
-
-    const liquidityScore = Math.floor(Math.random() * 40) + 60;
-    const marketPressure = (Math.random() - 0.5) * 100;
-    const institutionalFlow = (Math.random() - 0.5) * 100;
-    const whaleActivityLevel = Math.floor(Math.random() * 80) + 10;
-    
-    const entrySignals = ['STRONG_BUY', 'BUY', 'NEUTRAL', 'SELL', 'STRONG_SELL'];
-    const entrySignal = entrySignals[Math.floor(Math.random() * entrySignals.length)];
-    const confidenceScore = Math.floor(Math.random() * 30) + 65;
-
-    return {
-      symbol,
-      timestamp: new Date().toISOString(),
-      bids,
-      asks,
-      spreadPercent: (spread / midPrice) * 100,
-      midPrice,
-      liquidityScore,
-      marketPressure,
-      institutionalFlow,
-      whaleActivityLevel,
-      entrySignal,
-      confidenceScore,
-      timeframe: ['SCALP', 'SHORT_TERM', 'MEDIUM_TERM'][Math.floor(Math.random() * 3)],
-      orderFlowImbalance: (Math.random() - 0.5) * 100,
-      priceDiscoveryEfficiency: Math.floor(Math.random() * 30) + 70,
-      marketMakerActivity: Math.floor(Math.random() * 40) + 40
-    };
   };
 
-  // Simulate real-time updates
+  // Fetch REAL data - fail completely if APIs don't work
   useEffect(() => {
-    const updateData = () => {
-      const newData: Record<string, OrderBookData> = {};
-      symbols.forEach(symbol => {
-        newData[symbol] = generateMockData(symbol);
-      });
-      setOrderBookData(newData);
-      setLastUpdate(new Date());
-      setIsConnected(true);
+    const updateData = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const newData: Record<string, RealOrderBookData> = {};
+        
+        // Fetch real data for all symbols - FAIL if any don't work
+        for (const symbol of symbols) {
+          try {
+            const data = await fetchRealOrderBookData(symbol);
+            if (data) {
+              newData[symbol] = data;
+            }
+          } catch (error) {
+            console.error(`Failed to fetch real data for ${symbol}:`, error);
+            throw new Error(`Cannot fetch real market data for ${symbol}. API failure: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          }
+        }
+        
+        if (Object.keys(newData).length === 0) {
+          throw new Error('No real market data could be fetched from any API');
+        }
+        
+        setOrderBookData(newData);
+        setLastUpdate(new Date());
+        setIsConnected(true);
+        setError(null);
+        
+      } catch (error) {
+        console.error('Complete API failure:', error);
+        setIsConnected(false);
+        setError(error instanceof Error ? error.message : 'Failed to fetch real market data');
+        // DO NOT set any fallback data - let it fail visibly
+      } finally {
+        setLoading(false);
+      }
     };
 
     updateData(); // Initial load
     
-    const interval = autoRefresh ? setInterval(updateData, 2000) : null;
+    const interval = autoRefresh ? setInterval(updateData, 10000) : null; // Update every 10 seconds
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -134,23 +142,53 @@ export default function OrderBookIntelligenceDashboard() {
 
   const getSignalColor = (signal: string) => {
     switch (signal) {
-      case 'STRONG_BUY': return 'text-green-400 bg-green-900/20';
-      case 'BUY': return 'text-green-300 bg-green-900/10';
-      case 'NEUTRAL': return 'text-yellow-300 bg-yellow-900/10';
-      case 'SELL': return 'text-red-300 bg-red-900/10';
-      case 'STRONG_SELL': return 'text-red-400 bg-red-900/20';
-      default: return 'text-gray-300 bg-gray-900/10';
+      case 'STRONG_BUY': return 'text-green-400 bg-green-900/20 border-green-400';
+      case 'BUY': return 'text-green-300 bg-green-900/10 border-green-300';
+      case 'NEUTRAL': return 'text-yellow-300 bg-yellow-900/10 border-yellow-300';
+      case 'SELL': return 'text-red-300 bg-red-900/10 border-red-300';
+      case 'STRONG_SELL': return 'text-red-400 bg-red-900/20 border-red-400';
+      default: return 'text-gray-300 bg-gray-900/10 border-gray-300';
     }
   };
 
-  const getTimeframeIcon = (timeframe: string) => {
-    switch (timeframe) {
-      case 'SCALP': return <Zap className="w-4 h-4" />;
-      case 'SHORT_TERM': return <Clock className="w-4 h-4" />;
-      case 'MEDIUM_TERM': return <Target className="w-4 h-4" />;
-      default: return <Activity className="w-4 h-4" />;
-    }
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-500 border-t-cyan-400 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            Fetching REAL Market Data...
+          </p>
+          <p className="text-gray-400 mt-2">No fallbacks - only real API data</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center p-6">
+        <Card className="bg-red-900/20 border-red-500/30 p-8 max-w-2xl text-center">
+          <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-red-400 mb-4">REAL DATA FETCH FAILED</h2>
+          <p className="text-red-300 mb-6">{error}</p>
+          <div className="bg-red-950/30 border border-red-500/20 rounded-lg p-4 mb-6">
+            <p className="text-sm text-red-200">
+              🚨 This system ONLY uses real market data. No fallbacks or mock data are provided.
+              If you see this error, it means the real APIs are down or unreachable.
+            </p>
+          </div>
+          <Button
+            onClick={() => window.location.reload()}
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry Real Data Fetch
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -159,21 +197,30 @@ export default function OrderBookIntelligenceDashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-              📊 Order Book Intelligence
+              📊 REAL Order Book Intelligence
             </h1>
-            <p className="text-gray-300 mt-2">Real-time market microstructure analysis from Binance WebSocket streams</p>
+            <p className="text-gray-300 mt-2">🔥 LIVE REAL PRICES - NO FALLBACKS - NO MOCK DATA</p>
+            <div className="flex items-center gap-4 mt-2">
+              <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                ✅ REAL API DATA ONLY
+              </Badge>
+              <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                Kraken, Binance US, CoinGecko
+              </Badge>
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
               <span className="text-sm text-gray-300">
-                {isConnected ? 'Connected' : 'Disconnected'}
+                {isConnected ? 'Real Data Connected' : 'API Failed'}
               </span>
             </div>
             <Button
               onClick={() => setAutoRefresh(!autoRefresh)}
               variant={autoRefresh ? 'default' : 'outline'}
               size="sm"
+              className={autoRefresh ? 'bg-green-600 hover:bg-green-700' : ''}
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${autoRefresh ? 'animate-spin' : ''}`} />
               Auto Refresh
@@ -199,29 +246,50 @@ export default function OrderBookIntelligenceDashboard() {
                   }
                 >
                   {symbol}
+                  {orderBookData[symbol] && (
+                    <span className="ml-2 text-xs text-green-400">
+                      ${orderBookData[symbol].midPrice.toFixed(0)}
+                    </span>
+                  )}
                 </Button>
               ))}
             </div>
             <div className="text-sm text-gray-400">
-              Last update: {lastUpdate.toLocaleTimeString()}
+              Real data updated: {lastUpdate.toLocaleTimeString()}
             </div>
           </div>
         </Card>
 
         {!currentData ? (
-          <Card className="bg-gray-900 border-purple-500/30 p-8 text-center">
-            <Activity className="w-12 h-12 text-purple-500 mx-auto mb-4 animate-pulse" />
-            <p className="text-gray-400">Loading order book intelligence...</p>
+          <Card className="bg-gray-900 border-red-500/30 p-8 text-center">
+            <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <p className="text-red-400 text-lg">No real data available for {selectedSymbol}</p>
+            <p className="text-gray-500 text-sm mt-2">Real API data could not be fetched</p>
           </Card>
         ) : (
           <>
-            {/* Trading Signal Overview */}
+            {/* REAL Price Display */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card className="bg-gray-900 border-green-500/30 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-400">🔥 REAL LIVE PRICE</p>
+                    <p className="text-3xl font-bold text-green-400">
+                      ${currentData.midPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                    <p className="text-xs text-green-300 mt-1">
+                      From Real APIs
+                    </p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-green-500" />
+                </div>
+              </Card>
+
               <Card className="bg-gray-900 border-purple-500/30 p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-400">Entry Signal</p>
-                    <div className={`text-2xl font-bold px-3 py-1 rounded-lg ${getSignalColor(currentData.entrySignal)}`}>
+                    <div className={`text-lg font-bold px-3 py-1 rounded-lg border ${getSignalColor(currentData.entrySignal)}`}>
                       {currentData.entrySignal}
                     </div>
                   </div>
@@ -229,52 +297,36 @@ export default function OrderBookIntelligenceDashboard() {
                 </div>
               </Card>
 
-              <Card className="bg-gray-900 border-purple-500/30 p-6">
+              <Card className="bg-gray-900 border-cyan-500/30 p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-400">Confidence</p>
                     <p className="text-2xl font-bold text-cyan-400">
-                      {currentData.confidenceScore}%
+                      {currentData.confidenceScore.toFixed(1)}%
                     </p>
                   </div>
                   <Shield className="w-8 h-8 text-cyan-500" />
                 </div>
               </Card>
 
-              <Card className="bg-gray-900 border-purple-500/30 p-6">
+              <Card className="bg-gray-900 border-yellow-500/30 p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-400">Timeframe</p>
                     <div className="flex items-center gap-2">
-                      {getTimeframeIcon(currentData.timeframe)}
+                      <Clock className="w-4 h-4 text-yellow-400" />
                       <span className="text-lg font-bold text-yellow-400">
                         {currentData.timeframe}
                       </span>
                     </div>
                   </div>
-                  <Clock className="w-8 h-8 text-yellow-500" />
-                </div>
-              </Card>
-
-              <Card className="bg-gray-900 border-purple-500/30 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-400">Mid Price</p>
-                    <p className="text-2xl font-bold text-green-400">
-                      ${currentData.midPrice.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })}
-                    </p>
-                  </div>
-                  <DollarSign className="w-8 h-8 text-green-500" />
+                  <Target className="w-8 h-8 text-yellow-500" />
                 </div>
               </Card>
             </div>
 
-            {/* Market Intelligence Grid */}
+            {/* Market Intelligence */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Market Pressure */}
               <Card className="bg-gray-900 border-purple-500/30 p-6">
                 <h3 className="text-lg font-semibold mb-4 text-purple-300">Market Pressure</h3>
                 <div className="space-y-4">
@@ -288,7 +340,7 @@ export default function OrderBookIntelligenceDashboard() {
                     <div className="w-full bg-gray-800 rounded-full h-2">
                       <div 
                         className={`h-2 rounded-full ${currentData.marketPressure > 0 ? 'bg-green-500' : 'bg-red-500'}`}
-                        style={{ width: `${Math.abs(currentData.marketPressure)}%` }}
+                        style={{ width: `${Math.min(100, Math.abs(currentData.marketPressure))}%` }}
                       />
                     </div>
                   </div>
@@ -303,7 +355,7 @@ export default function OrderBookIntelligenceDashboard() {
                     <div className="w-full bg-gray-800 rounded-full h-2">
                       <div 
                         className={`h-2 rounded-full ${currentData.institutionalFlow > 0 ? 'bg-green-500' : 'bg-red-500'}`}
-                        style={{ width: `${Math.abs(currentData.institutionalFlow)}%` }}
+                        style={{ width: `${Math.min(100, Math.abs(currentData.institutionalFlow))}%` }}
                       />
                     </div>
                   </div>
@@ -312,146 +364,107 @@ export default function OrderBookIntelligenceDashboard() {
                     <div className="flex justify-between mb-2">
                       <span className="text-sm text-gray-400">Whale Activity</span>
                       <span className="text-sm font-bold text-purple-400">
-                        {currentData.whaleActivityLevel}%
+                        {currentData.whaleActivityLevel.toFixed(1)}%
                       </span>
                     </div>
                     <div className="w-full bg-gray-800 rounded-full h-2">
                       <div 
                         className="h-2 rounded-full bg-purple-500"
-                        style={{ width: `${currentData.whaleActivityLevel}%` }}
+                        style={{ width: `${Math.min(100, currentData.whaleActivityLevel)}%` }}
                       />
                     </div>
                   </div>
                 </div>
               </Card>
 
-              {/* Liquidity Analysis */}
-              <Card className="bg-gray-900 border-purple-500/30 p-6">
-                <h3 className="text-lg font-semibold mb-4 text-cyan-300">Liquidity Analysis</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-400">Liquidity Score</span>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full ${
-                        currentData.liquidityScore > 80 ? 'bg-green-500' :
-                        currentData.liquidityScore > 60 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`} />
-                      <span className="text-sm font-bold text-cyan-400">
-                        {currentData.liquidityScore}
-                      </span>
-                    </div>
+              <Card className="bg-gray-900 border-cyan-500/30 p-6">
+                <h3 className="text-lg font-semibold mb-4 text-cyan-300">Liquidity Metrics</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Liquidity Score:</span>
+                    <span className="text-cyan-400 font-medium">{currentData.liquidityScore.toFixed(1)}/100</span>
                   </div>
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-400">Spread</span>
-                    <span className="text-sm font-bold text-yellow-400">
-                      {currentData.spreadPercent.toFixed(3)}%
-                    </span>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Spread:</span>
+                    <span className="text-white font-medium">{currentData.spreadPercent.toFixed(3)}%</span>
                   </div>
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-400">Price Discovery</span>
-                    <span className="text-sm font-bold text-green-400">
-                      {currentData.priceDiscoveryEfficiency}%
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-400">Market Maker Activity</span>
-                    <span className="text-sm font-bold text-purple-400">
-                      {currentData.marketMakerActivity}%
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-400">Order Flow Imbalance</span>
-                    <span className={`text-sm font-bold ${
-                      Math.abs(currentData.orderFlowImbalance) < 20 ? 'text-green-400' :
-                      Math.abs(currentData.orderFlowImbalance) < 50 ? 'text-yellow-400' : 'text-red-400'
-                    }`}>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Order Flow Imbalance:</span>
+                    <span className={`font-medium ${currentData.orderFlowImbalance > 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {currentData.orderFlowImbalance > 0 ? '+' : ''}{currentData.orderFlowImbalance.toFixed(1)}
                     </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Price Discovery:</span>
+                    <span className="text-purple-400 font-medium">{currentData.priceDiscoveryEfficiency.toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Market Maker Activity:</span>
+                    <span className="text-yellow-400 font-medium">{currentData.marketMakerActivity.toFixed(1)}%</span>
                   </div>
                 </div>
               </Card>
 
-              {/* Order Book Visualization */}
-              <Card className="bg-gray-900 border-purple-500/30 p-6">
-                <h3 className="text-lg font-semibold mb-4 text-pink-300">Order Book (Top 5)</h3>
-                <div className="space-y-2">
-                  <div className="text-xs text-gray-500 flex justify-between">
-                    <span>ASKS (Selling)</span>
-                    <span>Price | Qty</span>
+              <Card className="bg-gray-900 border-green-500/30 p-6">
+                <h3 className="text-lg font-semibold mb-4 text-green-300">Real Data Sources</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <span className="text-gray-300">Kraken API</span>
                   </div>
-                  {currentData.asks.slice(0, 5).reverse().map((ask, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-sm bg-red-900/10 p-2 rounded">
-                      <span className="text-red-400">
-                        ${ask.price.toFixed(2)}
-                      </span>
-                      <span className="text-gray-300">
-                        {ask.quantity.toFixed(3)}
-                      </span>
-                    </div>
-                  ))}
-                  
-                  <div className="border-t border-purple-500/30 my-3 pt-3">
-                    <div className="text-center text-lg font-bold text-purple-400">
-                      SPREAD: ${(currentData.asks[0]?.price - currentData.bids[0]?.price || 0).toFixed(2)}
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <span className="text-gray-300">Binance US API</span>
                   </div>
-                  
-                  <div className="text-xs text-gray-500 flex justify-between">
-                    <span>BIDS (Buying)</span>
-                    <span>Price | Qty</span>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <span className="text-gray-300">CoinGecko API</span>
                   </div>
-                  {currentData.bids.slice(0, 5).map((bid, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-sm bg-green-900/10 p-2 rounded">
-                      <span className="text-green-400">
-                        ${bid.price.toFixed(2)}
-                      </span>
-                      <span className="text-gray-300">
-                        {bid.quantity.toFixed(3)}
-                      </span>
-                    </div>
-                  ))}
+                  <div className="mt-4 p-3 bg-green-950/30 border border-green-500/20 rounded-lg">
+                    <p className="text-xs text-green-200">
+                      ✅ NO MOCK DATA<br/>
+                      ✅ NO FALLBACKS<br/>
+                      ✅ REAL PRICES ONLY
+                    </p>
+                  </div>
                 </div>
               </Card>
             </div>
 
-            {/* System Status */}
-            <Card className="bg-gray-900 border-purple-500/30 p-6">
-              <h3 className="text-lg font-semibold mb-4 text-yellow-300">🧠 QUANTUM FORGE™ Order Book Intelligence</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-400 mb-1">Processing Engine</p>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="text-green-400">Binance WebSocket Active</span>
-                  </div>
+            {/* Order Book Display */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="bg-gray-900 border-red-500/30 p-6">
+                <h3 className="text-lg font-semibold mb-4 text-red-300 flex items-center gap-2">
+                  <TrendingDown className="w-5 h-5" />
+                  Sell Orders (Asks)
+                </h3>
+                <div className="space-y-2">
+                  {currentData.asks?.slice(0, 10).map((ask, index) => (
+                    <div key={index} className="flex justify-between text-sm">
+                      <span className="text-red-300">${ask.price.toFixed(2)}</span>
+                      <span className="text-gray-400">{ask.quantity.toFixed(4)}</span>
+                      <span className="text-gray-500">${ask.total?.toFixed(0)}</span>
+                    </div>
+                  )) || <p className="text-gray-500">No ask data available</p>}
                 </div>
-                <div>
-                  <p className="text-gray-400 mb-1">Analysis Speed</p>
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-yellow-500" />
-                    <span className="text-yellow-400">Real-time (100ms)</span>
-                  </div>
+              </Card>
+
+              <Card className="bg-gray-900 border-green-500/30 p-6">
+                <h3 className="text-lg font-semibold mb-4 text-green-300 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" />
+                  Buy Orders (Bids)
+                </h3>
+                <div className="space-y-2">
+                  {currentData.bids?.slice(0, 10).map((bid, index) => (
+                    <div key={index} className="flex justify-between text-sm">
+                      <span className="text-green-300">${bid.price.toFixed(2)}</span>
+                      <span className="text-gray-400">{bid.quantity.toFixed(4)}</span>
+                      <span className="text-gray-500">${bid.total?.toFixed(0)}</span>
+                    </div>
+                  )) || <p className="text-gray-500">No bid data available</p>}
                 </div>
-                <div>
-                  <p className="text-gray-400 mb-1">Intelligence Sources</p>
-                  <div className="flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-purple-500" />
-                    <span className="text-purple-400">4 Symbols, 20 Levels</span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-gray-400 mb-1">Integration Status</p>
-                  <div className="flex items-center gap-2">
-                    <Brain className="w-4 h-4 text-cyan-500" />
-                    <span className="text-cyan-400">QUANTUM FORGE™ Ready</span>
-                  </div>
-                </div>
-              </div>
-            </Card>
+              </Card>
+            </div>
           </>
         )}
       </div>

@@ -1,11 +1,13 @@
 /**
  * Dynamic Database Strategy Loader
  * Automatically detects and loads strategies from database using Pine Script analysis
+ * Now integrated with Position Management System for real P&L tracking
  */
 
 import StrategyExecutionEngine from './src/lib/strategy-execution-engine';
 import { StrategyService } from './src/lib/strategy-service';
 import { PineScriptParser } from './src/lib/pine-parser';
+import { positionService } from './src/lib/position-management/position-service';
 
 interface DatabaseStrategyConfig {
   id: string;
@@ -204,7 +206,12 @@ async function loadDatabaseStrategies() {
     // Initialize execution engine
     const engine = StrategyExecutionEngine.getInstance();
     engine.setPaperTradingMode(true);
-    console.log('✅ Paper trading mode enabled\n');
+    console.log('✅ Paper trading mode enabled');
+    
+    // Initialize Position Management System
+    console.log('🔄 Initializing Position Management System...');
+    await positionService.initialize();
+    console.log('✅ Position Management System ready\n');
     
     // Convert and load each active strategy dynamically
     let loadedCount = 0;

@@ -15,7 +15,9 @@ import {
   Brain,
   TestTube,
   DollarSign,
-  Sparkles
+  Sparkles,
+  Cpu,
+  Eye
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Card } from '../ui/card';
@@ -36,11 +38,15 @@ import OverviewDashboard from './OverviewDashboard';
 import ConfigurationPanel from './ConfigurationPanel';
 import RealTradingDashboard from './RealTradingDashboard';
 import StratusBrainDashboard from './StratusBrainDashboard';
+import QuantumForgeNeuralEngine from './QuantumForgeNeuralEngine';
+import QuantumForgeCognitiveCore from './QuantumForgeCognitiveCore';
 import CustomPaperTradingDashboard from './CustomPaperTradingDashboard';
 import LiveTradingChartDashboard from './LiveTradingChartDashboard';
+import QuantumForgeAnalyticsHub from './QuantumForgeAnalyticsHub';
 import QuantumForgeStrategyMonitor from './QuantumForgeStrategyMonitor';
 import SentimentAnalysisDashboard from './SentimentAnalysisDashboard';
 import QuantumForgeSentimentDashboard from './QuantumForgeSentimentDashboard';
+import MathematicalIntuitionDashboard from './MathematicalIntuitionDashboard';
 
 interface UnifiedDashboardProps {
   isKrakenConnected: boolean;
@@ -228,21 +234,27 @@ export default function UnifiedDashboard({
     },
     {
       id: 'stratus-optimizer',
-      label: 'Stratus Optimizer',
-      icon: Zap,
-      description: 'Active Trading Strategies & Services'
+      label: 'QUANTUM FORGE™ Neural Engine',
+      icon: Brain,
+      description: 'Neural Strategy Optimization & AI Intelligence'
     },
     {
       id: 'stratus-brain',
-      label: 'Stratus Brain',
-      icon: Sparkles,
-      description: 'AI Analysis & Expectancy Formula'
+      label: 'QUANTUM FORGE™ Cognitive Core',
+      icon: Cpu,
+      description: 'Markov Chain Intelligence & Neural Analysis'
     },
     {
       id: 'sentiment-analysis',
       label: 'QUANTUM FORGE™ Sentiment',
       icon: Activity,
       description: 'Multi-Source GPU-Accelerated Sentiment Intelligence'
+    },
+    {
+      id: 'mathematical-intuition',
+      label: 'Mathematical Intuition™',
+      icon: TestTube,
+      description: 'Flow Field Sensing & Pattern Resonance Analysis'
     },
     {
       id: 'paper-trading',
@@ -252,9 +264,9 @@ export default function UnifiedDashboard({
     },
     {
       id: 'trading-charts',
-      label: 'Trading Charts',
-      icon: BarChart3,
-      description: 'Live Market Data & Analysis'
+      label: 'QUANTUM FORGE™ Analytics Hub',
+      icon: Eye,
+      description: 'Neural Trading Analytics & Market Intelligence'
     },
     {
       id: 'real-trading',
@@ -287,19 +299,22 @@ export default function UnifiedDashboard({
         );
       
       case 'stratus-optimizer':
-        return <QuantumForgeStrategyMonitor />;
+        return <QuantumForgeNeuralEngine />;
       
       case 'stratus-brain':
-        return <StratusBrainDashboard />;
+        return <QuantumForgeCognitiveCore />;
       
       case 'sentiment-analysis':
         return <QuantumForgeSentimentDashboard />;
+      
+      case 'mathematical-intuition':
+        return <MathematicalIntuitionDashboard />;
       
       case 'paper-trading':
         return <CustomPaperTradingDashboard />;
       
       case 'trading-charts':
-        return <LiveTradingChartDashboard />;
+        return <QuantumForgeAnalyticsHub />;
       
       case 'real-trading':
         return (
@@ -547,18 +562,18 @@ export default function UnifiedDashboard({
       <div className="p-6 bg-gray-950">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           {/* Tab Navigation */}
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-1 h-auto p-2 mb-6 bg-gray-900 border border-purple-500/30">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-2 h-auto p-3 mb-6 bg-gradient-to-br from-gray-900/50 to-black/50 border border-purple-400/30 backdrop-blur-sm rounded-xl">
             {tabItems.map((tab) => {
               const IconComponent = tab.icon;
               return (
                 <TabsTrigger 
                   key={tab.id} 
                   value={tab.id}
-                  className="flex flex-col items-center justify-center space-y-1 py-3 px-2 h-auto text-gray-300 data-[state=active]:bg-purple-600 data-[state=active]:text-white hover:bg-gray-800 transition-colors"
+                  className="flex flex-col items-center justify-center space-y-1 py-4 px-3 h-auto text-gray-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-600/80 data-[state=active]:to-cyan-600/80 data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-purple-400/50 hover:bg-gray-800/50 transition-all duration-300 rounded-xl backdrop-blur-sm"
                 >
                   <IconComponent size={18} />
                   <span className="text-xs font-medium">{tab.label}</span>
-                  <span className="hidden lg:block text-[10px] text-gray-400 data-[state=active]:text-gray-200">{tab.description}</span>
+                  <span className="hidden lg:block text-[10px] text-gray-400 data-[state=active]:text-purple-200">{tab.description}</span>
                 </TabsTrigger>
               );
             })}

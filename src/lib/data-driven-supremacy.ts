@@ -72,14 +72,14 @@ class DataDrivenSupremacy {
       console.log(`   ${strategy.strategy} ${strategy.signalType}: ${confidence}% (${strategy._count.id} signals)`);
     }
 
-    // THE INSIGHT: Focus on 95% confidence strategies!
-    const supremeStrategies = signals.filter(s => (s._avg.confidence || 0) >= 0.95);
+    // PHASE 1 APPROACH: Focus on 25% confidence strategies for maximum data collection!
+    const supremeStrategies = signals.filter(s => (s._avg.confidence || 0) >= 0.25);
     
     return {
       highConfidenceStrategies,
       supremeStrategies,
       averageSupremeConfidence: supremeStrategies.reduce((sum, s) => sum + (s._avg.confidence || 0), 0) / supremeStrategies.length,
-      insight: 'Enhanced RSI + Bollinger at 95% confidence = Foundation for 80%+ win rate'
+      insight: 'Phase 1: Liberal 25% confidence threshold = Maximum trade volume for robust AI training dataset'
     };
   }
 

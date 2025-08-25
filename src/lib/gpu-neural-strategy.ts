@@ -34,11 +34,11 @@ export class GPUNeuralStrategy extends BaseStrategy {
   constructor(strategyId: string, symbol: string, config: any) {
     super(strategyId, symbol);
     this.config = {
-      lookbackPeriod: config.lookbackPeriod || 50,
-      predictionHorizon: config.predictionHoriod || 5,
-      confidenceThreshold: config.confidenceThreshold || 0.45, // Very aggressive threshold
-      neuralLayers: config.neuralLayers || [64, 32, 16],
-      learningRate: config.learningRate || 0.001
+      lookbackPeriod: config.lookbackPeriod || 30, // Reduced from 50 to 30 for faster signals
+      predictionHorizon: config.predictionHoriod || 3, // Reduced from 5 to 3 for quicker predictions
+      confidenceThreshold: config.confidenceThreshold || 0.35, // Reduced from 0.45 to 0.35 for more signals
+      neuralLayers: config.neuralLayers || [32, 16, 8], // Smaller network for faster processing
+      learningRate: config.learningRate || 0.002 // Increased learning rate for faster adaptation
     };
   }
   

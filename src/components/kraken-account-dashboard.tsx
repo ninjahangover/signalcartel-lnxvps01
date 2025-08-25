@@ -306,22 +306,71 @@ export default function KrakenAccountDashboard({ isConnected }: KrakenAccountDas
   };
 
   const fetchMarketOverview = async () => {
-    // Simulate market data - in production this would fetch from Kraken's public API
-    const sampleMarkets: MarketData[] = [
-      { symbol: 'BTCUSD', price: 121000.00, change24h: 1150.00, changePercent24h: 2.73, volume24h: 25487.39, high24h: 122000.00, low24h: 119000.00 },
-      { symbol: 'ETHUSD', price: 2695.50, change24h: 87.30, changePercent24h: 3.35, volume24h: 142587.20, high24h: 2750.00, low24h: 2580.00 },
-      { symbol: 'XRPUSD', price: 0.6234, change24h: -0.0156, changePercent24h: -2.44, volume24h: 8547123.45, high24h: 0.6480, low24h: 0.6180 },
-      { symbol: 'SOLUSD', price: 98.75, change24h: 4.83, changePercent24h: 5.14, volume24h: 45632.87, high24h: 102.50, low24h: 93.20 },
-      { symbol: 'ADAUSD', price: 0.4567, change24h: -0.0234, changePercent24h: -4.87, volume24h: 12458736.21, high24h: 0.4890, low24h: 0.4520 }
-    ];
+    try {
+      // Fetch real market data from Kraken API
+      const response = await fetch('/api/kraken-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          endpoint: 'Ticker',
+          params: {
+            pair: 'XXBTZUSD,XETHZUSD,XXRPZUSD,SOLUSD,ADAUSD'
+          }
+        })
+      });
 
-    setMarketOverview({
-      favorites: sampleMarkets.slice(0, 3),
-      topTraded: [...sampleMarkets].sort((a, b) => b.volume24h - a.volume24h),
-      gainers: [...sampleMarkets].filter(m => m.changePercent24h > 0).sort((a, b) => b.changePercent24h - a.changePercent24h),
-      losers: [...sampleMarkets].filter(m => m.changePercent24h < 0).sort((a, b) => a.changePercent24h - b.changePercent24h),
-      newListings: sampleMarkets.slice(-2)
-    });
+      const data = await response.json();
+      
+      if (data.result) {
+        const realMarkets: MarketData[] = [];
+        
+        // Map Kraken response to our MarketData interface
+        const symbols = ['XXBTZUSD', 'XETHZUSD', 'XXRPZUSD', 'SOLUSD', 'ADAUSD'];
+        const displaySymbols = ['BTCUSD', 'ETHUSD', 'XRPUSD', 'SOLUSD', 'ADAUSD'];
+        
+        symbols.forEach((krakenSymbol, index) => {
+          const tickerData = data.result[krakenSymbol];
+          if (tickerData) {
+            const currentPrice = parseFloat(tickerData.c[0]);
+            const yesterdayPrice = parseFloat(tickerData.o);
+            const change24h = currentPrice - yesterdayPrice;
+            const changePercent24h = yesterdayPrice > 0 ? (change24h / yesterdayPrice) * 100 : 0;
+            
+            realMarkets.push({
+              symbol: displaySymbols[index],
+              price: currentPrice,
+              change24h,
+              changePercent24h,
+              volume24h: parseFloat(tickerData.v[1]), // 24h volume
+              high24h: parseFloat(tickerData.h[1]),   // 24h high
+              low24h: parseFloat(tickerData.l[1])     // 24h low
+            });
+          }
+        });
+
+        setMarketOverview({
+          favorites: realMarkets.slice(0, 3),
+          topTraded: [...realMarkets].sort((a, b) => b.volume24h - a.volume24h),
+          gainers: [...realMarkets].filter(m => m.changePercent24h > 0).sort((a, b) => b.changePercent24h - a.changePercent24h),
+          losers: [...realMarkets].filter(m => m.changePercent24h < 0).sort((a, b) => a.changePercent24h - b.changePercent24h),
+          newListings: realMarkets.slice(-2)
+        });
+      } else {
+        console.error('❌ No market data from Kraken API');
+      }
+      
+    } catch (error) {
+      console.error('❌ Error fetching real market data:', error);
+      
+      // Fallback: empty state instead of fake data
+      setMarketOverview({
+        favorites: [],
+        topTraded: [],
+        gainers: [],
+        losers: [],
+        newListings: []
+      });
+    }
   };
 
   // Cache for trading pair mappings

@@ -342,7 +342,20 @@ export class QuantumForgeSentimentEngine {
                            symbol === 'SOL' ? 'SOLUSDT' : 
                            `${symbol}USDT`;
       
-      return orderBookIntelligence.getCurrentSignal(binanceSymbol);
+      // Add timeout to prevent hanging
+      const timeout = new Promise<OrderBookSignal | null>((resolve) => {
+        setTimeout(() => {
+          console.log('⏱️ Order book timeout - using default signal');
+          resolve(this.getDefaultOrderBookSignal(binanceSymbol));
+        }, 2000); // 2 second timeout
+      });
+      
+      const getSignal = new Promise<OrderBookSignal | null>((resolve) => {
+        const signal = orderBookIntelligence.getCurrentSignal(binanceSymbol);
+        resolve(signal);
+      });
+      
+      return await Promise.race([getSignal, timeout]);
     } catch (error) {
       console.error('Failed to get order book signal:', error);
       return null;

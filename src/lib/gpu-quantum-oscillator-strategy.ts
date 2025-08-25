@@ -35,11 +35,11 @@ export class GPUQuantumOscillatorStrategy extends BaseStrategy {
   constructor(strategyId: string, symbol: string, config: any) {
     super(strategyId, symbol);
     this.config = {
-      lookbackPeriod: config.lookbackPeriod || 100,
-      quantumPeriod: config.quantumPeriod || 20,
-      energyThreshold: config.energyThreshold || 0.3, // More aggressive - 30%
-      coherenceThreshold: config.coherenceThreshold || 0.4, // More aggressive - 40%
-      phaseShiftSensitivity: config.phaseShiftSensitivity || 0.5 // More aggressive - 50%
+      lookbackPeriod: config.lookbackPeriod || 60, // Reduced from 100 to 60 for faster quantum calculations
+      quantumPeriod: config.quantumPeriod || 15, // Reduced from 20 to 15 for more responsive oscillations
+      energyThreshold: config.energyThreshold || 0.2, // Reduced from 0.3 to 0.2 for more energy signals
+      coherenceThreshold: config.coherenceThreshold || 0.3, // Reduced from 0.4 to 0.3 for more coherence signals
+      phaseShiftSensitivity: config.phaseShiftSensitivity || 0.4 // Reduced from 0.5 to 0.4 for more phase shift detection
     };
   }
   

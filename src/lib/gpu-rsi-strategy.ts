@@ -31,9 +31,9 @@ export class GPURSIStrategy extends BaseStrategy {
   constructor(strategyId: string, symbol: string, config: any) {
     super(strategyId, symbol);
     this.config = {
-      rsiPeriod: config.rsiPeriod || 14,
-      oversoldLevel: config.oversoldLevel || 40, // More aggressive - trigger more often
-      overboughtLevel: config.overboughtLevel || 60, // More aggressive - trigger more often  
+      rsiPeriod: config.rsiPeriod || 10, // Reduced from 14 to 10 for more responsive signals
+      oversoldLevel: config.oversoldLevel || 45, // Increased from 40 to 45 for more buy signals  
+      overboughtLevel: config.overboughtLevel || 55, // Decreased from 60 to 55 for more sell signals  
       confirmationPeriod: config.confirmationPeriod || 2 // Faster confirmation
     };
   }

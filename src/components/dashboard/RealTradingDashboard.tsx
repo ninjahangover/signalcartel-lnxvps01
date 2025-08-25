@@ -24,26 +24,37 @@ export default function RealTradingDashboard() {
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [testResult, setTestResult] = useState<any>(null);
 
-  // Fetch real data from Kraken API
+  // Fetch real data from Quantum Forge API (Kraken endpoint not implemented yet)
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch real data from Kraken API
-      const response = await fetch('/api/kraken/account');
+      // Use Quantum Forge portfolio data instead of missing Kraken endpoint
+      const response = await fetch('/api/quantum-forge/portfolio');
       if (response.ok) {
         const data = await response.json();
-        setAccount(data.account || { cash: 0, portfolio_value: 0, buying_power: 0 });
-        setPositions(data.positions || []);
-        setOrders(data.orders || []);
+        if (data.success && data.data) {
+          setAccount({ 
+            cash: data.data.availableBalance || 0, 
+            portfolio_value: data.data.totalValue || 0, 
+            buying_power: data.data.availableBalance || 0 
+          });
+          setPositions(data.data.positions || []);
+          setOrders([]);
+        } else {
+          // Use placeholder when no data
+          setAccount({ cash: 0, portfolio_value: 0, buying_power: 0 });
+          setPositions([]);
+          setOrders([]);
+        }
       } else {
-        // Use placeholder when Kraken not connected
+        // Use placeholder when API fails
         setAccount({ cash: 0, portfolio_value: 0, buying_power: 0 });
         setPositions([]);
         setOrders([]);
       }
       setLastUpdate(new Date());
     } catch (error) {
-      console.error('Failed to fetch Kraken data:', error);
+      console.error('Failed to fetch trading data:', error);
       // Use placeholder on error
       setAccount({ cash: 0, portfolio_value: 0, buying_power: 0 });
       setPositions([]);

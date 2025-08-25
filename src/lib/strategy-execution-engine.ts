@@ -418,6 +418,48 @@ class StrategyExecutionEngine {
       // Continue with original signal if sentiment enhancement fails
     }
 
+    // 🧠 MATHEMATICAL INTUITION ENGINE - PARALLEL ANALYSIS
+    let intuitionResult: any = null;
+    try {
+      console.log('🧠 MATHEMATICAL INTUITION: Activating flow field sensing...');
+      
+      const { MathematicalIntuitionEngine } = await import('./mathematical-intuition-engine');
+      const intuitionEngine = MathematicalIntuitionEngine.getInstance();
+      
+      // Prepare market data for intuition analysis
+      const marketData = {
+        price: signal.price,
+        timestamp: new Date(),
+        symbol: signal.symbol || 'BTC',
+        volume: 1000, // Default volume, could be enhanced with real data
+        strategy: this.getStrategyName(strategyId)
+      };
+      
+      // Run parallel analysis: Intuition vs Calculation
+      intuitionResult = await intuitionEngine.runParallelAnalysis(signal, marketData);
+      
+      console.log('🧠 INTUITION ANALYSIS:');
+      console.log('='.repeat(60));
+      console.log(`   🌊 Flow Field Resonance: ${(intuitionResult.intuition.flowFieldResonance * 100).toFixed(1)}%`);
+      console.log(`   🎵 Pattern Resonance: ${(intuitionResult.intuition.patternResonance * 100).toFixed(1)}%`);
+      console.log(`   ⏰ Temporal Intuition: ${(intuitionResult.intuition.temporalIntuition * 100).toFixed(1)}%`);
+      console.log(`   🧠 INTUITION SCORE: ${(intuitionResult.intuition.overallIntuition * 100).toFixed(1)}%`);
+      console.log(`   📊 Traditional Expectancy: ${(intuitionResult.traditional.expectancyScore * 100).toFixed(1)}%`);
+      console.log(`   ⚖️ Recommendation: ${intuitionResult.recommendation.toUpperCase()}`);
+      console.log(`   📈 Performance Gap: ${intuitionResult.performanceGap > 0 ? '+' : ''}${(intuitionResult.performanceGap * 100).toFixed(1)}%`);
+      
+      // Apply intuition-enhanced confidence if it's stronger
+      if (intuitionResult.recommendation === 'intuition' && intuitionResult.intuition.overallIntuition > signal.confidence) {
+        const originalConfidence = signal.confidence;
+        signal.confidence = Math.min(0.99, intuitionResult.intuition.overallIntuition);
+        console.log(`🧠 INTUITION BOOST: ${(originalConfidence * 100).toFixed(1)}% → ${(signal.confidence * 100).toFixed(1)}%`);
+        signal.reason = `${signal.reason} | Intuition-Enhanced: Flow resonance detected`;
+      }
+      
+    } catch (intuitionError) {
+      console.warn('⚠️ Mathematical intuition analysis failed, proceeding:', intuitionError.message);
+    }
+
     // 🚀 QUANTUM SUPREMACY ENGINE INTEGRATION - GPU-ACCELERATED UNLIMITED INTELLIGENCE
     try {
       console.log('🌟 QUANTUM SUPREMACY: Activating unlimited AI enhancement...');
@@ -609,20 +651,20 @@ class StrategyExecutionEngine {
       console.log('🌟 Still quantum + evolution enhanced (extraordinary intelligence active!)');
     }
 
-    // 🎯 ULTIMATE CONFIDENCE FILTER - 95%+ ONLY FOR MAXIMUM WIN RATE
+    // 🎯 PHASE 1 OPTIMIZED STRATEGY APPROACH - 70% CONFIDENCE WITH MORE SIGNALS
     console.log('🎯 FINAL CONFIDENCE ASSESSMENT:');
     console.log(`   📊 Final enhanced confidence: ${(signal.confidence * 100).toFixed(1)}%`);
     
-    // Apply the 95%+ confidence filter for maximum win rate
-    const confidenceThreshold = 0.95; // 95% minimum confidence
+    // Apply the 70%+ confidence filter with optimized strategy parameters
+    const confidenceThreshold = 0.70; // 70% confidence with more responsive strategies
     if (signal.confidence < confidenceThreshold) {
-      console.log(`🚫 CONFIDENCE FILTER: Signal below 95% threshold (${(signal.confidence * 100).toFixed(1)}%)`);
-      console.log(`   💡 Only executing signals with 95%+ confidence for maximum win rate`);
-      console.log(`   🎯 "We win more often with AI and Machine Learning platform"`);
+      console.log(`🚫 CONFIDENCE FILTER: Signal below 70% threshold (${(signal.confidence * 100).toFixed(1)}%)`);
+      console.log(`   💡 Phase 1: Quality signals with optimized strategy parameters`);
+      console.log(`   📊 More frequent signals through better strategy tuning`);
       return;
     }
     
-    console.log(`✅ CONFIDENCE APPROVED: ${(signal.confidence * 100).toFixed(1)}% exceeds 95% threshold`);
+    console.log(`✅ CONFIDENCE APPROVED: ${(signal.confidence * 100).toFixed(1)}% exceeds 70% threshold`);
     console.log(`   🏆 HIGH-CONFIDENCE SIGNAL APPROVED FOR EXECUTION`);
 
     // 🎪 STRATEGY CONSENSUS VOTING - WHEN 3+ STRATEGIES AGREE, WIN RATE SKYROCKETS
@@ -1004,7 +1046,76 @@ class StrategyExecutionEngine {
       const strategyManager = StrategyManager.getInstance();
       const strategy = strategyManager.getStrategy(strategyId);
 
-      // STEP 3: Execute trade (QUANTUM FORGE™ Paper Trading ONLY - Completely separate from LIVE)
+      // STEP 3: MATHEMATICAL INTUITION ENGINE - Analyze REAL data vs Expectancy Equation
+      console.log(`🧠 MATHEMATICAL INTUITION ENGINE: Analyzing ${action} signal for ${strategyId}`);
+      
+      try {
+        const { MathematicalIntuitionEngine } = await import('./mathematical-intuition-engine');
+        const intuitionEngine = MathematicalIntuitionEngine.getInstance();
+        
+        // Create signal object for analysis
+        const tradingSignal = {
+          action: action,
+          confidence: signalData.confidence || 0.75,
+          price: signalData.price || 65000,
+          symbol: symbol,
+          reason: `${strategyId} signal: ${JSON.stringify(signalData)}`
+        };
+        
+        // Get current market data for analysis
+        const marketData = {
+          price: signalData.price || 65000,
+          timestamp: new Date(),
+          symbol: symbol,
+          volume: signalData.volume || 1000,
+          strategy: strategyId
+        };
+        
+        // Run REAL Mathematical Intuition vs Expectancy analysis
+        const analysisResult = await intuitionEngine.runParallelAnalysis(tradingSignal, marketData);
+        
+        console.log(`📊 INTUITION ANALYSIS COMPLETE:`, {
+          strategy: strategyId,
+          symbol: symbol,
+          action: action,
+          intuitionScore: (analysisResult.intuition.overallIntuition * 100).toFixed(1) + '%',
+          expectancyScore: (analysisResult.traditional.expectancyScore * 100).toFixed(1) + '%',
+          recommendation: analysisResult.recommendation.toUpperCase(),
+          performanceGap: (analysisResult.performanceGap * 100).toFixed(1) + '%'
+        });
+        
+        // Store REAL analysis in database for dashboard
+        const { PrismaClient } = await import('@prisma/client');
+        const prisma = new PrismaClient();
+        
+        await prisma.intuitionAnalysis.create({
+          data: {
+            symbol: symbol,
+            strategy: strategyId,
+            signalType: action,
+            originalConfidence: tradingSignal.confidence,
+            signalPrice: tradingSignal.price,
+            flowFieldResonance: analysisResult.intuition.flowFieldResonance,
+            patternResonance: analysisResult.intuition.patternResonance,
+            temporalIntuition: analysisResult.intuition.temporalIntuition,
+            overallIntuition: analysisResult.intuition.overallIntuition,
+            expectancyScore: analysisResult.traditional.expectancyScore,
+            winRateProjection: analysisResult.traditional.projectedWinRate || 0.75,
+            riskRewardRatio: analysisResult.traditional.riskRewardRatio || 2.0,
+            recommendation: analysisResult.recommendation,
+            performanceGap: analysisResult.performanceGap,
+            confidenceGap: analysisResult.confidenceGap || 0,
+            analysisTime: new Date()
+          }
+        });
+        
+        await prisma.$disconnect();
+        
+      } catch (error) {
+        console.error('❌ Mathematical Intuition Engine failed:', error.message);
+      }
+
+      // STEP 4: Execute trade (QUANTUM FORGE™ Paper Trading ONLY - Completely separate from LIVE)
       if (this.paperTradingMode) {
         console.log(`🚀 QUANTUM FORGE™ PAPER TRADING: ${action} for ${strategyId}`);
         

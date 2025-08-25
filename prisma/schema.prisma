@@ -7,8 +7,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db?connection_limit=1&pool_timeout=60&socket_timeout=60"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Account {
@@ -687,4 +687,197 @@ model EnhancedTradingSignal {
   @@index([symbol, signalTime])
   @@index([strategy, signalTime])
   @@index([wasExecuted])
+}
+
+// Mathematical Intuition Analysis Storage
+model IntuitionAnalysis {
+  id             String   @id @default(cuid())
+  
+  // Signal identification
+  symbol         String   // "BTC", "ETH", etc.
+  strategy       String   // Strategy name
+  signalType     String   // "BUY", "SELL", "CLOSE"
+  
+  // Original signal data
+  originalConfidence Float
+  signalPrice        Float
+  
+  // Mathematical Intuition metrics
+  flowFieldResonance    Float // 0.0 to 1.0 - probability current alignment
+  patternResonance      Float // 0.0 to 1.0 - pattern matching confidence
+  temporalIntuition     Float // 0.0 to 1.0 - time-based flow sensing
+  overallIntuition      Float // 0.0 to 1.0 - combined intuition score
+  
+  // Traditional Calculation metrics
+  expectancyScore       Float // 0.0 to 1.0 - traditional expectancy calculation
+  winRateProjection     Float // Projected win rate based on history
+  riskRewardRatio       Float // Traditional risk/reward analysis
+  
+  // Comparison and Recommendation
+  recommendation        String // "intuition" or "calculation"
+  performanceGap        Float  // Difference between approaches
+  confidenceGap         Float  // Final confidence difference
+  
+  // Flow Field Analysis Details (JSON)
+  flowFieldData         String? // JSON with detailed flow analysis
+  patternData           String? // JSON with pattern matching details
+  temporalData          String? // JSON with temporal analysis
+  
+  // Outcome tracking (filled after trade closes)
+  actualOutcome         String? // "WIN", "LOSS", "PENDING"
+  actualPnL             Float?  // Actual profit/loss
+  intuitionAccuracy     Boolean? // Was intuition right?
+  calculationAccuracy   Boolean? // Was calculation right?
+  outperformed          String?  // Which method performed better: "intuition" or "calculation"
+  
+  // Performance Learning
+  marketConditions      String? // JSON with market state during analysis
+  learningWeight        Float   @default(1.0) // Weight for machine learning
+  
+  // Timestamps
+  analysisTime          DateTime @default(now())
+  outcomeTime           DateTime? // When outcome was determined
+  
+  @@index([symbol, analysisTime])
+  @@index([strategy, analysisTime])
+  @@index([recommendation])
+  @@index([actualOutcome])
+}
+
+// Intuition vs Calculation Performance Tracking
+model IntuitionPerformance {
+  id                    String   @id @default(cuid())
+  
+  // Performance period
+  timeframe             String   // "1h", "24h", "7d", "30d"
+  periodStart           DateTime
+  periodEnd             DateTime
+  
+  // Overall statistics
+  totalAnalyses         Int
+  intuitionRecommended  Int
+  calculationRecommended Int
+  
+  // Accuracy metrics
+  intuitionCorrect      Int
+  calculationCorrect    Int
+  intuitionAccuracy     Float // Percentage
+  calculationAccuracy   Float // Percentage
+  
+  // Performance metrics
+  intuitionAvgPnL       Float
+  calculationAvgPnL     Float
+  intuitionTotalPnL     Float
+  calculationTotalPnL   Float
+  performanceAdvantage  Float // Which is performing better
+  
+  // Confidence analysis
+  avgIntuitionConfidence    Float
+  avgCalculationConfidence  Float
+  confidenceCorrelation     Float // How well confidence predicts success
+  
+  // Market condition analysis
+  strongTrendingPerformance   Float // Performance in strong trending markets
+  rangingMarketPerformance    Float // Performance in ranging markets
+  volatileMarketPerformance   Float // Performance in volatile markets
+  
+  // Learning evolution
+  improvementRate           Float // How quickly intuition is improving
+  convergenceRate           Float // How quickly both methods are converging
+  optimalBlendRatio         Float // Optimal ratio of intuition vs calculation
+  
+  // Timestamps
+  calculatedAt              DateTime @default(now())
+  
+  @@index([timeframe, periodStart])
+  @@index([calculatedAt])
+}
+
+// Position Management System Models
+model ManagedPosition {
+  id       String @id @default(cuid())
+  strategy String
+  symbol   String
+  side     String // 'long' or 'short'
+
+  // Entry details
+  entryPrice   Float
+  quantity     Float
+  entryTradeId String
+  entryTime    DateTime
+
+  // Exit details (when closed)
+  exitPrice   Float?
+  exitTradeId String?
+  exitTime    DateTime?
+
+  // Status and P&L
+  status        String @default("open") // 'open', 'closed', 'partial'
+  realizedPnL   Float?
+  unrealizedPnL Float?
+
+  // Risk management
+  stopLoss     Float?
+  takeProfit   Float?
+  maxHoldTime  Int? // milliseconds
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  entryTrade ManagedTrade? @relation("EntryTrade", fields: [entryTradeId], references: [id])
+  exitTrade  ManagedTrade? @relation("ExitTrade", fields: [exitTradeId], references: [id])
+
+  @@index([strategy, symbol])
+  @@index([status])
+  @@index([entryTime])
+  @@index([symbol, status])
+}
+
+model ManagedTrade {
+  id         String @id @default(cuid())
+  positionId String  // Reference to position but no FK constraint to avoid circular dependency
+  side       String // 'buy' or 'sell'
+  symbol     String
+  quantity   Float
+  price      Float
+  value      Float
+  strategy   String
+  executedAt DateTime
+  pnl        Float?
+  isEntry    Boolean
+
+  // Relations (no direct FK to position to avoid circular dependency)
+  entryPositions     ManagedPosition[] @relation("EntryTrade")
+  exitPositions      ManagedPosition[] @relation("ExitTrade")
+
+  @@index([positionId])
+  @@index([strategy, symbol])
+  @@index([executedAt])
+  @@index([isEntry])
+}
+
+model ExitStrategy {
+  id       String @id @default(cuid())
+  strategy String
+  symbol   String? // null means applies to all symbols for this strategy
+
+  // Profit/Loss targets
+  takeProfitPercent  Float? // 0.05 = 5%
+  stopLossPercent    Float? // 0.03 = 3%
+  trailingStopPercent Float?
+
+  // Time-based exits
+  maxHoldMinutes Int? // Close after X minutes
+
+  // Technical exits  
+  reverseSignalExit Boolean @default(false) // Close when opposite signal occurs
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([strategy, symbol])
+  @@index([strategy])
 }

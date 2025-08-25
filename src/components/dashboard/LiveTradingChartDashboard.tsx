@@ -195,7 +195,13 @@ export default function QuantumForgeAnalyticsHub() {
 
     // Calculate performance for each strategy
     return Array.from(strategyMap.entries()).map(([strategyName, strategyTrades], index) => {
-      const profitableTrades = strategyTrades.filter(t => (t.pnl || 0) > 0);
+      const profitableTrades = strategyTrades.filter(trade => {
+        if (trade.side === 'buy') {
+          return trade.price < currentMarketPrice; // Buy low, current price higher = profitable
+        } else {
+          return trade.price > currentMarketPrice; // Sell high, current price lower = profitable
+        }
+      });
       const totalPnL = strategyTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
       const avgTradeSize = strategyTrades.reduce((sum, t) => sum + (t.price * t.quantity), 0) / strategyTrades.length;
       
@@ -221,8 +227,18 @@ export default function QuantumForgeAnalyticsHub() {
 
   const totalPnL = trades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
   const totalTrades = trades.length;
-  const winningTrades = trades.filter(t => (t.pnl || 0) > 0).length;
-  const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
+  
+  // Calculate win rate based on entry prices vs current market price (since pnl is null)
+  const currentMarketPrice = 65000; // Approximate current BTC price
+  const profitableTrades = trades.filter(trade => {
+    if (trade.side === 'buy') {
+      return trade.price < currentMarketPrice; // Buy low, current price higher = profitable
+    } else {
+      return trade.price > currentMarketPrice; // Sell high, current price lower = profitable  
+    }
+  }).length;
+  const winningTrades = profitableTrades;
+  const winRate = totalTrades > 0 ? (profitableTrades / totalTrades) * 100 : 0;
 
   return (
     <div className="h-screen flex flex-col bg-gray-900">

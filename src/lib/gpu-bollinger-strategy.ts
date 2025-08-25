@@ -36,11 +36,11 @@ export class GPUBollingerStrategy extends BaseStrategy {
   constructor(strategyId: string, symbol: string, config: any) {
     super(strategyId, symbol);
     this.config = {
-      period: config.period || 20,
-      stdDev: config.stdDev || 2,
-      oversoldLevel: config.oversoldLevel || 0.05, // %B below 5%
-      overboughtLevel: config.overboughtLevel || 0.95, // %B above 95%
-      squeezeThreshold: config.squeezeThreshold || 0.1 // Bandwidth below 10%
+      period: config.period || 15, // Reduced from 20 to 15 for more responsive bands
+      stdDev: config.stdDev || 1.8, // Reduced from 2.0 to 1.8 for tighter bands = more signals
+      oversoldLevel: config.oversoldLevel || 0.15, // Increased from 0.05 to 0.15 for more buy signals
+      overboughtLevel: config.overboughtLevel || 0.85, // Decreased from 0.95 to 0.85 for more sell signals  
+      squeezeThreshold: config.squeezeThreshold || 0.15 // Increased from 0.1 to 0.15 for more squeeze signals
     };
   }
   

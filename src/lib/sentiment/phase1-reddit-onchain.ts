@@ -172,16 +172,22 @@ export class Phase1SentimentEngine {
     const posts: RedditPost[] = [];
     
     try {
-      // Fetch hot posts
+      // Fetch hot posts with timeout
       const hotResponse = await fetch(
         `https://www.reddit.com/r/${subreddit}/hot.json?limit=25`,
-        { headers: { 'User-Agent': this.redditConfig.userAgent } }
+        { 
+          headers: { 'User-Agent': this.redditConfig.userAgent },
+          signal: AbortSignal.timeout(2000) // 2 second timeout
+        }
       );
       
-      // Fetch rising posts
+      // Fetch rising posts with timeout
       const risingResponse = await fetch(
         `https://www.reddit.com/r/${subreddit}/rising.json?limit=10`,
-        { headers: { 'User-Agent': this.redditConfig.userAgent } }
+        { 
+          headers: { 'User-Agent': this.redditConfig.userAgent },
+          signal: AbortSignal.timeout(2000) // 2 second timeout
+        }
       );
       
       const hotData = await hotResponse.json();

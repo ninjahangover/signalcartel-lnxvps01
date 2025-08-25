@@ -116,50 +116,67 @@ export default function RealTimeChart({
     console.log('Creating TradingView widget with:', { tvSymbol, containerId });
 
     try {
+      // Ensure container exists and is empty
+      const container = document.getElementById(containerId);
+      if (container) {
+        container.innerHTML = '';
+      }
+      
       widgetRef.current = new window.TradingView.widget({
-      autosize: true,
-      symbol: tvSymbol,
-      interval: timeframe,
-      timezone: "Etc/UTC",
-      theme: "light",
-      style: "1",
-      locale: "en",
-      toolbar_bg: "#f1f3f6",
-      enable_publishing: false,
-      allow_symbol_change: false,
-      container_id: containerId,
-      studies: [
-        "Volume@tv-basicstudies",
-        "RSI@tv-basicstudies"
-      ],
-      overrides: {
-        "paneProperties.background": "#ffffff",
-        "paneProperties.vertGridProperties.color": "#f0f0f0",
-        "paneProperties.horzGridProperties.color": "#f0f0f0",
-        "symbolWatermarkProperties.transparency": 90,
-        "scalesProperties.textColor": "#666666",
-        "scalesProperties.lineColor": "#e0e0e0"
-      },
-      disabled_features: [
-        "use_localstorage_for_settings",
-        "volume_force_overlay",
-        "create_volume_indicator_by_default"
-      ],
-      enabled_features: [
-        "study_templates"
-      ],
-      loading_screen: {
-        backgroundColor: "#ffffff",
-        foregroundColor: "#2563eb"
-      },
-      custom_css_url: undefined,
-      width: "100%",
-      height: height
-    });
-    
-    console.log('TradingView widget created successfully');
+        autosize: true,
+        symbol: tvSymbol,
+        interval: timeframe,
+        timezone: "Etc/UTC",
+        theme: "dark",
+        style: "1",
+        locale: "en",
+        toolbar_bg: "#1a1a1a",
+        enable_publishing: false,
+        allow_symbol_change: false,
+        container_id: containerId,
+        studies: [],
+        overrides: {
+          "paneProperties.background": "#0a0a0a",
+          "paneProperties.vertGridProperties.color": "#1a1a1a",
+          "paneProperties.horzGridProperties.color": "#1a1a1a",
+          "symbolWatermarkProperties.transparency": 90,
+          "scalesProperties.textColor": "#999999",
+          "scalesProperties.lineColor": "#333333"
+        },
+        disabled_features: [
+          "use_localstorage_for_settings",
+          "volume_force_overlay",
+          "create_volume_indicator_by_default",
+          "header_widget",
+          "left_toolbar",
+          "context_menus",
+          "control_bar",
+          "timeframes_toolbar"
+        ],
+        enabled_features: [],
+        loading_screen: {
+          backgroundColor: "#0a0a0a",
+          foregroundColor: "#a855f7"
+        },
+        width: "100%",
+        height: height || 400
+      });
+      
+      console.log('TradingView widget created successfully');
     } catch (error) {
       console.error('Error creating TradingView widget:', error);
+      // Show fallback content if widget fails
+      const container = document.getElementById(containerId);
+      if (container) {
+        container.innerHTML = `
+          <div style="height: ${height}px; display: flex; align-items: center; justify-content: center; background: #0a0a0a; color: #666;">
+            <div style="text-align: center;">
+              <p>Chart temporarily unavailable</p>
+              <p style="font-size: 12px; margin-top: 8px;">Price: ${currentData?.price ? '$' + currentData.price.toFixed(2) : 'Loading...'}</p>
+            </div>
+          </div>
+        `;
+      }
     }
   };
 

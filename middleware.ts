@@ -15,8 +15,8 @@ export default withAuth(
       }
     }
 
-    // Dashboard protection - require active subscription or admin role
-    if (pathname.startsWith('/dashboard')) {
+    // Dashboard and Mathematical Intuition protection - require active subscription or admin role
+    if (pathname.startsWith('/dashboard') || pathname.startsWith('/mathematical-intuition')) {
       console.log(`🚪 Dashboard access attempted: ${pathname}`);
       
       if (!token) {
