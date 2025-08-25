@@ -3,7 +3,7 @@
 ## Project Overview
 SignalCartel is a revolutionary cryptocurrency trading platform featuring **QUANTUM FORGE™** - our advanced sentiment-intelligent AI paper trading engine. Executes GPU-accelerated automated trading strategies with **real multi-source sentiment analysis**, realistic retail trader configuration ($10K starting balance), and 100% real-data dashboard integration. All trades are stored in PostgreSQL for Law of Large Numbers analysis, Markov chain optimization, and intelligent pattern learning. Includes **Expectancy Formula Analysis** E = (W × A) - (L × B) for mathematical profit optimization and **Real-Time Sentiment Enhancement** for improved win rates.
 
-## Current State (As of August 24, 2025 - REAL SENTIMENT INTELLIGENCE ACTIVE)
+## Current State (As of August 25, 2025 - ENTERPRISE INFRASTRUCTURE COMPLETE)
 
 ### 🔥 **MAJOR BREAKTHROUGH: Real Multi-Source Sentiment Analysis**
 - ✅ **LIVE SENTIMENT INTEGRATION** - Fear & Greed Index, Reddit, News, On-chain metrics
@@ -20,9 +20,28 @@ SignalCartel is a revolutionary cryptocurrency trading platform featuring **QUAN
 - ✅ **4 GPU STRATEGIES ACTIVE** - All strategies GPU-accelerated with CUDA 13.0 support
 - ✅ **CLEAN DATABASE** - Cleaned 4,351 extreme P&L records, added validation constraints
 - ✅ **REAL-TIME DASHBOARD** - All components showing live PostgreSQL data
-- ✅ **ENTERPRISE BACKUP SYSTEM** - Bulletproof disaster recovery with cloud sync
+- ✅ **ENTERPRISE BACKUP SYSTEM** - PostgreSQL + SQLite automated backups with 7/30-day retention
+- ✅ **COMPREHENSIVE MONITORING** - 7 endpoints monitored every 2 minutes with instant alerts
 - ✅ **MARKET DATA ACTIVE** - Real-time Kraken API data feeding trading decisions
 - ✅ **SENTIMENT INTELLIGENCE** - Multi-source real sentiment validation improving win rates
+
+### 💾 **Enterprise Backup & Recovery** (NEW - August 25, 2025)
+- ✅ **MULTI-DATABASE SUPPORT** - PostgreSQL (pg_dump) + SQLite (.backup) methods
+- ✅ **3 POSTGRESQL DATABASES** - signalcartel, marketdata, quantum_forge_warehouse
+- ✅ **AUTOMATED RETENTION** - 7-day backup directories, 30-day compressed archives
+- ✅ **INTEGRITY VERIFICATION** - All backups verified before completion
+- ✅ **RESTORE COMMANDS** - Ready-to-use restore instructions for all databases
+- ✅ **SAFE OPERATION** - No service interruption required for backups
+- ✅ **SCHEDULED READY** - Easy crontab integration for automated backups
+
+### 📊 **Real-Time Monitoring & Alerting** (NEW - August 25, 2025)
+- ✅ **COMPREHENSIVE COVERAGE** - 7 critical endpoints monitored continuously
+- ✅ **SMART ALERTING** - ntfy push notifications + SMS webhook support
+- ✅ **SERVICE MANAGEMENT** - Background service with start/stop/status/logs
+- ✅ **HEALTH TRACKING** - Response times, status codes, error detection
+- ✅ **INSTANT NOTIFICATIONS** - Alert on service failures within 2-minute window
+- ✅ **ALERT LOGGING** - All incidents logged for analysis and escalation
+- ✅ **HIGH RELIABILITY** - Independent monitoring system ensuring 24/7 oversight
 
 ## Architecture
 
@@ -35,22 +54,30 @@ SignalCartel is a revolutionary cryptocurrency trading platform featuring **QUAN
 6. **Web Interface** - Next.js dashboard at port 3001 with live data
 7. **Real Sentiment Engine** - Fear&Greed, Reddit, News, On-chain metrics integration
 
-### Monitoring Architecture (Current Implementation)
-**🎯 7 Configured Monitors in OpenStatus:**
-1. **QUANTUM FORGE Trading Engine** - `/api/quantum-forge/status` (5 min intervals)
-2. **Trading Portfolio** - `/api/quantum-forge/portfolio` (5 min intervals)
-3. **Market Data Collector** - `/api/market-data/status` (5 min intervals)
-4. **Website Dashboard** - `/api/health` (5 min intervals)
-5. **GPU Strategy Engine** - `/api/quantum-forge/gpu-status` (5 min intervals)
-6. **PostgreSQL Database** - `/api/quantum-forge/database-health` (5 min intervals)
-7. **Real Sentiment Intelligence** - `/api/sentiment-analysis?hours=1` (10 min intervals)
+### Monitoring Architecture (Enterprise Implementation)
+**🎯 7 Active Monitors with Real-Time Alerting:**
+1. **🚀 QUANTUM FORGE Trading Engine** - `localhost:3001/api/quantum-forge/status` (2 min intervals)
+2. **📊 Trading Portfolio** - `localhost:3001/api/quantum-forge/portfolio` (2 min intervals)
+3. **📈 Market Data Collector** - `localhost:3001/api/market-data/status` (2 min intervals)
+4. **🌐 Website Dashboard** - `localhost:3001/api/health` (2 min intervals)
+5. **🎮 GPU Strategy Engine** - `localhost:3001/api/quantum-forge/gpu-status` (2 min intervals)
+6. **🗄️ PostgreSQL Database** - `localhost:3001/api/quantum-forge/database-health` (2 min intervals)
+7. **🧠 Sentiment Intelligence** - `localhost:3001/api/sentiment-analysis?hours=1` (2 min intervals)
 
-**Notification Channels:**
-- 📧 **Email** - Detailed alerts and reports
-- 📱 **SMS** - Critical/urgent notifications
-- 🔔 **ntfy** - Real-time push notifications
+**Active Monitoring Service:**
+- ✅ **Background Process** - `openstatus-monitor-service.sh` running continuously
+- ✅ **Health Verification** - Response codes, timing, error detection per endpoint
+- ✅ **Service Management** - start/stop/restart/status/logs commands
+- ✅ **Comprehensive Logging** - All results stored in `/tmp/openstatus-monitor.log`
+
+**Multi-Channel Alerting:**
+- 📱 **ntfy Push** - Instant notifications to `signal-cartel` topic (ACTIVE)
+- 📱 **SMS Webhook** - Ready for SMS service integration via `SMS_WEBHOOK_URL`
+- 📋 **Alert Logging** - All incidents logged to `/tmp/signalcartel-alerts.log`
 
 ### Key Files
+
+**🔥 Core Trading System:**
 - `load-database-strategies.ts` - Main entry point for sentiment-enhanced trading strategies
 - `src/lib/strategy-execution-engine.ts` - Core trading logic with real-time sentiment integration
 - `src/lib/sentiment/universal-sentiment-enhancer.ts` - Universal sentiment validation system
@@ -58,7 +85,15 @@ SignalCartel is a revolutionary cryptocurrency trading platform featuring **QUAN
 - `src/app/api/sentiment-analysis/route.ts` - Sentiment analysis API endpoint
 - `prisma/schema.prisma` - PostgreSQL schema with sentiment and enhanced signal tables
 - `src/lib/expectancy-calculator.ts` - Expectancy formula analysis and Kelly Criterion
-- `add-pnl-constraints.sql` - P&L validation constraints to prevent extreme values
+
+**💾 Enterprise Backup System:**
+- `scripts/backup/simple-db-backup.sh` - Complete database backup solution (PostgreSQL + SQLite)
+- Supports 3 PostgreSQL databases with automated retention and integrity verification
+
+**📊 Monitoring & Alerting:**
+- `openstatus-monitor-runner.ts` - Core monitoring logic with multi-channel alerting
+- `scripts/monitoring/openstatus-monitor-service.sh` - Service management (start/stop/status/logs)
+- `scripts/monitoring/trigger-openstatus-monitors.ts` - OpenStatus API integration helper
 
 ### OpenStatus Platform Files
 - `openstatus/` - Complete OpenStatus platform deployment
@@ -139,23 +174,42 @@ AUTH_GITHUB_SECRET="your-github-oauth-secret"
 
 ## Quick Commands
 
-### 🎯 OpenStatus Monitoring Platform
+### 💾 **Enterprise Backup System**
+```bash
+# Run manual backup (all databases)
+/home/telgkb9/depot/dev-signalcartel/scripts/backup/simple-db-backup.sh
+
+# Check backup location
+ls -la /home/telgkb9/signalcartel-db-backups/
+
+# Add to crontab for automation (every 6 hours)
+0 */6 * * * /home/telgkb9/depot/dev-signalcartel/scripts/backup/simple-db-backup.sh
+```
+
+### 📊 **Real-Time Monitoring & Alerting**
+```bash
+# Service Management
+scripts/monitoring/openstatus-monitor-service.sh start   # Start monitoring
+scripts/monitoring/openstatus-monitor-service.sh status  # Check status
+scripts/monitoring/openstatus-monitor-service.sh logs    # View live logs
+scripts/monitoring/openstatus-monitor-service.sh restart # Restart service
+scripts/monitoring/openstatus-monitor-service.sh stop    # Stop monitoring
+
+# Manual health check
+npx tsx openstatus-monitor-runner.ts
+
+# Start with ntfy alerts (recommended)
+NTFY_TOPIC="signal-cartel" scripts/monitoring/openstatus-monitor-service.sh start
+```
+
+### 🎯 OpenStatus Dashboard Platform
 ```bash
 # Start OpenStatus locally
-cd openstatus && PORT=3000 pnpm dev --filter './apps/server'  # API Server
-cd openstatus && PORT=3001 pnpm dev --filter './apps/dashboard'  # Dashboard
+cd openstatus && PORT=3000 pnpm dev --filter './apps/server'    # API Server
+cd openstatus && PORT=3006 pnpm dev --filter './apps/dashboard' # Dashboard
 
-# Test monitoring endpoints
-npx tsx test-all-monitoring-endpoints.ts
-
-# Check specific endpoints
-curl http://localhost:3001/api/quantum-forge/status
-curl http://localhost:3001/api/quantum-forge/portfolio
-curl http://localhost:3001/api/market-data/status
-curl http://localhost:3001/api/health
-curl http://localhost:3001/api/quantum-forge/gpu-status
-curl http://localhost:3001/api/quantum-forge/database-health
-curl http://localhost:3001/api/sentiment-analysis?hours=1
+# Access dashboard
+open http://localhost:3006/login
 ```
 
 ### 🔮 QUANTUM FORGE™ Real Sentiment Trading System
@@ -187,17 +241,6 @@ docker ps
 docker logs signalcartel-website
 ```
 
-### 🔐 Backup System
-```bash
-# Manual backup
-/home/telgkb9/depot/dev-signalcartel/scripts/backup/simple-backup.sh
-
-# Check backup status
-/home/telgkb9/depot/dev-signalcartel/scripts/backup/manage-backups.sh status
-
-# Emergency backup with cloud sync
-/home/telgkb9/depot/dev-signalcartel/scripts/backup/manage-backups.sh emergency
-```
 
 ## Hardware Context
 - Development server: Alienware Aurora R6
@@ -207,21 +250,22 @@ docker logs signalcartel-website
 - OS: Debian 13 (trixie)
 
 ## Next Development Priorities
-1. **Expose Monitoring Endpoints** - Use ngrok/localtunnel for external monitoring
-2. **Market State Evolution Timeline** - AI market regime detection and strategy adaptation
-3. **Live Trading Preparation** - Transition from paper to real trading
-4. **Multi-symbol Expansion** - Add more crypto pairs beyond BTC
-5. **Container Orchestration** - Kubernetes deployment for scaling
+1. **Market State Evolution Timeline** - AI market regime detection and strategy adaptation
+2. **Live Trading Preparation** - Transition from paper to real trading with risk management
+3. **Multi-symbol Expansion** - Add more crypto pairs beyond BTC (ETH, SOL, ADA, etc.)
+4. **Advanced Analytics Dashboard** - Real-time P&L visualization and performance metrics
+5. **Strategy Performance Analysis** - A/B testing framework for different trading approaches
 
 ## Important Notes
-- OpenStatus monitors are configured but show as "down" because localhost isn't accessible externally
+- **MONITORING ACTIVE** - Real-time monitoring service running with ntfy alerts enabled
+- **BACKUPS AUTOMATED** - Enterprise backup system ready for crontab scheduling
 - Use **load-database-strategies.ts** for real sentiment-enhanced trading (recommended)
 - Use **custom-paper-trading.ts** for basic trading without sentiment
-- All sentiment data is now REAL (Fear&Greed, Reddit, News, On-chain)
+- All sentiment data is now REAL (Fear&Greed, Reddit, News, On-chain metrics)
 - PostgreSQL database contains clean data with P&L validation constraints
 - Use `-r dotenv/config` when running TypeScript files
-- Prisma binary target set to debian-openssl-3.0.x for Debian 13
 - GPU strategies automatically fallback to CPU if CUDA unavailable
+- OpenStatus dashboard accessible at `http://localhost:3006/login`
 
 ## Repository
 - GitHub: https://github.com/ninjahangover/signalcartel
@@ -229,4 +273,4 @@ docker logs signalcartel-website
 - Test changes on dev server first
 
 ---
-*Vision Achieved: Revolutionary QUANTUM FORGE™ platform with REAL multi-source sentiment intelligence, explosive styling, bulletproof security, enterprise monitoring, and GPU-accelerated trading - the world's first truly sentiment-intelligent cryptocurrency trading platform.*
+*Enterprise Achievement: Revolutionary QUANTUM FORGE™ platform with REAL multi-source sentiment intelligence, bulletproof enterprise backup & recovery, comprehensive monitoring & alerting, explosive styling, and GPU-accelerated trading - the world's first truly sentiment-intelligent cryptocurrency trading platform with enterprise-grade infrastructure.*
