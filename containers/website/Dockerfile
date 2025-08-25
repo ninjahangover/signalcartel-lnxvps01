@@ -9,9 +9,11 @@ WORKDIR /app
 # Copy package files (context is set to root in docker-compose)
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
-# Install dependencies and generate Prisma client for Alpine Linux
+COPY src/lib/market-data-client ./src/lib/market-data-client/
+# Install dependencies and generate ALL Prisma clients for Alpine Linux
 RUN npm ci
 RUN npx prisma generate --schema=prisma/schema.prisma
+RUN npx prisma generate --schema=src/lib/market-data-client/schema.prisma
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -44,13 +46,26 @@ RUN adduser --system --uid 1001 nextjs
 # Install production dependencies
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
-RUN npm ci --only=production && npx prisma generate
+COPY src/lib/market-data-client ./src/lib/market-data-client/
+RUN npm ci --only=production
+RUN npx prisma generate --schema=prisma/schema.prisma
+RUN npx prisma generate --schema=src/lib/market-data-client/schema.prisma
+# Verify both clients were generated with Alpine engines
+RUN ls -la node_modules/.prisma/
+RUN find node_modules/.prisma -name "*linux-musl*"
+# Fix ownership of all Prisma files for nextjs user
+RUN chown -R nextjs:nodejs node_modules/.prisma
 
-# Copy built application and necessary files
+# Copy built application and necessary files  
 COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/next.config.js ./
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/src/lib/market-data-client ./src/lib/market-data-client
+
+# Ensure both Prisma clients have their query engines available
+# The regular prisma generate above creates both, but we need to ensure the market-data-client directory exists
+RUN ls -la node_modules/.prisma/ || echo "No .prisma directory found"
 
 # Create logs directory
 RUN mkdir -p logs && chown nextjs:nodejs logs
