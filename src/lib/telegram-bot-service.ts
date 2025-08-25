@@ -17,7 +17,7 @@ export class TelegramBotService {
 
   async sendTradeNotification(trade: any): Promise<void> {
     // OpenStatus handles notifications - stub only
-    console.log('Trade notification:', trade);
+    // console.log('Trade notification:', trade); // DISABLED to stop telegram spam
   }
 }
 

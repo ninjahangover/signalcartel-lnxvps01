@@ -40,6 +40,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3001
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 

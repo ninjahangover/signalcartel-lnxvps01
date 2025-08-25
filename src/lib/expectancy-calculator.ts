@@ -45,12 +45,11 @@ class ExpectancyCalculator {
    * Calculate expectancy for a specific strategy using completed trades
    */
   async calculateStrategyExpectancy(strategyName: string): Promise<ExpectancyResult> {
-    // Get completed trades (exit trades with P&L) for the strategy
+    // Get completed trades (all trades with P&L) for the strategy
     const trades = await prisma.paperTrade.findMany({
       where: {
         strategy: strategyName,
-        pnl: { not: null }, // Only completed trades
-        isEntry: false     // Only exit trades (completed positions)
+        pnl: { not: null } // Only completed trades (with P&L values)
       },
       select: {
         pnl: true,
@@ -136,8 +135,7 @@ class ExpectancyCalculator {
     // Get actual strategy names from trades (for custom engines like CustomPaperEngine)
     const actualStrategyNames = await prisma.paperTrade.findMany({
       where: { 
-        pnl: { not: null }, // Only completed trades
-        isEntry: false      // Only exit trades
+        pnl: { not: null } // Only completed trades (with P&L values)
       },
       select: { strategy: true },
       distinct: ['strategy']

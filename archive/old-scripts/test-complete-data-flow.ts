@@ -103,7 +103,7 @@ async function testDataFlow() {
     });
     
     // Check RSI optimizer
-    console.log('\nChecking RSI Strategy Optimizer...');
+    console.log('\nChecking RSI Strategy Optimizer (DISABLED)...');
     const optimizer = RSIStrategyOptimizer.getInstance();
     const currentParams = optimizer.getCurrentParameters();
     const optimizationHistory = optimizer.getOptimizationHistory();

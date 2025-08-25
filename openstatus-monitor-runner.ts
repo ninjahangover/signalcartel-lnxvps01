@@ -219,18 +219,30 @@ class OpenStatusMonitorRunner {
       // Send ntfy notification
       if (process.env.NTFY_TOPIC) {
         try {
-          await fetch(`https://ntfy.sh/${process.env.NTFY_TOPIC}`, {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+          
+          const response = await fetch(`https://ntfy.sh/${process.env.NTFY_TOPIC}`, {
             method: 'POST',
             body: `🚨 ALERT: ${check.name} is DOWN!\nStatus: ${check.status}\nError: ${check.error || 'Service unreachable'}`,
             headers: {
               'Title': 'SignalCartel Monitor Alert',
               'Priority': 'urgent',
               'Tags': 'warning,alert',
+              'Content-Type': 'text/plain',
             },
+            signal: controller.signal,
           });
-          console.log(`   📱 ntfy alert sent for ${check.name}`);
-        } catch (error) {
-          console.error('Failed to send ntfy alert:', error);
+          
+          clearTimeout(timeout);
+          
+          if (response.ok) {
+            console.log(`   📱 ntfy alert sent for ${check.name}`);
+          } else {
+            console.error(`   ❌ ntfy alert failed for ${check.name}: ${response.status} ${response.statusText}`);
+          }
+        } catch (error: any) {
+          console.error(`   ❌ Failed to send ntfy alert for ${check.name}:`, error.message || error);
         }
       }
 

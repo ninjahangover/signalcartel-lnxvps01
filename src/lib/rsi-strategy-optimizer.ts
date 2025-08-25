@@ -142,21 +142,22 @@ class RSIStrategyOptimizer {
           improvement: `${((this.calculateScore(bestResult) - 0.5) * 100).toFixed(1)}%`
         });
 
-        // Log strategy optimization
-        console.log('🎯 RSI Strategy Optimized:', {
-          type: 'STRATEGY_OPTIMIZED',
-          strategy: 'RSI Strategy Optimizer',
-          symbol: 'BTCUSD',
-          confidence: Math.round(this.calculateScore(bestResult) * 100),
-          timestamp: new Date(),
-          details: {
-            optimizedParams: this.currentParameters,
-            improvement: `${((this.calculateScore(bestResult) - 0.5) * 100).toFixed(1)}%`,
-            score: this.calculateScore(bestResult)
-          }
-        });
+        // Log strategy optimization (disabled to prevent telegram spam)
+        // console.log('🎯 RSI Strategy Optimized:', {
+        //   type: 'STRATEGY_OPTIMIZED',
+        //   strategy: 'RSI Strategy Optimizer',
+        //   symbol: 'BTCUSD',
+        //   confidence: Math.round(this.calculateScore(bestResult) * 100),
+        //   timestamp: new Date(),
+        //   details: {
+        //     optimizedParams: this.currentParameters,
+        //     improvement: `${((this.calculateScore(bestResult) - 0.5) * 100).toFixed(1)}%`,
+        //     score: this.calculateScore(bestResult)
+        //   }
+        // });
 
-        this.notifyListeners();
+        // Temporarily disable notifications to stop telegram spam
+        // this.notifyListeners();
       }
 
       return this.currentParameters;

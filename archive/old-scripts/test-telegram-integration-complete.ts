@@ -84,7 +84,7 @@ async function testCompleteTelegramIntegration() {
     console.log('\n⚡ Test 6: Sending strategy optimization notification...');
     await telegramBotService.sendTradeAlert({
       type: 'STRATEGY_OPTIMIZED',
-      strategy: 'RSI Strategy Optimizer',
+      strategy: 'RSI Strategy Optimizer (DISABLED)',
       symbol: 'BTCUSD',
       action: 'BUY', // Not relevant for optimization
       price: 0, // Not relevant for optimization
@@ -149,9 +149,9 @@ async function testCompleteTelegramIntegration() {
     // Check RSI optimizer
     try {
       const { rsiStrategyOptimizer } = await import('./src/lib/rsi-strategy-optimizer');
-      console.log('✅ RSI Strategy Optimizer: Telegram integration detected');
+      console.log('✅ RSI Strategy Optimizer (DISABLED): Telegram integration detected');
     } catch (error) {
-      console.log('⚠️ RSI Strategy Optimizer: Unable to verify integration');
+      console.log('⚠️ RSI Strategy Optimizer (DISABLED): Unable to verify integration');
     }
 
     // Check global engine service
