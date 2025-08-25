@@ -1,7 +1,7 @@
 // QUANTUM FORGE™ Data Warehouse Pipeline Monitor
 // Enterprise-grade monitoring and alerting for data warehouse operations
 
-import { telegramAlertService } from './telegram-alert-service';
+// import { telegramAlertService } from './telegram-alert-service'; // DISABLED - Using OpenStatus for monitoring
 
 export interface PipelineMetrics {
   name: string;
@@ -177,11 +177,11 @@ class WarehousePipelineMonitor {
       const priority = rule.severity === 'critical' ? 'critical' : 
                      rule.severity === 'warning' ? 'high' : 'medium';
 
-      await telegramAlertService.sendAlert(
-        message,
-        priority as any,
-        'warehouse'
-      );
+      // await telegramAlertService.sendAlert(
+      //   message,
+      //   priority as any,
+      // DISABLED - Using OpenStatus monitoring instead
+      console.log('Warehouse pipeline alert:', { message, priority: priority as any, source: 'warehouse' });
 
       console.log(`📱 Pipeline alert sent via Telegram: ${rule.name} - ${message}`);
     } catch (error) {
@@ -306,10 +306,11 @@ export async function recordDataSyncError(
 export function startWarehouseMonitoring(): void {
   warehousePipelineMonitor.startMonitoring(5); // Check every 5 minutes
   
-  // Send startup notification via Telegram
-  telegramAlertService.sendAlert(
-    '🔍 Data Warehouse monitoring system started - enterprise-grade pipeline monitoring active',
-    'medium',
-    'warehouse'
-  );
+  // Send startup notification via Telegram - DISABLED
+  // telegramAlertService.sendAlert(
+  //   '🔍 Data Warehouse monitoring system started - enterprise-grade pipeline monitoring active',
+  //   'medium',
+  //   'warehouse'
+  // ); // DISABLED - Using OpenStatus monitoring instead
+  console.log('🔍 Data Warehouse monitoring system started - enterprise-grade pipeline monitoring active');
 }

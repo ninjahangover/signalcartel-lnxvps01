@@ -2,7 +2,7 @@
 // Automated data synchronization with comprehensive monitoring
 
 import { warehousePipelineMonitor, recordDataSyncSuccess, recordDataSyncError } from './warehouse-pipeline-monitor';
-import { telegramAlertService } from './telegram-alert-service';
+// import { telegramAlertService } from './telegram-alert-service'; // DISABLED - Using OpenStatus for monitoring
 
 export interface SyncJobConfig {
   name: string;

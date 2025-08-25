@@ -12,7 +12,7 @@
  * - Trade execution pipeline monitoring
  */
 
-import { telegramAlerts } from './telegram-alert-service';
+// import { telegramAlerts } from './telegram-alert-service'; // DISABLED - Using OpenStatus for monitoring
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -70,9 +70,12 @@ class QuantumForgeWorkflowMonitor {
     console.log('🔍 Starting QUANTUM FORGE™ Workflow Monitor...');
     
     // Send startup alert
-    await telegramAlerts.sendAlert(
-      '🔍 <b>QUANTUM FORGE™ Workflow Monitor Started</b>\n' +
-      'Advanced AI workflow monitoring active:\n' +
+    // // await // telegramAlerts.sendAlert(//   '🔍 <b>QUANTUM FORGE™ Workflow Monitor Started</b>\n' +
+    //   'Advanced AI workflow monitoring active:\n' +
+    // DISABLED - Using OpenStatus for monitoring instead
+    console.log('🔍 QUANTUM FORGE™ Workflow Monitor Started - Advanced AI workflow monitoring active'); // DISABLED - Using OpenStatus monitoring
+  console.log("QUANTUM FORGE Workflow Alert:", "Alert disabled - using OpenStatus monitoring"); // DISABLED - Using OpenStatus monitoring
+      console.log("QUANTUM FORGE Workflow Alert:", "Alert disabled - using OpenStatus monitoring");
       '• Real-time health checks\n' +
       '• Intelligent failure detection\n' +
       '• Auto-recovery capabilities\n' +
@@ -348,8 +351,7 @@ class QuantumForgeWorkflowMonitor {
     if (health.overall === 'critical') {
       const alertKey = 'system_critical';
       if (!this.isInCooldown(alertKey, 15)) { // 15 minute cooldown
-        await telegramAlerts.sendAlert(
-          '🚨 <b>QUANTUM FORGE™ CRITICAL ISSUE</b>\n' +
+        // await // telegramAlerts.sendAlert('🚨 <b>QUANTUM FORGE™ CRITICAL ISSUE</b>\n' +
           `System Health: ${health.overall.toUpperCase()}\n\n` +
           '<b>Component Status:</b>\n' +
           `• Paper Trading: ${health.components.paperTrading}\n` +
@@ -361,8 +363,9 @@ class QuantumForgeWorkflowMonitor {
           `Recent Trades: ${health.metrics.recentTradeCount}\n` +
           `GPU Usage: ${health.metrics.gpuUtilization}%\n` +
           `DB Response: ${health.metrics.avgResponseTime}ms`,
-          'critical'
-        );
+          'critical'); // DISABLED - Using OpenStatus monitoring
+  console.log("QUANTUM FORGE Workflow Alert:", "Alert disabled - using OpenStatus monitoring"); // DISABLED - Using OpenStatus monitoring
+      console.log("QUANTUM FORGE Workflow Alert:", "Alert disabled - using OpenStatus monitoring");
         this.alertCooldowns.set(alertKey, now);
       }
     }
@@ -384,12 +387,12 @@ class QuantumForgeWorkflowMonitor {
     if (health.metrics.recentTradeCount < 3) {
       const alertKey = 'low_trade_volume';
       if (!this.isInCooldown(alertKey, 30)) { // 30 minute cooldown
-        await telegramAlerts.sendAlert(
-          '⚠️ <b>Low Trade Volume Detected</b>\n' +
+        // await // telegramAlerts.sendAlert('⚠️ <b>Low Trade Volume Detected</b>\n' +
           `Only ${health.metrics.recentTradeCount} trades in last hour\n` +
           'Checking strategy engines for issues...',
-          'warning'
-        );
+          'warning'); // DISABLED - Using OpenStatus monitoring
+  console.log("QUANTUM FORGE Workflow Alert:", "Alert disabled - using OpenStatus monitoring"); // DISABLED - Using OpenStatus monitoring
+      console.log("QUANTUM FORGE Workflow Alert:", "Alert disabled - using OpenStatus monitoring");
         this.alertCooldowns.set(alertKey, new Date());
       }
     }
@@ -405,22 +408,22 @@ class QuantumForgeWorkflowMonitor {
       // Try to restart the paper trading process
       await this.restartPaperTradingEngine();
       
-      await telegramAlerts.sendAlert(
-        '🔄 <b>Auto-Recovery: Paper Trading</b>\n' +
+      // await // telegramAlerts.sendAlert('🔄 <b>Auto-Recovery: Paper Trading</b>\n' +
         'Detected paper trading engine failure\n' +
         'Automatically restarting engine...\n' +
         'Will monitor for successful recovery',
-        'high'
-      );
+        'high'); // DISABLED - Using OpenStatus monitoring
+  console.log("QUANTUM FORGE Workflow Alert:", "Alert disabled - using OpenStatus monitoring"); // DISABLED - Using OpenStatus monitoring
+      console.log("QUANTUM FORGE Workflow Alert:", "Alert disabled - using OpenStatus monitoring");
       
     } catch (error) {
-      await telegramAlerts.sendAlert(
-        '❌ <b>Auto-Recovery Failed</b>\n' +
+      // await // telegramAlerts.sendAlert('❌ <b>Auto-Recovery Failed</b>\n' +
         'Could not restart paper trading engine\n' +
         'Manual intervention required\n' +
         `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'critical'
-      );
+        'critical'); // DISABLED - Using OpenStatus monitoring
+  console.log("QUANTUM FORGE Workflow Alert:", "Alert disabled - using OpenStatus monitoring"); // DISABLED - Using OpenStatus monitoring
+      console.log("QUANTUM FORGE Workflow Alert:", "Alert disabled - using OpenStatus monitoring");
     }
   }
 
@@ -430,13 +433,13 @@ class QuantumForgeWorkflowMonitor {
   private async alertPaperTradingIssues(health: WorkflowHealth): Promise<void> {
     const alertKey = 'paper_trading_critical';
     if (!this.isInCooldown(alertKey, 10)) { // 10 minute cooldown
-      await telegramAlerts.sendAlert(
-        '🚨 <b>Paper Trading Engine Critical</b>\n' +
+      // await // telegramAlerts.sendAlert('🚨 <b>Paper Trading Engine Critical</b>\n' +
         `No trades executed in last hour\n` +
         `Recent trades: ${health.metrics.recentTradeCount}\n` +
         'Investigating and attempting auto-recovery...',
-        'critical'
-      );
+        'critical'); // DISABLED - Using OpenStatus monitoring
+  console.log("QUANTUM FORGE Workflow Alert:", "Alert disabled - using OpenStatus monitoring"); // DISABLED - Using OpenStatus monitoring
+      console.log("QUANTUM FORGE Workflow Alert:", "Alert disabled - using OpenStatus monitoring");
       this.alertCooldowns.set(alertKey, new Date());
     }
   }
@@ -456,16 +459,16 @@ class QuantumForgeWorkflowMonitor {
   private async handleGPULowUtilization(gpuUtil: number): Promise<void> {
     const alertKey = 'gpu_low_utilization';
     if (!this.isInCooldown(alertKey, 5)) { // 5 minute cooldown
-      await telegramAlerts.sendAlert(
-        '🎮 <b>GPU Utilization Critical</b>\n' +
+      // await // telegramAlerts.sendAlert('🎮 <b>GPU Utilization Critical</b>\n' +
         `GPU Usage: ${gpuUtil}% (below 5% threshold)\n` +
         'This indicates trading strategies may have stopped!\n\n' +
         'Checking:\n' +
         '• Strategy execution processes\n' +
         '• Market data feeds\n' +
         '• Trade signal generation',
-        'critical'
-      );
+        'critical'); // DISABLED - Using OpenStatus monitoring
+  console.log("QUANTUM FORGE Workflow Alert:", "Alert disabled - using OpenStatus monitoring"); // DISABLED - Using OpenStatus monitoring
+      console.log("QUANTUM FORGE Workflow Alert:", "Alert disabled - using OpenStatus monitoring");
       this.alertCooldowns.set(alertKey, new Date());
     }
   }
@@ -474,13 +477,13 @@ class QuantumForgeWorkflowMonitor {
    * Handle monitoring system errors
    */
   private async handleMonitoringError(error: any): Promise<void> {
-    await telegramAlerts.sendAlert(
-      '⚠️ <b>Workflow Monitor Error</b>\n' +
+    // await // telegramAlerts.sendAlert('⚠️ <b>Workflow Monitor Error</b>\n' +
       'Issue with monitoring system itself\n' +
       `Error: ${error instanceof Error ? error.message : 'Unknown error'}\n` +
       'Monitor will continue attempting to run',
-      'warning'
-    );
+      'warning'); // DISABLED - Using OpenStatus monitoring
+  console.log("QUANTUM FORGE Workflow Alert:", "Alert disabled - using OpenStatus monitoring"); // DISABLED - Using OpenStatus monitoring
+      console.log("QUANTUM FORGE Workflow Alert:", "Alert disabled - using OpenStatus monitoring");
   }
 
   /**

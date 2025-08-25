@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
-    // Check if custom paper trading is running by looking for recent trades
-    const recentTrades = await prisma.paperTrade.count({
+    // Check if position-managed trading is running by looking for recent managed trades
+    const recentTrades = await prisma.managedTrade.count({
       where: {
         executedAt: {
           gte: new Date(Date.now() - 5 * 60 * 1000) // Last 5 minutes
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Get 24-hour trade count for alerts display
-    const last24hTrades = await prisma.paperTrade.count({
+    const last24hTrades = await prisma.managedTrade.count({
       where: {
         executedAt: {
           gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
@@ -41,14 +41,14 @@ export async function GET(request: NextRequest) {
       recentMarketData = 0;
     }
 
-    // Get total trades and calculate win rate
-    const totalTrades = await prisma.paperTrade.count({
+    // Get total trades and calculate win rate from managed trades
+    const totalTrades = await prisma.managedTrade.count({
       where: {
         pnl: { not: null }
       }
     });
 
-    const winningTrades = await prisma.paperTrade.count({
+    const winningTrades = await prisma.managedTrade.count({
       where: {
         pnl: { gt: 0 }
       }
@@ -56,8 +56,8 @@ export async function GET(request: NextRequest) {
 
     const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
 
-    // Calculate total P&L
-    const pnlResult = await prisma.paperTrade.aggregate({
+    // Calculate total P&L from managed trades
+    const pnlResult = await prisma.managedTrade.aggregate({
       _sum: {
         pnl: true
       },

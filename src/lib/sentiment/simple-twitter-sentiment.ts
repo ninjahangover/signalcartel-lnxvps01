@@ -69,13 +69,13 @@ export class SimpleTwitterSentiment {
       
       return this.analyzeTweets(symbol, tweets);
     } catch (error) {
-      console.error('Error fetching Twitter sentiment:', error);
+      console.error('Error fetching multi-source sentiment:', error);
       
-      // Return neutral sentiment on error
+      // Return neutral sentiment on error with reduced confidence
       return {
         symbol,
         score: 0,
-        confidence: 0,
+        confidence: 0.1, // Low confidence to indicate error state
         timestamp: new Date(),
         tweetCount: 0,
         positiveCount: 0,
@@ -208,32 +208,37 @@ export class SimpleTwitterSentiment {
   private async getRealSentimentData(symbol: string): Promise<any[]> {
     const sentimentSources = [];
     
-    try {
-      // 1. Fear & Greed Index (real market sentiment)
-      const fearGreedData = await this.getFearGreedIndex();
-      if (fearGreedData) {
-        sentimentSources.push({
-          text: `Market Fear & Greed Index: ${fearGreedData.value_classification} (${fearGreedData.value}/100)`,
-          created_at: new Date().toISOString(),
-          source: 'fear_greed_index',
-          sentiment_score: (fearGreedData.value - 50) / 50 // Convert 0-100 to -1 to 1
-        });
-      }
-      
-      // 2. Reddit sentiment from crypto subreddits
-      const redditData = await this.getRedditSentiment(symbol);
-      sentimentSources.push(...redditData);
-      
-      // 3. News sentiment
-      const newsData = await this.getNewsSentiment(symbol);
-      sentimentSources.push(...newsData);
-      
-      // 4. On-chain metrics sentiment
-      const onChainData = await this.getOnChainSentiment(symbol);
-      if (onChainData) sentimentSources.push(onChainData);
-      
-    } catch (error) {
-      console.error('Error fetching real sentiment data:', error);
+    // Fetch all sources in parallel with individual error handling
+    const [fearGreedResult, redditResult, newsResult, onChainResult] = await Promise.allSettled([
+      this.getFearGreedIndex(),
+      this.getRedditSentiment(symbol),
+      this.getNewsSentiment(symbol),
+      this.getOnChainSentiment(symbol)
+    ]);
+    
+    // 1. Fear & Greed Index
+    if (fearGreedResult.status === 'fulfilled' && fearGreedResult.value) {
+      sentimentSources.push({
+        text: `Market Fear & Greed Index: ${fearGreedResult.value.value_classification} (${fearGreedResult.value.value}/100)`,
+        created_at: new Date().toISOString(),
+        source: 'fear_greed_index',
+        sentiment_score: (fearGreedResult.value.value - 50) / 50
+      });
+    }
+    
+    // 2. Reddit sentiment
+    if (redditResult.status === 'fulfilled' && redditResult.value) {
+      sentimentSources.push(...redditResult.value);
+    }
+    
+    // 3. News sentiment  
+    if (newsResult.status === 'fulfilled' && newsResult.value) {
+      sentimentSources.push(...newsResult.value);
+    }
+    
+    // 4. On-chain sentiment
+    if (onChainResult.status === 'fulfilled' && onChainResult.value) {
+      sentimentSources.push(onChainResult.value);
     }
     
     // Ensure we always have some data
@@ -254,7 +259,14 @@ export class SimpleTwitterSentiment {
    */
   private async getFearGreedIndex(): Promise<any> {
     try {
-      const response = await fetch('https://api.alternative.me/fng/');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      
+      const response = await fetch('https://api.alternative.me/fng/', {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
       const data = await response.json();
       if (data.data && data.data[0]) {
         return data.data[0];
@@ -265,19 +277,69 @@ export class SimpleTwitterSentiment {
     return null;
   }
 
+  private lastRedditFetch: number = 0;
+  private redditCache: any[] = [];
+  private redditRetryCount: number = 0;
+  private maxRedditRetries: number = 3;
+  
   /**
-   * Get Reddit sentiment from crypto subreddits
+   * Get Reddit sentiment from crypto subreddits with enhanced rate limiting
    */
   private async getRedditSentiment(symbol: string): Promise<any[]> {
+    // Enhanced rate limiting: 5 minutes cache to reduce API pressure
+    const now = Date.now();
+    const cacheTimeout = 5 * 60 * 1000; // 5 minutes instead of 1 minute
+    
+    if (this.redditCache.length > 0 && (now - this.lastRedditFetch) < cacheTimeout) {
+      // console.log('Using cached Reddit data to avoid rate limits'); // Reduced console noise
+      return this.redditCache;
+    }
+    
     const sentimentData = [];
     
     try {
-      // Use Reddit's JSON API (no auth required for public posts)
-      const subreddits = ['Bitcoin', 'CryptoCurrency', 'ethereum'];
+      // Reduced to single subreddit to minimize rate limit exposure
+      const subreddits = ['Bitcoin']; // Reduced from 3 to 1 subreddit
       
       for (const subreddit of subreddits) {
         try {
-          const response = await fetch(`https://www.reddit.com/r/${subreddit}/hot.json?limit=10`);
+          // Exponential backoff for rate limiting
+          if (this.redditRetryCount > 0) {
+            const backoffDelay = Math.min(1000 * Math.pow(2, this.redditRetryCount), 10000);
+            await new Promise(resolve => setTimeout(resolve, backoffDelay));
+          }
+          
+          const response = await fetch(`https://www.reddit.com/r/${subreddit}/hot.json?limit=10`, { // Increased limit to get more data per request
+            headers: {
+              'User-Agent': 'SignalCartel/1.0 (Quantum Forge Trading Platform)',
+              'Accept': 'application/json',
+              'Cache-Control': 'max-age=300' // 5 minute cache header
+            },
+            signal: AbortSignal.timeout(4000) // Increased timeout to 4 seconds
+          });
+          
+          if (response.status === 429) {
+            this.redditRetryCount = Math.min(this.redditRetryCount + 1, this.maxRedditRetries);
+            console.warn(`Rate limited on r/${subreddit}, retry count: ${this.redditRetryCount}`);
+            
+            // If max retries reached, use cached data if available
+            if (this.redditRetryCount >= this.maxRedditRetries && this.redditCache.length > 0) {
+              console.warn('Max Reddit retries reached, using stale cache data');
+              return this.redditCache;
+            }
+            continue;
+          }
+          
+          if (!response.ok) {
+            throw new Error(`Reddit API returned ${response.status}: ${response.statusText}`);
+          }
+          
+          const contentType = response.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            console.warn(`r/${subreddit} returned non-JSON content, skipping`);
+            continue;
+          }
+          
           const data = await response.json();
           
           if (data.data && data.data.children) {
@@ -301,11 +363,29 @@ export class SimpleTwitterSentiment {
             });
           }
         } catch (error) {
-          console.warn(`Error fetching from r/${subreddit}:`, error);
+          // Only log warnings for non-timeout errors to reduce console noise
+          if (!error.message.includes('timeout') && !error.message.includes('aborted')) {
+            console.warn(`Error fetching from r/${subreddit}:`, error.message);
+          }
         }
       }
+      
+      // Cache results and timestamp, reset retry count on success
+      if (sentimentData.length > 0) {
+        this.redditCache = sentimentData;
+        this.lastRedditFetch = now;
+        this.redditRetryCount = 0; // Reset retry count on successful fetch
+        console.log(`✅ Reddit sentiment updated: ${sentimentData.length} data points cached for 5 minutes`);
+      }
+      
     } catch (error) {
-      console.error('Error fetching Reddit sentiment:', error);
+      console.error('Error fetching Reddit sentiment:', error.message);
+      
+      // Return stale cache data if available during errors
+      if (this.redditCache.length > 0) {
+        console.warn('Using stale Reddit cache due to API error');
+        return this.redditCache;
+      }
     }
     
     return sentimentData;
@@ -360,7 +440,14 @@ export class SimpleTwitterSentiment {
     try {
       if (symbol === 'BTC') {
         // Use free blockchain.info API for basic metrics
-        const response = await fetch('https://blockchain.info/q/24hrtransactioncount');
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        
+        const response = await fetch('https://blockchain.info/q/24hrtransactioncount', {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
         const txCount = parseInt(await response.text());
         
         // Simple sentiment based on transaction volume
