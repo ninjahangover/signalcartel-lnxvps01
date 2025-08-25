@@ -9,7 +9,9 @@ WORKDIR /app
 # Copy package files (context is set to root in docker-compose)
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
-RUN npm ci && npx prisma generate
+# Install dependencies and generate Prisma client for Alpine Linux
+RUN npm ci
+RUN npx prisma generate --schema=prisma/schema.prisma
 
 # Rebuild the source code only when needed
 FROM base AS builder
