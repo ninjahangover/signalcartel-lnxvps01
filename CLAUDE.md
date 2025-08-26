@@ -172,6 +172,12 @@ SignalCartel is a revolutionary cryptocurrency trading platform featuring **QUAN
 - `src/lib/order-book-validator.ts` - Order book data validation and preprocessing
 - `test-order-book-validation.ts` - Comprehensive testing suite for order book intelligence
 
+### Administration & Operations (NEW - August 26, 2025)
+- `QUANTUM-FORGE-ADMIN-PLAYBOOK.md` - Comprehensive administration playbook for system operators
+- Includes script reference, common workflows, troubleshooting procedures, and emergency recovery
+- Designed for SRE/sysadmin professionals with command-line expertise
+- Covers all monitoring, trading engine, database, and service management procedures
+
 ## Recent Work Completed (August 26, 2025 - Latest Sessions)
 
 ### 🔥 **QUANTUM FORGE™ ORDER BOOK INTELLIGENCE™ INTEGRATION COMPLETE** (Latest Session - Aug 26)
@@ -561,6 +567,7 @@ docker exec signalcartel-warehouse psql -U warehouse_user -d signalcartel -c "SE
 ## Important Notes
 - **ORDER BOOK INTELLIGENCE™ ACTIVE** - Phase 4 multi-layer AI system with real-time market microstructure analysis
 - **MULTI-LAYER AI INTEGRATION** - 4-layer fusion engine (Technical + Sentiment + Order Book + Fusion) fully operational
+- **ADMIN PLAYBOOK AVAILABLE** - `QUANTUM-FORGE-ADMIN-PLAYBOOK.md` provides comprehensive operations guide
 - **MONITORING ACTIVE** - Real-time monitoring service running with OpenStatus integration 
 - **TELEGRAM ALERTS DISABLED** - All legacy telegram spam eliminated, using OpenStatus for proper alerts
 - **BACKUPS AUTOMATED** - Enterprise backup system ready for crontab scheduling
@@ -574,6 +581,13 @@ docker exec signalcartel-warehouse psql -U warehouse_user -d signalcartel -c "SE
 - GPU strategies automatically fallback to CPU if CUDA unavailable
 - OpenStatus dashboard accessible at `http://localhost:3006/login`
 - Order Book Intelligence™ accessible in main dashboard "Order Book Intelligence™" tab
+
+### 🔧 **For System Administration**
+- **Complete Admin Playbook**: `QUANTUM-FORGE-ADMIN-PLAYBOOK.md` - comprehensive operations guide
+- **Script Reference**: All scripts organized by purpose (trading, monitoring, testing, debugging)
+- **Common Workflows**: Step-by-step procedures for frequent admin tasks
+- **Emergency Procedures**: Quick recovery commands and escalation procedures
+- **Monitoring Integration**: ntfy alerts, log locations, and health check procedures
 
 ## Repository
 - GitHub: https://github.com/ninjahangover/signalcartel
