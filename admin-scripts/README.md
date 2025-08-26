@@ -38,6 +38,9 @@ npx tsx admin-scripts/test-position-management.ts
 # Test order book intelligence
 npx tsx admin-scripts/test-order-book-validation.ts
 
+# Test enhanced sentiment engine (NEW - 12+ data sources)
+npx tsx admin-scripts/test-enhanced-sentiment-engine.ts
+
 # Verify all strategies
 npx tsx admin-scripts/verify-all-strategies.ts
 ```

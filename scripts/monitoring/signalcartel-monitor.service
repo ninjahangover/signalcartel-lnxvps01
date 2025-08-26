@@ -1,0 +1,38 @@
+[Unit]
+Description=SignalCartel OpenStatus Monitoring Service
+Documentation=https://github.com/ninjahangover/signalcartel
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=telgkb9
+Group=telgkb9
+WorkingDirectory=/home/telgkb9/depot/dev-signalcartel
+Environment=NODE_ENV=production
+Environment=NTFY_TOPIC=signal-cartel
+Environment=PATH=/home/telgkb9/.nvm/versions/node/v20.18.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/home/telgkb9/.nvm/versions/node/v20.18.0/bin/npx tsx openstatus-monitor-daemon.ts
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=10
+KillMode=mixed
+TimeoutStopSec=30
+
+# Logging
+StandardOutput=append:/var/log/signalcartel-monitor.log
+StandardError=append:/var/log/signalcartel-monitor-error.log
+SyslogIdentifier=signalcartel-monitor
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/telgkb9/depot/dev-signalcartel /tmp /var/log
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target

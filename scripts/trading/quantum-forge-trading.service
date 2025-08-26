@@ -1,0 +1,45 @@
+[Unit]
+Description=QUANTUM FORGE™ Trading Engine with CUDA Support
+Documentation=https://github.com/ninjahangover/signalcartel
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=telgkb9
+Group=telgkb9
+WorkingDirectory=/home/telgkb9/depot/dev-signalcartel
+
+# Load environment from .env.cuda file
+EnvironmentFile=/home/telgkb9/depot/dev-signalcartel/.env.cuda
+Environment=NODE_ENV=production
+Environment=PATH=/home/telgkb9/.nvm/versions/node/v20.18.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Start the trading engine
+ExecStart=/home/telgkb9/.nvm/versions/node/v20.18.0/bin/npx tsx -r dotenv/config load-database-strategies.ts
+ExecStop=/home/telgkb9/depot/dev-signalcartel/scripts/trading/stop-quantum-forge.sh
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Restart configuration
+Restart=always
+RestartSec=15
+KillMode=mixed
+TimeoutStopSec=30
+
+# Logging
+StandardOutput=append:/var/log/quantum-forge-trading.log
+StandardError=append:/var/log/quantum-forge-trading-error.log
+SyslogIdentifier=quantum-forge-trading
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/telgkb9/depot/dev-signalcartel /tmp /var/log
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target
