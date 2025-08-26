@@ -5,70 +5,78 @@
 
 ## 📋 SCRIPT & TEST QUICK REFERENCE
 
+**🎯 ALL ADMIN SCRIPTS CONSOLIDATED IN `admin-scripts/` DIRECTORY**
+**Use only these consolidated scripts to avoid legacy script conflicts!**
+
 ### Core Trading Scripts
 ```bash
 # Primary Trading Engine (POSITION MANAGEMENT REQUIRED)
-load-database-strategies.ts                    # MAIN: Multi-layer AI trading with Order Book Intelligence™
+admin-scripts/load-database-strategies.ts     # MAIN: Multi-layer AI trading with Order Book Intelligence™
                                               # ✅ USES: Position management (entry → exit tracking)
                                               # ✅ USES: ManagedPosition & ManagedTrade tables
                                               # ✅ SHOWS: Dashboard status as "running"
 
 # ⚠️  DEPRECATED - DO NOT USE FOR PRODUCTION
-custom-paper-trading.ts                       # LEGACY: Basic paper trading WITHOUT position management
+admin-scripts/custom-paper-trading.ts         # LEGACY: Basic paper trading WITHOUT position management
                                               # ❌ BYPASSES: Position lifecycle tracking
                                               # ❌ BYPASSES: Dashboard status detection
                                               # ❌ NO P&L: Entry/exit tracking
 
 # Trading Tests & Validation
-test-multi-layer-ai.ts                       # Test complete 4-layer AI integration
-test-order-book-validation.ts                # Test order book intelligence specifically
-test-quantum-forge-sentiment.ts              # Test sentiment analysis integration
-test-conflict-detection.ts                   # Test cross-layer conflict detection
-test-extreme-conflict.ts                     # Test extreme conflict scenarios
+admin-scripts/test-order-book-validation.ts  # Test order book intelligence specifically
+admin-scripts/test-position-management.ts    # Test position lifecycle system  
+admin-scripts/verify-all-strategies.ts       # Comprehensive strategy validation
 ```
 
 ### System Health & Monitoring
 ```bash
 # Health Checks
-system-health-check.ts                       # Comprehensive system status
-test-all-monitoring-endpoints.ts             # Validate all monitoring endpoints
-openstatus-monitor-runner.ts                # Manual monitoring check
+admin-scripts/system-health-check.ts         # Comprehensive system status
+admin-scripts/openstatus-monitor-runner.ts   # Manual monitoring check
 
-# Service Management Scripts
-scripts/monitoring/openstatus-monitor-service.sh    # start|stop|status|logs|restart
-scripts/backup/simple-db-backup.sh                  # Manual database backup
+# Service Management Scripts  
+admin-scripts/openstatus-monitor-service.sh  # start|stop|status|logs|restart
+admin-scripts/simple-db-backup.sh            # Manual database backup
 ```
 
-### Strategy Testing & Optimization
-```bash
-# Individual Strategy Tests  
-test-gpu-strategy-fast.ts                    # Quick GPU strategy validation
-test-trading-pipeline.ts                     # Full trading pipeline test
-test-strategies-simple.ts                    # Simple strategy execution test
-verify-all-strategies.ts                     # Comprehensive strategy validation
+## ⚠️ CRITICAL: LEGACY SCRIPT AVOIDANCE
 
-# Performance & Analysis
-test-position-management.ts                  # Position lifecycle testing
-test-mathematical-intuition.ts               # Mathematical intuition engine test
+**🚨 DANGER: Avoid Legacy Scripts in Root Directory**
+
+The root directory contains many legacy scripts that can cause system conflicts:
+- Old trading scripts that bypass position management
+- Deprecated testing scripts with outdated APIs  
+- Experimental scripts that may corrupt data
+- Scripts with hardcoded configurations
+
+**✅ SAFE APPROACH: Only use `admin-scripts/` directory**
+```bash
+# ✅ SAFE - Use consolidated admin scripts
+npx tsx admin-scripts/load-database-strategies.ts
+npx tsx admin-scripts/system-health-check.ts
+
+# ❌ DANGEROUS - Avoid root directory legacy scripts  
+npx tsx some-old-script.ts                    # May bypass position management!
+npx tsx legacy-trading-script.ts              # May corrupt database!
 ```
 
-### API & Data Tests
+### Quick Admin Commands
 ```bash
-# Market Data Tests
-test-real-prices.html                        # Visual market data test (browser)
-test-real-price/route.ts                     # API endpoint for real price testing
+# System Health Overview
+npx tsx admin-scripts/system-health-check.ts
 
-# Database & Migration
-test-restore.sh                              # Database restore testing
-database-backup.sh                           # Database backup utility
-```
+# Start Position-Managed Trading (ONLY approved method)
+ENABLE_GPU_STRATEGIES=true NTFY_TOPIC="signal-cartel" npx tsx admin-scripts/load-database-strategies.ts
 
-### Development & Debugging
-```bash
-# Quick Debug Commands
-npx tsx system-health-check.ts                                    # System overview
-DATABASE_URL="..." npx tsx -e "import {prisma} from './src/lib/prisma.ts'; prisma.paperTrade.count().then(console.log);"  # DB query
-ENABLE_GPU_STRATEGIES=true timeout 30s npx tsx -r dotenv/config test-multi-layer-ai.ts    # AI test
+# Test Position Management System
+npx tsx admin-scripts/test-position-management.ts
+
+# Manual Database Backup
+./admin-scripts/simple-db-backup.sh
+
+# Service Management
+./admin-scripts/openstatus-monitor-service.sh status
+./admin-scripts/openstatus-monitor-service.sh start
 ```
 
 ## 🚨 CRITICAL: POSITION MANAGEMENT REQUIREMENTS
