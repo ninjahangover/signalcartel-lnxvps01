@@ -91,8 +91,8 @@ SignalCartel is a revolutionary cryptocurrency trading platform featuring **QUAN
    - **Host PostgreSQL (localhost:5433)** - Contains 4,975 trading records + 18,623 signals (MAIN DATA)
    - **Warehouse Container (signalcartel-warehouse:5432)** - Container databases with minimal data
    - **Current Issue**: Website container connects to warehouse container but data is in host PostgreSQL
-3. **Quantum Forge** - Multi-source sentiment-intelligent AI paper trading engine
-4. **Strategy Execution Engine** - GPU-accelerated with real-time sentiment enhancement
+3. **Quantum Forge** - Multi-source sentiment-intelligent AI paper trading engine with **mandatory position management**
+4. **Strategy Execution Engine** - GPU-accelerated with real-time sentiment enhancement and **complete position lifecycle tracking**
 5. **Market Data Service** - Real-time data from Kraken API
 6. **Web Interface** - Next.js dashboard at port 3001 with live data
 7. **Real Sentiment Engine** - Fear&Greed, Reddit, News, On-chain metrics integration
@@ -564,15 +564,32 @@ docker exec signalcartel-warehouse psql -U warehouse_user -d signalcartel -c "SE
 - **Database Query Optimization** - Improve dashboard load times with large datasets
 - **Caching Layer Implementation** - Redis caching for frequently accessed sentiment data
 
+## 🚨 CRITICAL: Position Management Requirements
+
+**Position Management is MANDATORY - Not Optional:**
+- ✅ **ALWAYS USE**: `load-database-strategies.ts` for all trading operations (includes full position management)
+- ❌ **NEVER USE**: `custom-paper-trading.ts` for production (bypasses position tracking system)
+- ⚠️  **WARNING**: Using non-position-managed scripts bypasses essential architecture and dashboard status detection
+
+**Why Position Management is Essential:**
+- Tracks complete trade lifecycle: Entry → Monitoring → Exit
+- Calculates real P&L between entry and exit prices
+- Provides risk management with stop-loss and take-profit levels
+- Enables portfolio tracking and position-level analysis
+- Required for dashboard status detection ("Quantum Forge Neural Core" component)
+- Uses proper database schema (ManagedPosition + ManagedTrade tables)
+
+**Database Cleanup**: If `custom-paper-trading.ts` was accidentally used, clean database of unmanaged trades before resuming with position-managed trading.
+
 ## Important Notes
 - **ORDER BOOK INTELLIGENCE™ ACTIVE** - Phase 4 multi-layer AI system with real-time market microstructure analysis
 - **MULTI-LAYER AI INTEGRATION** - 4-layer fusion engine (Technical + Sentiment + Order Book + Fusion) fully operational
+- **POSITION MANAGEMENT ENFORCED** - All trading must use position lifecycle tracking (critical path element)
 - **ADMIN PLAYBOOK AVAILABLE** - `QUANTUM-FORGE-ADMIN-PLAYBOOK.md` provides comprehensive operations guide
 - **MONITORING ACTIVE** - Real-time monitoring service running with OpenStatus integration 
 - **TELEGRAM ALERTS DISABLED** - All legacy telegram spam eliminated, using OpenStatus for proper alerts
 - **BACKUPS AUTOMATED** - Enterprise backup system ready for crontab scheduling
-- Use **load-database-strategies.ts** for multi-layer AI trading with Order Book Intelligence™ (RECOMMENDED)
-- Use **custom-paper-trading.ts** for basic trading without multi-layer AI enhancements
+- **DASHBOARD STATUS FIXED** - Status detection now properly identifies position-managed trading engines
 - All sentiment data is REAL and optimized (95.7% confidence, 5-min cache, single Reddit subreddit)
 - Order Book Intelligence™ uses real external APIs (Binance US, Kraken, CoinGecko)
 - Traditional order book visualization with ExoCharts-style heat maps and animations

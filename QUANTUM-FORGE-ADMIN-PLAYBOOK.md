@@ -7,9 +7,17 @@
 
 ### Core Trading Scripts
 ```bash
-# Primary Trading Engines
+# Primary Trading Engine (POSITION MANAGEMENT REQUIRED)
 load-database-strategies.ts                    # MAIN: Multi-layer AI trading with Order Book Intelligence™
-custom-paper-trading.ts                       # LEGACY: Basic paper trading without AI layers
+                                              # ✅ USES: Position management (entry → exit tracking)
+                                              # ✅ USES: ManagedPosition & ManagedTrade tables
+                                              # ✅ SHOWS: Dashboard status as "running"
+
+# ⚠️  DEPRECATED - DO NOT USE FOR PRODUCTION
+custom-paper-trading.ts                       # LEGACY: Basic paper trading WITHOUT position management
+                                              # ❌ BYPASSES: Position lifecycle tracking
+                                              # ❌ BYPASSES: Dashboard status detection
+                                              # ❌ NO P&L: Entry/exit tracking
 
 # Trading Tests & Validation
 test-multi-layer-ai.ts                       # Test complete 4-layer AI integration
@@ -61,6 +69,45 @@ database-backup.sh                           # Database backup utility
 npx tsx system-health-check.ts                                    # System overview
 DATABASE_URL="..." npx tsx -e "import {prisma} from './src/lib/prisma.ts'; prisma.paperTrade.count().then(console.log);"  # DB query
 ENABLE_GPU_STRATEGIES=true timeout 30s npx tsx -r dotenv/config test-multi-layer-ai.ts    # AI test
+```
+
+## 🚨 CRITICAL: POSITION MANAGEMENT REQUIREMENTS
+
+### Position Management is MANDATORY
+**Position management is a critical path element and must ALWAYS be active:**
+
+- ✅ **ALWAYS USE**: `load-database-strategies.ts` for all trading operations
+- ❌ **NEVER USE**: `custom-paper-trading.ts` for production trading
+- ⚠️  **WARNING**: Using non-position-managed scripts bypasses essential system architecture
+
+### Why Position Management is Essential:
+```bash
+# Position management provides:
+✅ Full trade lifecycle tracking (entry → monitoring → exit)
+✅ Real P&L calculation between entry and exit prices  
+✅ Risk management with stop-loss and take-profit levels
+✅ Portfolio tracking and position-level details
+✅ Dashboard status detection and health reporting
+✅ Proper database schema usage (ManagedPosition + ManagedTrade)
+
+# WITHOUT position management:
+❌ Trades are just fired blindly without lifecycle tracking
+❌ No real P&L calculations 
+❌ No risk management or stop-loss functionality
+❌ Dashboard shows "not running" even when trades occur
+❌ Bypasses professional trading system architecture
+```
+
+### Database Cleanup After Non-Position-Managed Trading:
+```bash
+# If custom-paper-trading.ts was used, clean up unmanaged data:
+DATABASE_URL="..." npx tsx -e "
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
+await prisma.paperTradingSession.deleteMany({}); // Remove unmanaged sessions
+await prisma.paperTrade.deleteMany({});           // Remove unmanaged trades
+console.log('Cleaned up unmanaged trading data');
+"
 ```
 
 ## 🔄 COMMON ADMIN WORKFLOWS
