@@ -1,0 +1,129 @@
+SIGNALCARTEL WEBSITE AUDIT REPORT - FAKE vs REAL DATA
+================================================================================
+Generated: 2025-08-26T07:05:05.516Z
+Audited: 17 pages and API endpoints
+
+SUMMARY:
+✅ Real: 6
+❌ Fake: 7
+⚠️ Mixed: 4
+💥 Error: 0
+
+DETAILED AUDIT RESULTS:
+================================================================================
+FAKE: Landing Page
+URL: http://localhost:3001/
+FAKE ELEMENTS (2):
+  - Fake/mock/demo keywords
+  - Hardcoded/simulated data mentions
+
+FAKE: Main Dashboard
+URL: http://localhost:3001/dashboard
+FAKE ELEMENTS (2):
+  - Fake/mock/demo keywords
+  - Hardcoded/simulated data mentions
+
+FAKE: Quantum Forge Page
+URL: http://localhost:3001/quantum-forge
+FAKE ELEMENTS (2):
+  - Fake/mock/demo keywords
+  - Hardcoded/simulated data mentions
+
+FAKE: Charts Page
+URL: http://localhost:3001/charts
+FAKE ELEMENTS (2):
+  - Fake/mock/demo keywords
+  - Hardcoded/simulated data mentions
+
+FAKE: Manual Trading Page
+URL: http://localhost:3001/manual-trading
+FAKE ELEMENTS (2):
+  - Fake/mock/demo keywords
+  - Hardcoded/simulated data mentions
+
+FAKE: Mathematical Intuition Page
+URL: http://localhost:3001/mathematical-intuition
+FAKE ELEMENTS (2):
+  - Fake/mock/demo keywords
+  - Hardcoded/simulated data mentions
+
+FAKE: Strategies Page
+URL: http://localhost:3001/strategies
+FAKE ELEMENTS (2):
+  - Fake/mock/demo keywords
+  - Hardcoded/simulated data mentions
+
+REAL: Health API
+URL: http://localhost:3001/api/health
+REAL ELEMENTS (1):
+  - Real timestamps in ISO format
+
+MIXED: Multi-Source Sentiment API
+URL: http://localhost:3001/api/multi-source-sentiment?symbol=BTC
+FAKE ELEMENTS (3):
+  - Mock/fake data in API response
+  - Suspicious 0.5x scores (likely fake)
+  - Fake number patterns
+REAL ELEMENTS (9):
+  - Real timestamps in ISO format
+  - Real transaction counts
+  - Real Reddit upvote counts
+  - Real source arrays
+  - API returning successful responses
+  - 9 real sentiment sources
+  - Source 2 (Enhanced Blockchain Analysis) has real metadata
+  - Source 7 (Reddit Community) has real metadata
+  - Source 9 (On-Chain Metrics) has real metadata
+
+REAL: Quantum Forge Status API
+URL: http://localhost:3001/api/quantum-forge/status
+REAL ELEMENTS (2):
+  - Real timestamps in ISO format
+  - API returning successful responses
+
+REAL: Portfolio API
+URL: http://localhost:3001/api/quantum-forge/portfolio
+REAL ELEMENTS (2):
+  - Real timestamps in ISO format
+  - API returning successful responses
+
+MIXED: Quantum Forge Dashboard API
+URL: http://localhost:3001/api/quantum-forge/dashboard
+FAKE ELEMENTS (1):
+  - Fake number patterns
+REAL ELEMENTS (2):
+  - Real timestamps in ISO format
+  - API returning successful responses
+
+REAL: Real BTC Price API
+URL: http://localhost:3001/api/real-btc-price
+REAL ELEMENTS (2):
+  - Real timestamps in ISO format
+  - API returning successful responses
+
+REAL: Market Data Status API
+URL: http://localhost:3001/api/market-data/status
+REAL ELEMENTS (1):
+  - API returning successful responses
+
+MIXED: Sentiment Analysis API
+URL: http://localhost:3001/api/sentiment-analysis?hours=1
+FAKE ELEMENTS (1):
+  - Fake number patterns
+REAL ELEMENTS (2):
+  - Real timestamps in ISO format
+  - API returning successful responses
+
+MIXED: Position Management API
+URL: http://localhost:3001/api/position-management/portfolio
+FAKE ELEMENTS (1):
+  - Mock/fake data in API response
+REAL ELEMENTS (2):
+  - Real timestamps in ISO format
+  - API returning successful responses
+
+REAL: Expectancy Dashboard API
+URL: http://localhost:3001/api/expectancy/dashboard
+REAL ELEMENTS (2):
+  - Real timestamps in ISO format
+  - API returning successful responses

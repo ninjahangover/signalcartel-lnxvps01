@@ -1,42 +1,58 @@
 # QUANTUM FORGE™ Administration Playbook
 
-**Version**: 1.0 - August 26, 2025  
-**Last Updated**: Phase 4 Order Book Intelligence™ Integration Complete
+**Version**: 2.0 - August 26, 2025  
+**Last Updated**: Phased Intelligence System Complete with Real-Time Monitoring
 
 ## 📋 SCRIPT & TEST QUICK REFERENCE
 
-**🎯 ALL ADMIN SCRIPTS CONSOLIDATED IN `admin-scripts/` DIRECTORY**
-**Use only these consolidated scripts to avoid legacy script conflicts!**
+**🎯 ALL ADMIN SCRIPTS CONSOLIDATED IN `admin/` DIRECTORY**
+**Use only these consolidated scripts - organized and validated!**
 
-### Core Trading Scripts
+### 🚀 Primary Trading Commands
 ```bash
-# Primary Trading Engine (POSITION MANAGEMENT REQUIRED)
-admin-scripts/load-database-strategies.ts     # MAIN: Multi-layer AI trading with Order Book Intelligence™
+# MAIN: Start Trading with Live Monitor (RECOMMENDED)
+admin/start-quantum-forge-with-monitor.sh    # Complete solution: Trading engine + live monitor
+                                              # ✅ USES: Complete position lifecycle tracking
+                                              # ✅ SHOWS: Real-time dashboard with phase monitoring
+                                              # ✅ LOGS: All activity to /tmp/signalcartel-logs/
+
+# Alternative: Manual startup
+load-database-strategies.ts                  # Core trading engine with phased intelligence
                                               # ✅ USES: Position management (entry → exit tracking)
                                               # ✅ USES: ManagedPosition & ManagedTrade tables
-                                              # ✅ SHOWS: Dashboard status as "running"
+                                              # ✅ SUPPORTS: 5-phase intelligence system
 
-# ⚠️  DEPRECATED - DO NOT USE FOR PRODUCTION
-admin-scripts/custom-paper-trading.ts         # LEGACY: Basic paper trading WITHOUT position management
-                                              # ❌ BYPASSES: Position lifecycle tracking
-                                              # ❌ BYPASSES: Dashboard status detection
-                                              # ❌ NO P&L: Entry/exit tracking
-
-# Trading Tests & Validation
-admin-scripts/test-order-book-validation.ts  # Test order book intelligence specifically
-admin-scripts/test-position-management.ts    # Test position lifecycle system  
-admin-scripts/verify-all-strategies.ts       # Comprehensive strategy validation
+# Real-Time Monitoring
+admin/quantum-forge-live-monitor.ts          # Live dashboard with colorized output
+                                              # ✅ SHOWS: Trades, phases, P&L in real-time
+                                              # ✅ LOGS: Comprehensive activity logging
 ```
 
-### System Health & Monitoring
+### 📊 Phase Management & Control
+```bash  
+# Phase Status & Readiness Analysis
+admin/phase-transition-status.ts             # Current phase analysis and readiness scoring
+admin/control-trading-phase.ts               # Manual phase control interface
+
+# Position Management Testing
+admin/test-position-tracking.ts              # Test complete position lifecycle
+admin/test-phase-0-barriers.ts               # Test ultra-low barrier configuration
+```
+
+### 🔧 System Health & Monitoring
 ```bash
 # Health Checks
-admin-scripts/system-health-check.ts         # Comprehensive system status
-admin-scripts/openstatus-monitor-runner.ts   # Manual monitoring check
+system-health-check.ts                       # Comprehensive system status
+openstatus-monitor-runner.ts                 # Manual monitoring check
 
 # Service Management Scripts  
-admin-scripts/openstatus-monitor-service.sh  # start|stop|status|logs|restart
-admin-scripts/simple-db-backup.sh            # Manual database backup
+scripts/monitoring/openstatus-monitor-service.sh  # start|stop|status|logs|restart
+scripts/backup/simple-db-backup.sh               # Manual database backup
+
+# Legacy Test Scripts (admin/ folder)
+admin/test-api-route.ts                       # Test API endpoints
+admin/test-cleaned-sentiment.ts               # Test sentiment analysis
+admin/test-order-book-validation.ts           # Test order book intelligence
 ```
 
 ## ⚠️ CRITICAL: LEGACY SCRIPT AVOIDANCE

@@ -11,6 +11,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 
+interface SentimentData {
+  confidence: number;
+  sourceCount: number;
+}
+
 interface FlowStage {
   id: string;
   title: string;
@@ -36,6 +41,10 @@ const QuantumBrainFlow: React.FC = () => {
   const [currentStage, setCurrentStage] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showConnections, setShowConnections] = useState(false);
+  const [sentimentData, setSentimentData] = useState<SentimentData>({
+    confidence: 0,
+    sourceCount: 0
+  });
 
   // Animated flow stages
   const flowStages: FlowStage[] = [
@@ -212,6 +221,40 @@ const QuantumBrainFlow: React.FC = () => {
       connections: []
     }
   ];
+
+  // Fetch real sentiment data
+  useEffect(() => {
+    const fetchSentimentData = async () => {
+      try {
+        const response = await fetch('/api/multi-source-sentiment?symbol=BTC');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data) {
+            // Calculate confidence from sentiment data (convert 0-1 to percentage)
+            const confidence = Math.round(data.data.confidence * 100);
+            
+            // Count active sources that returned data
+            const sourceCount = data.data.sources ? data.data.sources.length : 0;
+            
+            setSentimentData({
+              confidence: confidence > 0 ? confidence : 0,
+              sourceCount: sourceCount > 0 ? sourceCount : 0
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch sentiment data:', error);
+        // On error, show 0 values (no fallback fake data)
+        setSentimentData({ confidence: 0, sourceCount: 0 });
+      }
+    };
+
+    fetchSentimentData();
+    
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchSentimentData, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Animation control
   useEffect(() => {
@@ -449,13 +492,13 @@ const QuantumBrainFlow: React.FC = () => {
             </div>
             <div>
               <div className="text-3xl font-bold text-pink-400 mb-1">
-                {isPlaying ? Math.floor(Math.random() * 100 + 85) : '89.2'}%
+                {sentimentData.confidence}%
               </div>
               <div className="text-sm text-gray-400">Decision Confidence</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-green-400 mb-1">
-                {isPlaying ? Math.floor(Math.random() * 10 + 45) : '47'}
+                {sentimentData.sourceCount}
               </div>
               <div className="text-sm text-gray-400">Data Sources</div>
             </div>

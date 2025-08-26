@@ -5,6 +5,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { PositionManager, TradingSignal, ExitStrategy } from './position-manager';
+import { phaseManager, PhaseConfig } from '../quantum-forge-phase-config';
 
 export class PositionService {
   private positionManager: PositionManager;

@@ -5,6 +5,8 @@ import { StrategyFactory, BaseStrategy, TradingSignal } from './strategy-impleme
 import { GPURSIStrategy } from './gpu-rsi-strategy';
 import { QuantumProfitOptimizer, AdvancedTradeSignal } from './quantum-profit-optimizer';
 import { QuantumSupremacyEngine, QuantumTradeSignal } from './quantum-supremacy-engine';
+import { phaseManager, PhaseConfig } from './quantum-forge-phase-config';
+import { positionService } from './position-management/position-service';
 // import { telegramAlerts } from './telegram-alert-service';
 
 interface TechnicalIndicators {
@@ -337,8 +339,22 @@ class StrategyExecutionEngine {
 
   // Process trading signal from strategy implementation with QUANTUM FORGE™ Multi-Layer AI enhancement
   private async processStrategySignal(strategyId: string, signal: TradingSignal): Promise<void> {
-    if (signal.action === 'HOLD' || signal.confidence < 0.5) {
-      return; // Don't execute low-confidence or hold signals
+    // 🎯 QUANTUM FORGE™ PHASE MANAGEMENT - Check current phase configuration
+    const currentPhase = await phaseManager.getCurrentPhase();
+    const phaseProgress = await phaseManager.getProgressToNextPhase();
+    
+    console.log(`📊 QUANTUM FORGE™ Phase ${currentPhase.phase}: ${currentPhase.name}`);
+    console.log(`   Progress: ${phaseProgress.currentTrades}/${currentPhase.maxTrades} trades (${phaseProgress.progress}% to next phase)`);
+    console.log(`   Mode: ${phaseManager.getOverrideStatus().mode.toUpperCase()}`);
+    
+    // Apply phase-based confidence threshold
+    if (signal.confidence < currentPhase.features.confidenceThreshold) {
+      console.log(`🚫 Signal rejected: Confidence ${(signal.confidence * 100).toFixed(1)}% below phase threshold ${(currentPhase.features.confidenceThreshold * 100).toFixed(1)}%`);
+      return;
+    }
+    
+    if (signal.action === 'HOLD') {
+      return; // Don't execute hold signals
     }
 
     console.log(`🎯 Strategy ${strategyId} generated raw signal:`, {
@@ -347,33 +363,35 @@ class StrategyExecutionEngine {
       reason: signal.reason
     });
 
-    // 🚀 QUANTUM FORGE™ MULTI-LAYER AI ENHANCEMENT INTEGRATION
-    try {
-      const { quantumForgeMultiLayerAI } = await import('./quantum-forge-multi-layer-ai');
-      
-      // Convert TradingSignal to BaseStrategySignal format
-      const baseSignal = {
-        action: signal.action,
-        confidence: signal.confidence,
-        symbol: signal.symbol || 'BTC',
-        price: signal.price,
-        strategy: this.getStrategyName(strategyId),
-        reason: signal.reason,
-        timestamp: new Date()
-      };
+    // 🚀 QUANTUM FORGE™ MULTI-LAYER AI ENHANCEMENT INTEGRATION (if enabled by phase)
+    // Only use multi-layer AI if phase configuration enables it
+    if (currentPhase.features.multiLayerAIEnabled) {
+      try {
+        const { quantumForgeMultiLayerAI } = await import('./quantum-forge-multi-layer-ai');
+        
+        // Convert TradingSignal to BaseStrategySignal format
+        const baseSignal = {
+          action: signal.action,
+          confidence: signal.confidence,
+          symbol: signal.symbol || 'BTC',
+          price: signal.price,
+          strategy: this.getStrategyName(strategyId),
+          reason: signal.reason,
+          timestamp: new Date()
+        };
 
-      // Enhance signal with QUANTUM FORGE™ Multi-Layer AI
-      console.log('🚀 QUANTUM FORGE™ Multi-Layer AI: Processing signal through 4-layer architecture...');
-      const multiLayerSignal = await quantumForgeMultiLayerAI.enhanceSignalWithMultiLayerAI(baseSignal, {
-        // Use conservative settings for initial deployment
-        technicalWeight: 0.4,     // 40% technical analysis weight
-        sentimentWeight: 0.35,    // 35% sentiment intelligence weight  
-        orderBookWeight: 0.25,    // 25% order book AI weight
-        minConsensus: 70,         // Require 70% consensus between layers
-        skipOnConflict: true,     // Skip trades when layers disagree
-        conservativeMode: true,   // More cautious decision making
-        enableCrossValidation: true
-      });
+        // Enhance signal with QUANTUM FORGE™ Multi-Layer AI
+        console.log('🚀 QUANTUM FORGE™ Multi-Layer AI: Processing signal through 4-layer architecture...');
+        const multiLayerSignal = await quantumForgeMultiLayerAI.enhanceSignalWithMultiLayerAI(baseSignal, {
+          // Use phase-based configuration for weights and thresholds
+          technicalWeight: 0.4,
+          sentimentWeight: currentPhase.features.sentimentEnabled ? 0.35 : 0,
+          orderBookWeight: currentPhase.features.orderBookEnabled ? 0.25 : 0,
+          minConsensus: currentPhase.features.requireMultiLayerConsensus ? 70 : 30,
+          skipOnConflict: currentPhase.features.requireMultiLayerConsensus,
+          conservativeMode: currentPhase.phase >= 3, // Conservative only in later phases
+          enableCrossValidation: currentPhase.features.requireMultiLayerConsensus
+        });
 
       console.log('🔥 QUANTUM FORGE™ Multi-Layer AI Enhanced Signal:');
       console.log('='.repeat(80));
@@ -442,12 +460,15 @@ class StrategyExecutionEngine {
         opportunityFactors: multiLayerSignal.decisionExplanation.opportunityFactors
       };
 
-      console.log('🔥 QUANTUM FORGE™ Multi-Layer AI: Signal approved and enhanced for execution!');
+        console.log('🔥 QUANTUM FORGE™ Multi-Layer AI: Signal approved and enhanced for execution!');
+        
+      } catch (multiLayerError) {
+        console.warn('⚠️ QUANTUM FORGE™ Multi-Layer AI enhancement failed:', multiLayerError);
+      }
+    } else if (currentPhase.features.sentimentEnabled) {
+      // Phase 1-2: Use basic sentiment enhancement without full multi-layer AI
+      console.log(`📊 Phase ${currentPhase.phase}: Using simplified sentiment validation`);
       
-    } catch (multiLayerError) {
-      console.warn('⚠️ QUANTUM FORGE™ Multi-Layer AI enhancement failed, falling back to basic sentiment enhancement:', multiLayerError);
-      
-      // Fallback to basic sentiment enhancement
       try {
         const { universalSentimentEnhancer } = await import('./sentiment/universal-sentiment-enhancer');
         
@@ -463,23 +484,35 @@ class StrategyExecutionEngine {
 
         const enhancedSignal = await universalSentimentEnhancer.enhanceSignal(baseSignal);
         
-        if (!enhancedSignal.shouldExecute) {
-          console.log(`🚫 Fallback sentiment validation: Signal skipped - ${enhancedSignal.executionReason}`);
+        // Apply phase-based sentiment threshold
+        const sentimentThreshold = currentPhase.features.sentimentThreshold;
+        if (currentPhase.features.requireSentimentAlignment && enhancedSignal.confidence < sentimentThreshold) {
+          console.log(`🚫 Sentiment validation failed: ${(enhancedSignal.confidence * 100).toFixed(1)}% below threshold ${(sentimentThreshold * 100).toFixed(1)}%`);
           return;
         }
 
         signal.confidence = enhancedSignal.confidence;
-        signal.reason = `${signal.reason} | Sentiment-Enhanced: ${enhancedSignal.executionReason}`;
+        signal.reason = `${signal.reason} | Sentiment: ${enhancedSignal.executionReason}`;
         
       } catch (sentimentError) {
-        console.warn('⚠️ Fallback sentiment enhancement also failed, proceeding with original signal:', sentimentError);
+        console.warn('⚠️ Sentiment enhancement failed:', sentimentError);
+        // In early phases, continue without sentiment
+        if (!currentPhase.features.requireSentimentAlignment) {
+          console.log('📊 Continuing without sentiment (not required in this phase)');
+        } else {
+          return; // Block if sentiment is required but failed
+        }
       }
+    } else {
+      // Phase 0: No sentiment or AI validation - raw signals only
+      console.log(`🚀 Phase ${currentPhase.phase}: Direct execution mode - No AI validation`);
     }
 
-    // 🧠 MATHEMATICAL INTUITION ENGINE - PARALLEL ANALYSIS
+    // 🧠 MATHEMATICAL INTUITION ENGINE - PARALLEL ANALYSIS (if enabled by phase)
     let intuitionResult: any = null;
-    try {
-      console.log('🧠 MATHEMATICAL INTUITION: Activating flow field sensing...');
+    if (currentPhase.features.mathematicalIntuitionEnabled) {
+      try {
+        console.log('🧠 MATHEMATICAL INTUITION: Activating flow field sensing...');
       
       const { MathematicalIntuitionEngine } = await import('./mathematical-intuition-engine');
       const intuitionEngine = MathematicalIntuitionEngine.getInstance();
@@ -1228,54 +1261,71 @@ class StrategyExecutionEngine {
           const quantity = positionValue / currentPrice;
           const tradeValue = quantity * currentPrice;
           
-          // Create QUANTUM FORGE™ paper trade with valid sessionId
-          const trade = await prisma.paperTrade.create({
-            data: {
-              sessionId: session.id,
+          // Use QUANTUM FORGE™ Position Management System for complete trade lifecycle
+          const tradingSignal = {
+            action: action as 'BUY' | 'SELL' | 'CLOSE',
+            symbol: symbol,
+            price: currentPrice,
+            confidence: confidence,
+            quantity: quantity,
+            strategy: this.getStrategyName(strategyId),
+            reason: signalData.reason || 'GPU Strategy Signal',
+            timestamp: new Date()
+          };
+          
+          // Process signal through position management for proper entry→exit tracking
+          console.log('📊 Processing signal through Position Management System...');
+          const result = await positionService.processSignal(tradingSignal);
+          
+          if (result.action === 'opened' || result.action === 'closed' || result.action === 'updated') {
+            console.log(`✅ QUANTUM FORGE™ POSITION MANAGED:`, {
+              action: result.action,
               symbol: symbol,
-              side: orderSide,
-              quantity: quantity,
               price: currentPrice,
-              value: tradeValue,
-              commission: 0.0,
-              fees: 0.0,
-              netValue: tradeValue,
-              isEntry: action !== 'CLOSE',
-              tradeType: 'market',
-              strategy: this.getStrategyName(strategyId),
-              signalSource: 'ai',
-              confidence: confidence,
-              executedAt: new Date()
+              quantity: quantity,
+              positionId: result.position?.id,
+              tradeId: result.trade?.id,
+              status: result.action
+            });
+            
+            if (result.action === 'opened') {
+              console.log(`📈 NEW POSITION OPENED: ${symbol} ${tradingSignal.action} @ $${currentPrice}`);
+              console.log(`   Position ID: ${result.position?.id}`);
+              console.log(`   Exit Strategy: SL ${result.position?.stopLoss || 'None'}, TP ${result.position?.takeProfit || 'None'}`);
+            } else if (result.action === 'closed') {
+              console.log(`💰 POSITION CLOSED: ${symbol}`);
+              console.log(`   P&L: $${result.pnl?.toFixed(2) || '0.00'}`);
+              console.log(`   Entry: $${result.position?.entryPrice} → Exit: $${result.position?.exitPrice}`);
+            } else if (result.action === 'updated') {
+              console.log(`🔄 POSITION UPDATED: ${symbol}`);
             }
-          });
-          
-          // Also create trading signal for analysis
-          await prisma.tradingSignal.create({
-            data: {
-              symbol: symbol,
-              strategy: this.getStrategyName(strategyId),
-              signalType: action,
-              currentPrice: currentPrice,
-              confidence: confidence,
-              volume: tradeValue,
-              indicators: JSON.stringify({
-                strategyId: strategyId.slice(0, 8),
-                reason: signalData.reason || 'GPU Strategy Signal',
-                tradeValue: tradeValue,
-                executionTime: new Date().getTime()
-              })
+            
+            // Create trading signal for analysis (kept for dashboard/monitoring)
+            await prisma.tradingSignal.create({
+              data: {
+                symbol: symbol,
+                strategy: this.getStrategyName(strategyId),
+                signalType: action,
+                currentPrice: currentPrice,
+                confidence: confidence,
+                volume: tradeValue,
+                indicators: JSON.stringify({
+                  strategyId: strategyId.slice(0, 8),
+                  reason: signalData.reason || 'GPU Strategy Signal',
+                  tradeValue: tradeValue,
+                  executionTime: new Date().getTime(),
+                  positionId: result.position?.id,
+                  managed: true
+                })
+              }
+            });
+          } else {
+            console.log(`⚠️ Position management returned: ${result.action}`);
+            console.log(`   Signal: ${action} ${symbol} @ $${currentPrice}`);
+            if (result.error) {
+              console.log(`   Error: ${result.error}`);
             }
-          });
-          
-          console.log(`✅ QUANTUM FORGE™ PAPER TRADE EXECUTED:`, {
-            id: trade.id,
-            symbol: trade.symbol,
-            side: trade.side,
-            quantity: trade.quantity,
-            price: trade.price,
-            value: trade.value,
-            strategy: 'QUANTUM FORGE™'
-          });
+          }
           
           // Update strategy state
           const state = this.strategyStates.get(strategyId);

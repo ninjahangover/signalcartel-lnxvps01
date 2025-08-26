@@ -145,7 +145,7 @@ const AccessRequestPage: React.FC = () => {
                     onChange={handleChange}
                     required
                     className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-purple-500 focus:outline-none"
-                    placeholder="your.email@example.com"
+                    placeholder="Enter your email address"
                   />
                 </div>
               </div>

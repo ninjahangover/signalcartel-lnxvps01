@@ -8,6 +8,86 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const hours = parseInt(searchParams.get('hours') || '24');
     const strategy = searchParams.get('strategy');
+    const liveSources = searchParams.get('live') === 'true';
+    
+    // If live sources requested, return live sentiment data
+    if (liveSources) {
+      const { twitterSentiment } = await import('../../../lib/sentiment/simple-twitter-sentiment');
+      
+      // Get detailed sentiment data from enhanced engine
+      const sentimentResult = await twitterSentiment.getBTCSentiment();
+      
+      // Get the raw source data
+      const detailedSources = await (twitterSentiment as any).getRealSentimentData('BTC');
+      
+      // Group and aggregate by source type
+      const sourceGroups = detailedSources.reduce((acc: any, item: any) => {
+        const source = item.source;
+        if (!acc[source]) {
+          acc[source] = {
+            source,
+            dataPoints: [],
+            totalScore: 0,
+            totalWeight: 0,
+            sampleText: '',
+            metadata: {}
+          };
+        }
+        
+        acc[source].dataPoints.push(item);
+        acc[source].totalScore += (item.sentiment_score || 0);
+        acc[source].totalWeight += (item.weight || 1);
+        acc[source].sampleText = acc[source].sampleText || item.text;
+        
+        // Store additional metadata
+        if (item.upvotes) acc[source].metadata.upvotes = item.upvotes;
+        if (item.tx_count) acc[source].metadata.tx_count = item.tx_count;
+        
+        return acc;
+      }, {});
+      
+      // Calculate averages and format for display
+      const sources = Object.values(sourceGroups).map((group: any) => {
+        const avgScore = group.totalScore / group.dataPoints.length;
+        const avgWeight = group.totalWeight / group.dataPoints.length;
+        const confidence = Math.min(0.95, 0.6 + (group.dataPoints.length / 10) * 0.2);
+        
+        const sourceInfo = getSourceDisplayInfo(group.source);
+        
+        return {
+          id: group.source,
+          name: sourceInfo.name,
+          icon: sourceInfo.icon,
+          color: sourceInfo.color,
+          category: sourceInfo.category,
+          score: avgScore,
+          confidence: confidence,
+          weight: avgWeight,
+          dataPoints: group.dataPoints.length,
+          sampleText: group.sampleText.substring(0, 100) + (group.sampleText.length > 100 ? '...' : ''),
+          sentiment: avgScore > 0.3 ? 'BULLISH' : avgScore < -0.3 ? 'BEARISH' : 'NEUTRAL',
+          metadata: group.metadata,
+          isActive: true,
+          lastUpdate: new Date().toISOString()
+        };
+      });
+      
+      const summary = {
+        totalSources: sources.length,
+        totalDataPoints: detailedSources.length,
+        overallScore: sentimentResult.score,
+        overallConfidence: sentimentResult.confidence
+      };
+      
+      return NextResponse.json({
+        success: true,
+        data: {
+          summary,
+          sources,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
     
     const timeFilter = new Date(Date.now() - hours * 60 * 60 * 1000);
 

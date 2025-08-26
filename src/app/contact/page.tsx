@@ -155,7 +155,7 @@ export default function ContactPage() {
                     value={formData.email}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-transparent"
-                    placeholder="your@email.com"
+                    placeholder="Enter your email address"
                   />
                 </div>
               </div>

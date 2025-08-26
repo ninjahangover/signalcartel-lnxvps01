@@ -123,21 +123,33 @@ export default function QuantumForgeAnalyticsHub() {
         }
       }
 
-      // Generate mock market data for visualization
-      const now = new Date();
-      const mockMarketData: MarketDataPoint[] = [];
-      for (let i = 23; i >= 0; i--) {
-        const timestamp = new Date(now.getTime() - (i * 60 * 60 * 1000));
-        const basePrice = 65000;
-        const volatility = Math.sin(i * 0.5) * 2000 + Math.random() * 1000;
-        
-        mockMarketData.push({
-          timestamp: timestamp.toISOString(),
-          price: basePrice + volatility,
-          volume: Math.random() * 1000000
-        });
+      // Fetch real market data 
+      try {
+        const marketResponse = await fetch('/api/real-btc-price');
+        if (marketResponse.ok) {
+          const marketDataResult = await marketResponse.json();
+          if (marketDataResult.success && marketDataResult.data) {
+            // Use real BTC price data
+            const realMarketData: MarketDataPoint[] = [{
+              timestamp: new Date().toISOString(),
+              price: marketDataResult.data.price || 0,
+              volume: marketDataResult.data.volume || 0
+            }];
+            
+            setMarketData(realMarketData);
+          } else {
+            // If no real data, show empty array (no fake fallback)
+            setMarketData([]);
+          }
+        } else {
+          // If API fails, show empty array (no fake fallback)
+          setMarketData([]);
+        }
+      } catch (marketError) {
+        console.error('Failed to fetch market data:', marketError);
+        // On error, show empty array (no fake fallback)
+        setMarketData([]);
       }
-      setMarketData(mockMarketData);
       setLastUpdate(new Date());
       
     } catch (error) {
