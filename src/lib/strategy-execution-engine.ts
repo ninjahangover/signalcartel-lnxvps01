@@ -550,6 +550,7 @@ class StrategyExecutionEngine {
     } catch (intuitionError) {
       console.warn('⚠️ Mathematical intuition analysis failed, proceeding:', intuitionError.message);
     }
+    }
 
     // 🚀 QUANTUM SUPREMACY ENGINE INTEGRATION - GPU-ACCELERATED UNLIMITED INTELLIGENCE
     try {
@@ -691,8 +692,10 @@ class StrategyExecutionEngine {
     }
 
     // 💎 DATA-DRIVEN SUPREMACY - LEVERAGING 12,701+ DATA POINTS OF TRADING INTELLIGENCE
-    try {
-      console.log('💎 DATA-DRIVEN SUPREMACY: Using YOUR REAL DATA to achieve 80%+ win rates');
+    // PHASE 0: Skip data-driven supremacy for raw signal collection
+    if (currentPhase.phase > 0) {
+      try {
+        console.log('💎 DATA-DRIVEN SUPREMACY: Using YOUR REAL DATA to achieve 80%+ win rates');
       
       const { DataDrivenSupremacy } = await import('./data-driven-supremacy');
       const dataEngine = DataDrivenSupremacy.getInstance();
@@ -735,28 +738,31 @@ class StrategyExecutionEngine {
         console.log(`📊 DATA ANALYSIS: Current setup achieving ${(supremacyAnalysis.enhancedWinRate * 100).toFixed(1)}% (monitoring...)`);
       }
       
-      console.log('💎 DATA-DRIVEN SUPREMACY: Real trading intelligence applied');
-      
-    } catch (dataError) {
-      console.warn('⚠️ Data-Driven Supremacy processing failed, proceeding with evolution-enhanced signal:', dataError);
-      console.log('🌟 Still quantum + evolution enhanced (extraordinary intelligence active!)');
+        console.log('💎 DATA-DRIVEN SUPREMACY: Real trading intelligence applied');
+        
+      } catch (dataError) {
+        console.warn('⚠️ Data-Driven Supremacy processing failed, proceeding with evolution-enhanced signal:', dataError);
+        console.log('🌟 Still quantum + evolution enhanced (extraordinary intelligence active!)');
+      }
+    } else {
+      console.log('🎯 Phase 0: Skipping data-driven supremacy for raw signal collection');
     }
 
     // 🎯 PHASE 1 OPTIMIZED STRATEGY APPROACH - 70% CONFIDENCE WITH MORE SIGNALS
     console.log('🎯 FINAL CONFIDENCE ASSESSMENT:');
     console.log(`   📊 Final enhanced confidence: ${(signal.confidence * 100).toFixed(1)}%`);
     
-    // Apply the 70%+ confidence filter with optimized strategy parameters
-    const confidenceThreshold = 0.70; // 70% confidence with more responsive strategies
+    // Apply phase-based confidence threshold
+    const confidenceThreshold = currentPhase.features.confidenceThreshold;
     if (signal.confidence < confidenceThreshold) {
-      console.log(`🚫 CONFIDENCE FILTER: Signal below 70% threshold (${(signal.confidence * 100).toFixed(1)}%)`);
-      console.log(`   💡 Phase 1: Quality signals with optimized strategy parameters`);
+      console.log(`🚫 CONFIDENCE FILTER: Signal below ${(confidenceThreshold * 100).toFixed(1)}% threshold (${(signal.confidence * 100).toFixed(1)}%)`);
+      console.log(`   💡 Phase ${currentPhase.phase}: ${currentPhase.description}`);
       console.log(`   📊 More frequent signals through better strategy tuning`);
       return;
     }
     
-    console.log(`✅ CONFIDENCE APPROVED: ${(signal.confidence * 100).toFixed(1)}% exceeds 70% threshold`);
-    console.log(`   🏆 HIGH-CONFIDENCE SIGNAL APPROVED FOR EXECUTION`);
+    console.log(`✅ CONFIDENCE APPROVED: ${(signal.confidence * 100).toFixed(1)}% exceeds ${(confidenceThreshold * 100).toFixed(1)}% threshold`);
+    console.log(`   🏆 ${currentPhase.phase === 0 ? 'RAW DATA COLLECTION' : 'HIGH-CONFIDENCE'} SIGNAL APPROVED FOR EXECUTION`);
 
     // 🎪 STRATEGY CONSENSUS VOTING - WHEN 3+ STRATEGIES AGREE, WIN RATE SKYROCKETS
     let consensusCount = 0;
@@ -781,14 +787,19 @@ class StrategyExecutionEngine {
     console.log(`   🎯 Consensus ratio: ${((consensusCount / totalStrategiesActive) * 100).toFixed(1)}%`);
     
     // Require consensus for execution (at least 30% of strategies must agree)
+    // PHASE 0: Skip consensus requirement for maximum data collection
     const minimumConsensusRatio = 0.3; // 30% minimum consensus
     const consensusRatio = consensusCount / totalStrategiesActive;
     
-    if (consensusRatio < minimumConsensusRatio && totalStrategiesActive > 1) {
+    if (currentPhase.phase > 0 && consensusRatio < minimumConsensusRatio && totalStrategiesActive > 1) {
       console.log(`🚫 CONSENSUS FILTER: Insufficient strategy agreement (${(consensusRatio * 100).toFixed(1)}% < 30%)`);
       console.log(`   💡 Waiting for more strategy consensus before execution`);
       console.log(`   🎯 "When 3+ strategies agree with >90% confidence = 80%+ win probability!"`);
       return;
+    }
+    
+    if (currentPhase.phase === 0) {
+      console.log(`🎯 Phase 0: Skipping consensus requirement for maximum data collection`);
     }
     
     console.log(`✅ CONSENSUS APPROVED: ${(consensusRatio * 100).toFixed(1)}% strategy agreement`);

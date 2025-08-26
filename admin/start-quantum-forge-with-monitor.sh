@@ -37,7 +37,7 @@ echo ""
 sleep 2
 
 # Run the live monitor (this keeps the terminal busy)
-npx tsx -r dotenv/config quantum-forge-live-monitor.ts
+npx tsx -r dotenv/config admin/quantum-forge-live-monitor.ts
 
 # If monitor exits, cleanup
 cleanup
