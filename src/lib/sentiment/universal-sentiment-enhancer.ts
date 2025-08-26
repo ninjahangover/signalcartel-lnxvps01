@@ -1,11 +1,12 @@
 /**
  * Universal Sentiment Enhancement Layer
- * Applies sentiment validation to ANY trading strategy
- * Enables multi-strategy sentiment analysis for statistical significance
+ * Applies sentiment validation AND order book validation to ANY trading strategy
+ * Enables multi-strategy sentiment analysis with market microstructure validation
  */
 
 import { PrismaClient } from '@prisma/client';
 import { twitterSentiment, SimpleSentimentScore } from './simple-twitter-sentiment';
+import { orderBookValidator, OrderBookValidationResult, TradingSignal } from '../order-book-validator';
 
 const prisma = new PrismaClient();
 
@@ -30,9 +31,15 @@ export interface SentimentEnhancedSignal extends BaseStrategySignal {
   sentimentConfidence: number;
   sentimentConflict: boolean;
   
+  // Order book validation
+  orderBookValidation?: OrderBookValidationResult;
+  orderBookConflict: boolean;
+  marketStructureRisk: 'LOW' | 'MEDIUM' | 'HIGH' | 'EXTREME';
+  
   // Enhanced decision
   finalAction: 'BUY' | 'SELL' | 'HOLD' | 'SKIP';
   confidenceModifier: number; // -1.0 to +1.0 (how sentiment changed confidence)
+  orderBookModifier: number; // -1.0 to +1.0 (how order book changed confidence)
   enhancedReason: string;
   
   // Execution decision
@@ -45,6 +52,12 @@ export interface SentimentConfig {
   minSentimentConfidence: number; // Ignore sentiment below this confidence
   maxBoostPercent: number;       // Maximum confidence boost/penalty
   skipOnConflict: boolean;       // Skip trades on sentiment conflict
+  
+  // Order book validation settings
+  enableOrderBookValidation: boolean; // Enable order book validation layer
+  minOrderBookValidation: number;     // Minimum validation strength (0-100)
+  skipOnOrderBookConflict: boolean;   // Skip trades on order book conflict
+  maxOrderBookBoost: number;          // Maximum order book confidence boost
 }
 
 export class UniversalSentimentEnhancer {
@@ -52,7 +65,13 @@ export class UniversalSentimentEnhancer {
     conflictThreshold: 0.3,
     minSentimentConfidence: 0.5, // Lowered from 0.4 to enable real sentiment impact
     maxBoostPercent: 0.35, // Increased max boost for stronger sentiment influence
-    skipOnConflict: true
+    skipOnConflict: true,
+    
+    // Order book validation settings
+    enableOrderBookValidation: true, // Enable by default for QUANTUM FORGE™
+    minOrderBookValidation: 60, // Require 60% validation strength minimum
+    skipOnOrderBookConflict: true, // Skip on order book conflicts
+    maxOrderBookBoost: 0.25 // Order book can boost confidence by up to 25%
   };
 
   /**
@@ -70,8 +89,8 @@ export class UniversalSentimentEnhancer {
       // Get sentiment for the symbol
       const sentiment = await this.getSentimentForSymbol(baseSignal.symbol);
       
-      // Apply sentiment enhancement
-      const enhancedSignal = this.applySentimentEnhancement(
+      // Apply sentiment and order book enhancement
+      const enhancedSignal = await this.applySentimentAndOrderBookEnhancement(
         baseSignal, 
         sentiment, 
         effectiveConfig
@@ -115,7 +134,7 @@ export class UniversalSentimentEnhancer {
     // Enhance each signal
     for (const signal of signals) {
       const sentiment = sentimentCache[signal.symbol];
-      const enhanced = this.applySentimentEnhancement(signal, sentiment, { ...this.defaultConfig, ...config });
+      const enhanced = await this.applySentimentAndOrderBookEnhancement(signal, sentiment, { ...this.defaultConfig, ...config });
       enhancedSignals.push(enhanced);
       
       // Store for analysis
@@ -124,13 +143,19 @@ export class UniversalSentimentEnhancer {
     
     // Log summary
     const executed = enhancedSignals.filter(s => s.shouldExecute);
-    const skipped = enhancedSignals.filter(s => s.sentimentConflict);
-    const boosted = enhancedSignals.filter(s => s.confidenceModifier > 0);
+    const sentimentSkipped = enhancedSignals.filter(s => s.sentimentConflict);
+    const orderBookSkipped = enhancedSignals.filter(s => s.orderBookConflict);
+    const sentimentBoosted = enhancedSignals.filter(s => s.confidenceModifier > 0);
+    const orderBookBoosted = enhancedSignals.filter(s => s.orderBookModifier > 0);
+    const highRisk = enhancedSignals.filter(s => s.marketStructureRisk === 'HIGH' || s.marketStructureRisk === 'EXTREME');
     
-    console.log(`📊 Sentiment Enhancement Summary:`);
+    console.log(`📊 QUANTUM FORGE™ Enhancement Summary:`);
     console.log(`   Signals to Execute: ${executed.length}/${signals.length}`);
-    console.log(`   Skipped (Conflict): ${skipped.length}`);
-    console.log(`   Confidence Boosted: ${boosted.length}`);
+    console.log(`   Skipped (Sentiment): ${sentimentSkipped.length}`);
+    console.log(`   Skipped (Order Book): ${orderBookSkipped.length}`);
+    console.log(`   Sentiment Boosted: ${sentimentBoosted.length}`);
+    console.log(`   Order Book Boosted: ${orderBookBoosted.length}`);
+    console.log(`   High Risk Markets: ${highRisk.length}`);
     
     return enhancedSignals;
   }
@@ -153,13 +178,14 @@ export class UniversalSentimentEnhancer {
   }
 
   /**
-   * Apply sentiment enhancement logic to a strategy signal
+   * Apply sentiment AND order book enhancement logic to a strategy signal
+   * This now includes QUANTUM FORGE™ order book validation
    */
-  private applySentimentEnhancement(
+  private async applySentimentAndOrderBookEnhancement(
     signal: BaseStrategySignal,
     sentiment: SimpleSentimentScore,
     config: SentimentConfig
-  ): SentimentEnhancedSignal {
+  ): Promise<SentimentEnhancedSignal> {
     
     const originalAction = signal.action;
     const originalConfidence = signal.confidence;
@@ -167,12 +193,18 @@ export class UniversalSentimentEnhancer {
     // Check for sentiment conflict
     const sentimentConflict = this.checkSentimentConflict(signal.action, sentiment, config.conflictThreshold);
     
-    // Calculate confidence modification
+    // Initialize enhancement variables
     let confidenceModifier = 0;
+    let orderBookModifier = 0;
     let finalConfidence = originalConfidence;
     let finalAction: 'BUY' | 'SELL' | 'HOLD' | 'SKIP' = signal.action;
     let shouldExecute = signal.action !== 'HOLD';
     let executionReason = signal.reason;
+    
+    // Order book validation
+    let orderBookValidation: OrderBookValidationResult | undefined = undefined;
+    let orderBookConflict = false;
+    let marketStructureRisk: 'LOW' | 'MEDIUM' | 'HIGH' | 'EXTREME' = 'LOW';
     
     if (sentiment.confidence < config.minSentimentConfidence) {
       // Low confidence sentiment - ignore
@@ -209,6 +241,61 @@ export class UniversalSentimentEnhancer {
       }
     }
 
+    // QUANTUM FORGE™ ORDER BOOK VALIDATION LAYER
+    if (config.enableOrderBookValidation && signal.action !== 'HOLD') {
+      try {
+        console.log(`🔬 QUANTUM FORGE™: Running order book validation for ${signal.symbol}...`);
+        
+        const tradingSignal: TradingSignal = {
+          action: signal.action,
+          confidence: finalConfidence,
+          price: signal.price,
+          symbol: signal.symbol,
+          strategy: signal.strategy,
+          reason: executionReason
+        };
+        
+        orderBookValidation = await orderBookValidator.validateSignal(tradingSignal);
+        marketStructureRisk = orderBookValidation.riskLevel;
+        
+        // Check for order book conflict
+        orderBookConflict = orderBookValidation.signalAlignment < -20; // Conflict if alignment < -20%
+        
+        if (orderBookConflict && config.skipOnOrderBookConflict) {
+          // Order book conflicts - skip trade
+          finalAction = 'SKIP';
+          shouldExecute = false;
+          executionReason += ` ❌ Order book conflict: ${orderBookValidation.validationReason}`;
+          
+        } else if (orderBookValidation.validationStrength < config.minOrderBookValidation) {
+          // Low order book validation - reduce position or skip
+          if (orderBookValidation.recommendedAction === 'SKIP') {
+            finalAction = 'SKIP';
+            shouldExecute = false;
+            executionReason += ` ⚠️ Order book validation failed: ${orderBookValidation.validationReason}`;
+          } else {
+            executionReason += ` 📊 Low order book validation (${orderBookValidation.validationStrength.toFixed(1)}%)`;
+          }
+          
+        } else if (orderBookValidation.isValidated && orderBookValidation.validationStrength > 70) {
+          // Strong order book validation - apply boost
+          const validationStrength = orderBookValidation.validationStrength / 100;
+          const alignmentBoost = Math.max(0, orderBookValidation.signalAlignment / 100);
+          orderBookModifier = validationStrength * alignmentBoost * config.maxOrderBookBoost;
+          
+          finalConfidence = Math.min(0.95, finalConfidence + orderBookModifier);
+          executionReason += ` 📈 +${(orderBookModifier * 100).toFixed(1)}% order book validation boost`;
+        }
+        
+        console.log(`✅ Order book validation complete: ${orderBookValidation.recommendedAction} (${orderBookValidation.validationStrength.toFixed(1)}%)`);
+        
+      } catch (error) {
+        console.error(`❌ Order book validation failed for ${signal.symbol}:`, error);
+        marketStructureRisk = 'HIGH';
+        executionReason += ' ⚠️ Order book validation unavailable';
+      }
+    }
+
     return {
       ...signal,
       confidence: finalConfidence,
@@ -225,9 +312,15 @@ export class UniversalSentimentEnhancer {
       sentimentConfidence: sentiment.confidence,
       sentimentConflict,
       
+      // Order book validation data
+      orderBookValidation,
+      orderBookConflict,
+      marketStructureRisk,
+      
       // Enhanced decision
       finalAction,
       confidenceModifier,
+      orderBookModifier,
       enhancedReason: executionReason,
       
       // Execution decision
@@ -261,8 +354,12 @@ export class UniversalSentimentEnhancer {
       sentimentScore: 0,
       sentimentConfidence: 0,
       sentimentConflict: false,
+      orderBookValidation: undefined,
+      orderBookConflict: false,
+      marketStructureRisk: 'HIGH',
       finalAction: baseSignal.action,
       confidenceModifier: 0,
+      orderBookModifier: 0,
       enhancedReason: `${baseSignal.reason} (${reason})`,
       shouldExecute: baseSignal.action !== 'HOLD',
       executionReason: reason

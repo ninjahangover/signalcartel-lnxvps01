@@ -25,23 +25,26 @@ export default function RealBTCPrice() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  // Fetch REAL prices from server-side API to avoid CORS issues
+  // Fetch REAL prices from external APIs via our new endpoint
   const fetchRealPrices = async (): Promise<RealPriceData> => {
     try {
-      console.log('🔥 FETCHING REAL PRICES FROM API...');
+      console.log('🔥 FETCHING REAL PRICES FROM EXTERNAL APIS...');
       
-      // Fetch all prices from our server-side API
-      const response = await fetch('/api/market-data');
-      if (!response.ok) throw new Error('Failed to fetch market prices');
+      // Use our new test-real-price endpoint that fetches from Kraken + CoinGecko
+      const response = await fetch('/api/test-real-price');
+      if (!response.ok) throw new Error('Failed to fetch real prices');
       const data = await response.json();
       
-      // Extract prices from the response
-      const realData = {
-        btc: data.BTCUSD?.price || 0,
-        eth: data.ETHUSD?.price || 0,
-        ada: data.ADAUSD?.price || 0,
-        sol: data.SOLUSD?.price || 0,
-        timestamp: new Date()
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch real prices');
+      }
+      
+      const realData: RealPriceData = {
+        btc: data.data.btc || 0,
+        eth: data.data.eth || 0,
+        ada: data.data.ada || 0,
+        sol: data.data.sol || 0,
+        timestamp: new Date(data.data.timestamp)
       };
 
       console.log('✅ REAL PRICES FETCHED:');

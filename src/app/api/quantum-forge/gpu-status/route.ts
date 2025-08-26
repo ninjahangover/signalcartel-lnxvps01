@@ -1,4 +1,28 @@
 import { NextResponse } from 'next/server';
+import { execSync } from 'child_process';
+
+async function checkCudaAvailability(): Promise<boolean> {
+  try {
+    // Method 1: Check CUDA_VISIBLE_DEVICES environment variable
+    if (process.env.CUDA_VISIBLE_DEVICES !== undefined) {
+      return true;
+    }
+    
+    // Method 2: Try to detect nvidia-smi
+    execSync('which nvidia-smi', { stdio: 'ignore' });
+    
+    // Method 3: Try to run nvidia-smi to verify GPU is accessible
+    const output = execSync('nvidia-smi --query-gpu=name --format=csv,noheader,nounits', { 
+      encoding: 'utf8', 
+      timeout: 5000 
+    });
+    
+    return output.trim().length > 0;
+  } catch (error) {
+    // If any of the checks fail, assume CUDA is not available
+    return false;
+  }
+}
 
 export async function GET() {
   try {
@@ -21,7 +45,7 @@ export async function GET() {
       },
       performance: {
         accelerationEnabled: gpuEnabled,
-        cudaAvailable: process.env.CUDA_VISIBLE_DEVICES !== undefined
+        cudaAvailable: await checkCudaAvailability()
       }
     };
 

@@ -109,11 +109,13 @@ export class GPUBollingerStrategy extends BaseStrategy {
     const isSqueezing = squeeze; // Low volatility - prepare for breakout
     const highVolatility = bandwidth > 0.2; // High volatility
     
-    // Entry conditions
-    const longCondition = (priceNearLowerBand && priceAboveMiddle) || 
-                         (isSqueezing && price > upperBand); // Breakout above squeeze
-    const shortCondition = (priceNearUpperBand && priceBelowMiddle) || 
-                          (isSqueezing && price < lowerBand); // Breakdown below squeeze
+    // Entry conditions (more aggressive)
+    const longCondition = priceNearLowerBand || // Oversold condition
+                         (isSqueezing && price > middleBand) || // Squeeze with upward momentum
+                         (bandwidth < 0.1 && price > upperBand); // Low volatility breakout
+    const shortCondition = priceNearUpperBand || // Overbought condition  
+                          (isSqueezing && price < middleBand) || // Squeeze with downward momentum
+                          (bandwidth < 0.1 && price < lowerBand); // Low volatility breakdown
     
     // Track conditions for confirmation
     if (longCondition) {
@@ -128,9 +130,9 @@ export class GPUBollingerStrategy extends BaseStrategy {
       this.lastShortCondition++;
     }
     
-    // Confirmation (within 3 bars)
-    const longConfirmed = this.lastLongCondition >= 0 && this.lastLongCondition <= 3 && longCondition;
-    const shortConfirmed = this.lastShortCondition >= 0 && this.lastShortCondition <= 3 && shortCondition;
+    // Confirmation (within 2 bars for faster signals)
+    const longConfirmed = this.lastLongCondition >= 0 && this.lastLongCondition <= 2 && longCondition;
+    const shortConfirmed = this.lastShortCondition >= 0 && this.lastShortCondition <= 2 && shortCondition;
     
     // Position sizing
     const quantity = 0.001;

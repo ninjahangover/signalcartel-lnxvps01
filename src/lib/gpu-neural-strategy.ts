@@ -36,7 +36,7 @@ export class GPUNeuralStrategy extends BaseStrategy {
     this.config = {
       lookbackPeriod: config.lookbackPeriod || 30, // Reduced from 50 to 30 for faster signals
       predictionHorizon: config.predictionHoriod || 3, // Reduced from 5 to 3 for quicker predictions
-      confidenceThreshold: config.confidenceThreshold || 0.35, // Reduced from 0.45 to 0.35 for more signals
+      confidenceThreshold: config.confidenceThreshold || 0.20, // Ultra-aggressive threshold for maximum signals
       neuralLayers: config.neuralLayers || [32, 16, 8], // Smaller network for faster processing
       learningRate: config.learningRate || 0.002 // Increased learning rate for faster adaptation
     };
@@ -335,15 +335,15 @@ except Exception as e:
             # Use first feature (usually price change) for simple prediction
             price_momentum = features[i][0] if features[i] else 0
             
-            if price_momentum > 0.01:  # 1% positive momentum
+            if price_momentum > 0.001:  # 0.1% positive momentum (ultra-sensitive)
                 signal = 1  # BUY
-                confidence = min(0.8, abs(price_momentum) * 10)
-            elif price_momentum < -0.01:  # 1% negative momentum
+                confidence = min(0.95, max(0.7, abs(price_momentum) * 50))  # Much higher confidence multiplier
+            elif price_momentum < -0.001:  # 0.1% negative momentum (ultra-sensitive)
                 signal = -1  # SELL
-                confidence = min(0.8, abs(price_momentum) * 10)
+                confidence = min(0.95, max(0.7, abs(price_momentum) * 50))  # Much higher confidence multiplier
             else:
                 signal = 0  # HOLD
-                confidence = 0.5
+                confidence = 0.3  # Lower HOLD confidence
             
             predictions.append(signal)
             confidence_scores.append(confidence)
@@ -351,7 +351,7 @@ except Exception as e:
     # Ensure we have predictions
     if not predictions:
         predictions = [0]  # HOLD
-        confidence_scores = [0.5]
+        confidence_scores = [0.3]  # Lower fallback confidence
     
     feature_importance = [1.0] + [0.1] * (len(features[0]) - 1) if features else [1.0]
     

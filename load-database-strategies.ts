@@ -191,8 +191,8 @@ async function loadDatabaseStrategies() {
     console.log('🚀 DYNAMIC STRATEGY LOADING FROM DATABASE');
     console.log('=' + '='.repeat(60));
     
-    // Get admin user (who owns all strategies)
-    const adminUserId = 'cme53zc9y0000mwgyjb9joki2'; // admin@signalcartel.com
+    // Get admin user (who owns all strategies) - corrected user ID
+    const adminUserId = 'cmerfldym00005n99vrofhfff'; // Correct user ID for GPU strategies
     
     // Load strategies from database
     const dbStrategies = await StrategyService.getUserStrategies(adminUserId);
@@ -208,10 +208,8 @@ async function loadDatabaseStrategies() {
     engine.setPaperTradingMode(true);
     console.log('✅ Paper trading mode enabled');
     
-    // Initialize Position Management System
-    console.log('🔄 Initializing Position Management System...');
-    await positionService.initialize();
-    console.log('✅ Position Management System ready\n');
+    // Position Management System is auto-initialized via singleton
+    console.log('✅ Position Management System ready (auto-initialized)\n');
     
     // Convert and load each active strategy dynamically
     let loadedCount = 0;

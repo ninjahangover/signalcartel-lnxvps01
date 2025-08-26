@@ -86,31 +86,38 @@ class QuantumSupremacyEngine {
     // PHASE 5: Compound learning acceleration
     const learningAcceleration = await this.calculateLearningAcceleration(quantumSignal);
     
-    // THE SUPREMACY SYNTHESIS
-    const supremeSignal: QuantumTradeSignal = {
-      ...quantumSignal,
-      quantumConfidence: this.synthesizeQuantumConfidence([
-        quantumSignal.baseConfidence,
-        supremeExpectancy.confidence,
-        timeSensitiveProfit.confidence,
-        antifragileBoost.confidence,
-        learningAcceleration.confidence
-      ]),
-      riskAdjustedExpectancy: supremeExpectancy.value,
-      timeDecayFactor: timeSensitiveProfit.decayFactor,
-      antiFragilityScore: antifragileBoost.score,
-      compoundLearningFactor: learningAcceleration.factor,
-      emergentIntelligenceBoost: await this.discoverEmergentPatterns(quantumSignal)
-    };
+    // THE SUPREMACY SYNTHESIS with null safety
+    try {
+      const quantumConfidence = this.synthesizeQuantumConfidence([
+        quantumSignal?.baseConfidence || 0.5,
+        supremeExpectancy?.confidence || 0.5,
+        timeSensitiveProfit?.confidence || 0.5,
+        antifragileBoost?.confidence || 0.5,
+        learningAcceleration?.confidence || 0.5
+      ]);
 
-    // VALIDATION: Only execute if we can achieve 80%+ probability
-    if (supremeSignal.quantumConfidence >= 0.80) {
-      console.log(`🎯 SUPREMACY ACHIEVED: ${(supremeSignal.quantumConfidence * 100).toFixed(1)}% confidence`);
-      return supremeSignal;
+      const supremeSignal: QuantumTradeSignal = {
+        ...quantumSignal,
+        quantumConfidence,
+        riskAdjustedExpectancy: supremeExpectancy?.value || 0,
+        timeDecayFactor: timeSensitiveProfit?.decayFactor || 0.95,
+        antiFragilityScore: antifragileBoost?.score || 0,
+        compoundLearningFactor: learningAcceleration?.factor || 1.0,
+        emergentIntelligenceBoost: 0.1 // Safe default instead of async call
+      };
+
+      // VALIDATION: Only execute if we can achieve 80%+ probability
+      if (quantumConfidence >= 0.80) {
+        console.log(`🎯 SUPREMACY ACHIEVED: ${(quantumConfidence * 100).toFixed(1)}% confidence`);
+        return supremeSignal;
+      }
+      
+      console.log(`⏳ WAITING: ${(quantumConfidence * 100).toFixed(1)}% confidence (need 80%+)`);
+      return null;
+    } catch (error) {
+      console.warn('Quantum Supremacy synthesis failed:', error.message);
+      return null;
     }
-    
-    console.log(`⏳ WAITING: ${(supremeSignal.quantumConfidence * 100).toFixed(1)}% confidence (need 80%+)`);
-    return null;
   }
 
   /**
@@ -444,11 +451,11 @@ class QuantumSupremacyEngine {
 
   private async fuseQuantumIntelligence(signals: any[], marketData: any): Promise<any> {
     // Fuse all signal sources into quantum intelligence
-    if (signals.length === 0) return null;
+    if (!signals || !Array.isArray(signals) || signals.length === 0) return null;
     
     // Find the strongest signal
     const strongestSignal = signals.reduce((prev, current) => 
-      (current.confidence > prev.confidence) ? current : prev
+      (current?.confidence > prev?.confidence) ? current : prev
     );
     
     return {

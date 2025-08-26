@@ -83,16 +83,16 @@ export class PositionService {
         intuitionAnalysis = await intuitionEngine.runParallelAnalysisSimple(signal, marketData);
         
         console.log('🧠 INTUITION vs TRADITIONAL ANALYSIS:');
-        console.log(`  Flow Field Resonance: ${(intuitionAnalysis.intuition.flowFieldResonance * 100).toFixed(1)}%`);
-        console.log(`  Pattern Resonance: ${(intuitionAnalysis.intuition.patternResonance * 100).toFixed(1)}%`);
-        console.log(`  Overall Intuition: ${(intuitionAnalysis.intuition.overallIntuition * 100).toFixed(1)}%`);
-        console.log(`  Traditional Expectancy: ${(intuitionAnalysis.traditional.expectancyScore * 100).toFixed(1)}%`);
-        console.log(`  Performance Gap: ${(intuitionAnalysis.performanceGap * 100).toFixed(1)}%`);
-        console.log(`  Final Recommendation: ${intuitionAnalysis.recommendation}`);
+        console.log(`  Flow Field Resonance: ${((intuitionAnalysis?.intuition?.flowFieldResonance || 0) * 100).toFixed(1)}%`);
+        console.log(`  Pattern Resonance: ${((intuitionAnalysis?.intuition?.patternResonance || 0) * 100).toFixed(1)}%`);
+        console.log(`  Overall Intuition: ${((intuitionAnalysis?.intuition?.overallIntuition || 0) * 100).toFixed(1)}%`);
+        console.log(`  Traditional Expectancy: ${((intuitionAnalysis?.traditional?.expectancyScore || 0) * 100).toFixed(1)}%`);
+        console.log(`  Performance Gap: ${((intuitionAnalysis?.performanceGap || 0) * 100).toFixed(1)}%`);
+        console.log(`  Final Recommendation: ${intuitionAnalysis?.recommendation || 'unknown'}`);
         
         // Enhance signal confidence based on intuition analysis
-        if (intuitionAnalysis.performanceGap > 0.1) {
-          signal.confidence = Math.min(0.95, signal.confidence * (1 + intuitionAnalysis.performanceGap));
+        if ((intuitionAnalysis?.performanceGap || 0) > 0.1) {
+          signal.confidence = Math.min(0.95, signal.confidence * (1 + (intuitionAnalysis?.performanceGap || 0)));
           console.log(`🚀 Mathematical Intuition boosted confidence to ${(signal.confidence * 100).toFixed(1)}%`);
         }
         

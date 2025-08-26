@@ -335,7 +335,7 @@ class StrategyExecutionEngine {
     }
   }
 
-  // Process trading signal from strategy implementation with sentiment enhancement
+  // Process trading signal from strategy implementation with QUANTUM FORGE™ Multi-Layer AI enhancement
   private async processStrategySignal(strategyId: string, signal: TradingSignal): Promise<void> {
     if (signal.action === 'HOLD' || signal.confidence < 0.5) {
       return; // Don't execute low-confidence or hold signals
@@ -347,9 +347,9 @@ class StrategyExecutionEngine {
       reason: signal.reason
     });
 
-    // ✨ SENTIMENT ENHANCEMENT INTEGRATION
+    // 🚀 QUANTUM FORGE™ MULTI-LAYER AI ENHANCEMENT INTEGRATION
     try {
-      const { universalSentimentEnhancer } = await import('./sentiment/universal-sentiment-enhancer');
+      const { quantumForgeMultiLayerAI } = await import('./quantum-forge-multi-layer-ai');
       
       // Convert TradingSignal to BaseStrategySignal format
       const baseSignal = {
@@ -362,60 +362,118 @@ class StrategyExecutionEngine {
         timestamp: new Date()
       };
 
-      // Enhance signal with sentiment validation
-      const enhancedSignal = await universalSentimentEnhancer.enhanceSignal(baseSignal);
-      
-      console.log(`🔮 SENTIMENT-ENHANCED SIGNAL:`, {
-        originalAction: enhancedSignal.originalAction,
-        finalAction: enhancedSignal.finalAction,
-        originalConfidence: `${(enhancedSignal.originalConfidence * 100).toFixed(1)}%`,
-        enhancedConfidence: `${(enhancedSignal.confidence * 100).toFixed(1)}%`,
-        sentimentScore: enhancedSignal.sentimentScore.toFixed(3),
-        sentimentConflict: enhancedSignal.sentimentConflict ? '⚠️ CONFLICT' : '✅ ALIGNED',
-        shouldExecute: enhancedSignal.shouldExecute ? '✅ EXECUTE' : '❌ SKIP',
-        reason: enhancedSignal.executionReason
+      // Enhance signal with QUANTUM FORGE™ Multi-Layer AI
+      console.log('🚀 QUANTUM FORGE™ Multi-Layer AI: Processing signal through 4-layer architecture...');
+      const multiLayerSignal = await quantumForgeMultiLayerAI.enhanceSignalWithMultiLayerAI(baseSignal, {
+        // Use conservative settings for initial deployment
+        technicalWeight: 0.4,     // 40% technical analysis weight
+        sentimentWeight: 0.35,    // 35% sentiment intelligence weight  
+        orderBookWeight: 0.25,    // 25% order book AI weight
+        minConsensus: 70,         // Require 70% consensus between layers
+        skipOnConflict: true,     // Skip trades when layers disagree
+        conservativeMode: true,   // More cautious decision making
+        enableCrossValidation: true
       });
 
-      // Store enhanced signal in database for analysis
+      console.log('🔥 QUANTUM FORGE™ Multi-Layer AI Enhanced Signal:');
+      console.log('='.repeat(80));
+      console.log(`   🔧 Layer 1 - Technical: ${(baseSignal.confidence * 100).toFixed(1)}% confidence`);
+      console.log(`   🧠 Layer 2 - Sentiment: ${multiLayerSignal.sentimentAnalysis.score.toFixed(3)} score, ${multiLayerSignal.sentimentAnalysis.conflict ? 'CONFLICT' : 'ALIGNED'}`);
+      console.log(`   📊 Layer 3 - Order Book: ${multiLayerSignal.orderBookAnalysis.microstructureScore.toFixed(1)} score, ${multiLayerSignal.orderBookAnalysis.liquidityQuality} liquidity`);
+      console.log(`   ⚡ Layer 4 - Fusion: ${multiLayerSignal.finalDecision.action} at ${(multiLayerSignal.finalDecision.confidence * 100).toFixed(1)}% confidence`);
+      console.log(`   🎯 Layer Agreement: ${multiLayerSignal.layerAgreement.sentimentOrderBookAlignment.toFixed(1)}% alignment, ${multiLayerSignal.layerAgreement.consensusStrength.toFixed(1)}% consensus`);
+      console.log(`   ⚖️ Risk Level: ${multiLayerSignal.layerAgreement.riskLevel}`);
+      console.log(`   💡 Should Execute: ${multiLayerSignal.finalDecision.shouldExecute ? '✅ YES' : '❌ NO'}`);
+      console.log(`   📏 Position Sizing: ${(multiLayerSignal.finalDecision.positionSizing * 100).toFixed(1)}% allocation`);
+      console.log(`   ⏱️ Processing Time: ${multiLayerSignal.processingTime.toFixed(0)}ms`);
+
+      // Store multi-layer signal in database for analysis and dashboard
       try {
         const { PrismaClient } = await import('@prisma/client');
         const prisma = new PrismaClient();
         
         await prisma.enhancedTradingSignal.create({
           data: {
-            symbol: enhancedSignal.symbol,
+            symbol: multiLayerSignal.originalSignal.symbol,
             strategy: this.getStrategyName(strategyId),
-            technicalScore: enhancedSignal.originalConfidence,
-            technicalAction: enhancedSignal.originalAction,
-            sentimentScore: enhancedSignal.sentimentScore,
-            sentimentConfidence: enhancedSignal.sentimentConfidence,
-            sentimentConflict: enhancedSignal.sentimentConflict,
-            combinedConfidence: enhancedSignal.confidence,
-            finalAction: enhancedSignal.finalAction,
-            confidenceBoost: enhancedSignal.confidenceModifier,
-            wasExecuted: enhancedSignal.shouldExecute,
-            executeReason: enhancedSignal.executionReason
+            technicalScore: multiLayerSignal.originalSignal.confidence,
+            technicalAction: multiLayerSignal.originalSignal.action,
+            sentimentScore: multiLayerSignal.sentimentAnalysis.score,
+            sentimentConfidence: multiLayerSignal.sentimentAnalysis.confidence,
+            sentimentConflict: multiLayerSignal.sentimentAnalysis.conflict,
+            combinedConfidence: multiLayerSignal.finalDecision.confidence,
+            finalAction: multiLayerSignal.finalDecision.action,
+            confidenceBoost: multiLayerSignal.finalDecision.totalBoost,
+            wasExecuted: multiLayerSignal.finalDecision.shouldExecute,
+            executeReason: `Multi-Layer AI: ${multiLayerSignal.decisionExplanation.primaryFactors.join(', ')}`
           }
         });
         
         await prisma.$disconnect();
+        console.log('✅ Multi-Layer AI signal stored in database for dashboard visualization');
       } catch (dbError) {
-        console.warn('📊 Could not store enhanced signal to database:', dbError);
+        console.warn('📊 Could not store multi-layer AI signal to database:', dbError);
       }
 
-      // Only proceed if sentiment validation recommends execution
-      if (!enhancedSignal.shouldExecute) {
-        console.log(`🚫 Signal skipped due to sentiment validation: ${enhancedSignal.executionReason}`);
+      // Only proceed if multi-layer AI recommends execution
+      if (!multiLayerSignal.finalDecision.shouldExecute) {
+        console.log(`🚫 QUANTUM FORGE™ Multi-Layer AI VETO: Trade skipped`);
+        console.log(`   💡 Primary Reason: ${multiLayerSignal.decisionExplanation.primaryFactors[0] || 'Insufficient consensus'}`);
+        console.log(`   ⚠️ Risk Factors: ${multiLayerSignal.decisionExplanation.riskFactors.join(', ') || 'None identified'}`);
+        console.log(`   🎯 Risk Level: ${multiLayerSignal.layerAgreement.riskLevel}`);
         return;
       }
 
-      // Use enhanced signal for quantum processing
-      signal.confidence = enhancedSignal.confidence;
-      signal.reason = `${signal.reason} | Sentiment-Enhanced: ${enhancedSignal.executionReason}`;
+      // Use multi-layer AI enhanced signal for execution
+      signal.confidence = multiLayerSignal.finalDecision.confidence;
+      signal.quantity = (signal.quantity || 0.01) * multiLayerSignal.finalDecision.positionSizing;
+      signal.reason = `${signal.reason} | 🚀 QUANTUM FORGE™ Multi-Layer AI: ${multiLayerSignal.decisionExplanation.primaryFactors.slice(0, 2).join(', ')}`;
       
-    } catch (sentimentError) {
-      console.warn('⚠️ Sentiment enhancement failed, proceeding with original signal:', sentimentError);
-      // Continue with original signal if sentiment enhancement fails
+      // Add multi-layer metadata to signal
+      (signal as any).multiLayerMetadata = {
+        sentimentScore: multiLayerSignal.sentimentAnalysis.score,
+        orderBookMicrostructure: multiLayerSignal.orderBookAnalysis.microstructureScore,
+        liquidityQuality: multiLayerSignal.orderBookAnalysis.liquidityQuality,
+        layerConsensus: multiLayerSignal.layerAgreement.consensusStrength,
+        riskLevel: multiLayerSignal.layerAgreement.riskLevel,
+        processingTime: multiLayerSignal.processingTime,
+        executionStrategy: multiLayerSignal.finalDecision.executionStrategy,
+        primaryFactors: multiLayerSignal.decisionExplanation.primaryFactors,
+        opportunityFactors: multiLayerSignal.decisionExplanation.opportunityFactors
+      };
+
+      console.log('🔥 QUANTUM FORGE™ Multi-Layer AI: Signal approved and enhanced for execution!');
+      
+    } catch (multiLayerError) {
+      console.warn('⚠️ QUANTUM FORGE™ Multi-Layer AI enhancement failed, falling back to basic sentiment enhancement:', multiLayerError);
+      
+      // Fallback to basic sentiment enhancement
+      try {
+        const { universalSentimentEnhancer } = await import('./sentiment/universal-sentiment-enhancer');
+        
+        const baseSignal = {
+          action: signal.action,
+          confidence: signal.confidence,
+          symbol: signal.symbol || 'BTC',
+          price: signal.price,
+          strategy: this.getStrategyName(strategyId),
+          reason: signal.reason,
+          timestamp: new Date()
+        };
+
+        const enhancedSignal = await universalSentimentEnhancer.enhanceSignal(baseSignal);
+        
+        if (!enhancedSignal.shouldExecute) {
+          console.log(`🚫 Fallback sentiment validation: Signal skipped - ${enhancedSignal.executionReason}`);
+          return;
+        }
+
+        signal.confidence = enhancedSignal.confidence;
+        signal.reason = `${signal.reason} | Sentiment-Enhanced: ${enhancedSignal.executionReason}`;
+        
+      } catch (sentimentError) {
+        console.warn('⚠️ Fallback sentiment enhancement also failed, proceeding with original signal:', sentimentError);
+      }
     }
 
     // 🧠 MATHEMATICAL INTUITION ENGINE - PARALLEL ANALYSIS

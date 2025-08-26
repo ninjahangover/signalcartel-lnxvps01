@@ -47,6 +47,7 @@ import QuantumForgeStrategyMonitor from './QuantumForgeStrategyMonitor';
 import SentimentAnalysisDashboard from './SentimentAnalysisDashboard';
 import QuantumForgeSentimentDashboard from './QuantumForgeSentimentDashboard';
 import MathematicalIntuitionDashboard from './MathematicalIntuitionDashboard';
+import OrderBookIntelligenceDashboard from './OrderBookIntelligenceDashboard';
 
 interface UnifiedDashboardProps {
   isKrakenConnected: boolean;
@@ -257,6 +258,12 @@ export default function UnifiedDashboard({
       description: 'Flow Field Sensing & Pattern Resonance Analysis'
     },
     {
+      id: 'order-book-intelligence',
+      label: 'Order Book Intelligence™',
+      icon: BarChart3,
+      description: 'Real-Time Order Book Analysis & Market Microstructure AI'
+    },
+    {
       id: 'paper-trading',
       label: 'QUANTUM FORGE™',
       icon: Brain,
@@ -309,6 +316,9 @@ export default function UnifiedDashboard({
       
       case 'mathematical-intuition':
         return <MathematicalIntuitionDashboard />;
+      
+      case 'order-book-intelligence':
+        return <OrderBookIntelligenceDashboard />;
       
       case 'paper-trading':
         return <CustomPaperTradingDashboard />;

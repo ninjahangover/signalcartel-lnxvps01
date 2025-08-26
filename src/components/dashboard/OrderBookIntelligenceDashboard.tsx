@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import TradingOrderBookVisual from './TradingOrderBookVisual';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -431,40 +432,18 @@ export default function OrderBookIntelligenceDashboard() {
               </Card>
             </div>
 
-            {/* Order Book Display */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="bg-gray-900 border-red-500/30 p-6">
-                <h3 className="text-lg font-semibold mb-4 text-red-300 flex items-center gap-2">
-                  <TrendingDown className="w-5 h-5" />
-                  Sell Orders (Asks)
-                </h3>
-                <div className="space-y-2">
-                  {currentData.asks?.slice(0, 10).map((ask, index) => (
-                    <div key={index} className="flex justify-between text-sm">
-                      <span className="text-red-300">${ask.price.toFixed(2)}</span>
-                      <span className="text-gray-400">{ask.quantity.toFixed(4)}</span>
-                      <span className="text-gray-500">${ask.total?.toFixed(0)}</span>
-                    </div>
-                  )) || <p className="text-gray-500">No ask data available</p>}
-                </div>
-              </Card>
-
-              <Card className="bg-gray-900 border-green-500/30 p-6">
-                <h3 className="text-lg font-semibold mb-4 text-green-300 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5" />
-                  Buy Orders (Bids)
-                </h3>
-                <div className="space-y-2">
-                  {currentData.bids?.slice(0, 10).map((bid, index) => (
-                    <div key={index} className="flex justify-between text-sm">
-                      <span className="text-green-300">${bid.price.toFixed(2)}</span>
-                      <span className="text-gray-400">{bid.quantity.toFixed(4)}</span>
-                      <span className="text-gray-500">${bid.total?.toFixed(0)}</span>
-                    </div>
-                  )) || <p className="text-gray-500">No bid data available</p>}
-                </div>
-              </Card>
-            </div>
+            {/* Traditional Order Book Visualization */}
+            <TradingOrderBookVisual 
+              data={{
+                symbol: selectedSymbol,
+                bids: currentData.bids || [],
+                asks: currentData.asks || [],
+                midPrice: currentData.midPrice,
+                spreadPercent: currentData.spreadPercent,
+                timestamp: currentData.timestamp
+              }}
+              maxLevels={20}
+            />
           </>
         )}
       </div>
