@@ -96,6 +96,9 @@ async function displayHeader() {
 
 async function displayPhaseStatus() {
   try {
+    // Update trade count to get fresh data
+    await phaseManager.updateTradeCount();
+    
     const currentPhase = await phaseManager.getCurrentPhase();
     const progress = await phaseManager.getProgressToNextPhase();
     const overrideStatus = phaseManager.getOverrideStatus();
