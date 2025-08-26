@@ -6,29 +6,45 @@ const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
-    // Check if QUANTUM FORGE trading engine is running by checking for the process
+    // Check if QUANTUM FORGE trading engine is running
+    // Check multiple indicators for running status
     let isQuantumForgeRunning = false;
-    try {
-      const { execSync } = require('child_process');
-      const processes = execSync('pgrep -f "load-database-strategies.ts" || echo ""', { 
-        encoding: 'utf8',
-        timeout: 2000 // 2 second timeout
-      });
-      isQuantumForgeRunning = processes.trim().length > 0;
-      console.log(`Process detection: found ${processes.split('\n').filter(p => p.trim()).length} processes`);
-    } catch (error) {
-      console.warn('Process detection failed:', error.message);
-      isQuantumForgeRunning = false;
-    }
-
-    // Check if position-managed trading has recent trades (for trade execution status)
-    const recentTrades = await prisma.managedTrade.count({
+    
+    // Check if position-managed trading has recent trades (primary indicator)
+    const recentTradesCount = await prisma.managedTrade.count({
       where: {
         executedAt: {
-          gte: new Date(Date.now() - 5 * 60 * 1000) // Last 5 minutes
+          gte: new Date(Date.now() - 60 * 60 * 1000) // Last hour
         }
       }
     });
+    
+    // Also check active sessions as secondary indicator
+    const activeSessions = await prisma.paperTradingSession.count({
+      where: {
+        isActive: true,
+        updatedAt: {
+          gte: new Date(Date.now() - 30 * 60 * 1000) // Updated in last 30 minutes
+        }
+      }
+    });
+    
+    // Check for ANY trades today as tertiary indicator
+    const todayTrades = await prisma.managedTrade.count({
+      where: {
+        executedAt: {
+          gte: new Date(new Date().setHours(0, 0, 0, 0))
+        }
+      }
+    });
+    
+    // Consider running if any indicator shows activity
+    isQuantumForgeRunning = recentTradesCount > 0 || activeSessions > 0 || todayTrades > 0;
+    
+    console.log(`Status detection: ${recentTradesCount} recent trades, ${activeSessions} active sessions, ${todayTrades} today trades`);
+
+    // Use the recentTradesCount we already have
+    const recentTrades = recentTradesCount;
 
     // Get 24-hour trade count for alerts display
     const last24hTrades = await prisma.managedTrade.count({
@@ -83,8 +99,8 @@ export async function GET(request: NextRequest) {
 
     const totalPnL = pnlResult._sum.pnl || 0;
 
-    // Get trading sessions info
-    const activeSessions = await prisma.paperTradingSession.count({
+    // Get total active sessions (we already have activeSessions from earlier)
+    const totalActiveSessions = await prisma.paperTradingSession.count({
       where: {
         isActive: true
       }
@@ -118,7 +134,7 @@ export async function GET(request: NextRequest) {
         neuralNetworkActive: totalTrades >= 10 // Activate after 10 trades
       },
       tradingSessions: {
-        active: activeSessions,
+        active: totalActiveSessions,
         total: await prisma.paperTradingSession.count()
       },
       systemHealth: {
