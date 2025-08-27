@@ -68,7 +68,6 @@ export async function GET(request: NextRequest) {
         console.error(`Error fetching price for ${symbol}:`, error);
       }
     }));
-    };
 
     for (const trade of allTrades) {
       totalInvested += trade.value;

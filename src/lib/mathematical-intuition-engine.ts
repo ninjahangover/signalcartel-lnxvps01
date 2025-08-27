@@ -5,7 +5,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import consolidatedDataService from './consolidated-ai-data-service.js';
+import consolidatedDataService from './consolidated-ai-data-service';
 
 const prisma = new PrismaClient();
 

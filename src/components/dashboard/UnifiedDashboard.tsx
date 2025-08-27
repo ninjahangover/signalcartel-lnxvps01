@@ -35,6 +35,7 @@ import RSIOptimizationDashboard from '../ai/RSIOptimizationDashboard';
 
 // Core functional components with real data
 import OverviewDashboard from './OverviewDashboard';
+import OverviewDashboardV2 from './OverviewDashboardV2';
 import ConfigurationPanel from './ConfigurationPanel';
 import RealTradingDashboard from './RealTradingDashboard';
 import StratusBrainDashboard from './StratusBrainDashboard';
