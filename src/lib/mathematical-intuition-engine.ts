@@ -520,9 +520,11 @@ export class MathematicalIntuitionEngine {
     } = inputs;
     
     // Non-linear intuitive synthesis (not simple weighted average)
-    const harmonic = Math.sqrt(
-      mathIntuition * flowField * patternResonance * timingIntuition * energyAlignment
-    );
+    // Ensure all values are positive for harmonic mean calculation
+    const harmonicBase = Math.abs(mathIntuition) * Math.abs(flowField) * 
+                        Math.abs(patternResonance) * Math.abs(timingIntuition) * 
+                        Math.abs(energyAlignment);
+    const harmonic = Math.sqrt(harmonicBase);
     
     const arithmetic = (
       mathIntuition * 0.3 +
@@ -693,4 +695,11 @@ export class MathematicalIntuitionEngine {
   }
 }
 
+// Export the singleton instance and class
 export const mathIntuitionEngine = MathematicalIntuitionEngine.getInstance();
+
+// Default export for compatibility with existing imports
+export default {
+  MathematicalIntuitionEngine,
+  mathIntuitionEngine
+};

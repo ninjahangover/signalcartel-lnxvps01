@@ -7,6 +7,8 @@ import { QuantumProfitOptimizer, AdvancedTradeSignal } from './quantum-profit-op
 import { QuantumSupremacyEngine, QuantumTradeSignal } from './quantum-supremacy-engine';
 import { phaseManager, PhaseConfig } from './quantum-forge-phase-config';
 import { positionService } from './position-management/position-service';
+import { webhookClient } from './webhooks/webhook-client';
+import { quantumForgeLiveExecutor } from './live-trading/quantum-forge-live-executor';
 // import { telegramAlerts } from './telegram-alert-service';
 
 interface TechnicalIndicators {
@@ -514,20 +516,13 @@ class StrategyExecutionEngine {
       try {
         console.log('🧠 MATHEMATICAL INTUITION: Activating flow field sensing...');
       
-      const { MathematicalIntuitionEngine } = await import('./mathematical-intuition-engine');
-      const intuitionEngine = MathematicalIntuitionEngine.getInstance();
+      const { mathIntuitionEngine } = (await import('./mathematical-intuition-engine')).default;
       
-      // Prepare market data for intuition analysis
-      const marketData = {
-        price: signal.price,
-        timestamp: new Date(),
-        symbol: signal.symbol || 'BTC',
-        volume: 1000, // Default volume, could be enhanced with real data
-        strategy: this.getStrategyName(strategyId)
-      };
+      // Prepare comprehensive market data for intuition analysis
+      const marketData = await this.prepareMarketDataForIntuition(signal, strategyId);
       
       // Run parallel analysis: Intuition vs Calculation
-      intuitionResult = await intuitionEngine.runParallelAnalysis(signal, marketData);
+      intuitionResult = await mathIntuitionEngine.runParallelAnalysis(signal, marketData);
       
       console.log('🧠 INTUITION ANALYSIS:');
       console.log('='.repeat(60));
@@ -550,6 +545,55 @@ class StrategyExecutionEngine {
     } catch (intuitionError) {
       console.warn('⚠️ Mathematical intuition analysis failed, proceeding:', intuitionError.message);
     }
+    }
+
+    // 🔮 MARKOV CHAIN PREDICTIVE ANALYTICS (if enabled by phase)
+    let markovPrediction: any = null;
+    if (currentPhase.features.markovChainEnabled) {
+      try {
+        console.log('🔮 MARKOV CHAIN: Activating predictive state analysis...');
+        
+        const { enhancedMarkovPredictor } = await import('./enhanced-markov-predictor');
+        
+        // Get comprehensive market data for prediction
+        const marketData = await this.prepareMarketDataForIntuition(signal, strategyId);
+        
+        // Convert to required format for Markov analysis
+        const ohlcData = marketData.priceHistory.map((price: number, index: number) => ({
+          symbol: signal.symbol || 'BTCUSD',
+          timestamp: new Date(Date.now() - (marketData.priceHistory.length - index) * 60000),
+          open: price,
+          high: price * 1.001, // Approximate OHLC from price history
+          low: price * 0.999,
+          close: price,
+          volume: marketData.volume / marketData.priceHistory.length
+        }));
+        
+        if (ohlcData.length >= 10) {
+          markovPrediction = await enhancedMarkovPredictor.generatePrediction(signal.symbol || 'BTCUSD', ohlcData);
+          
+          console.log('🔮 MARKOV CHAIN ANALYSIS:');
+          console.log('='.repeat(60));
+          console.log(`   📊 Current State: ${markovPrediction.currentState}`);
+          console.log(`   🎯 Most Likely Next State: ${markovPrediction.mostLikelyNextState}`);
+          console.log(`   📈 Expected Return: ${(markovPrediction.expectedReturn * 100).toFixed(2)}%`);
+          console.log(`   🎲 Prediction Confidence: ${(markovPrediction.confidence * 100).toFixed(1)}%`);
+          console.log(`   ⏱️ Optimal Hold Period: ${markovPrediction.optimalHoldingPeriod} minutes`);
+          
+          // Apply Markov enhancement to signal confidence
+          if (markovPrediction.confidence > 0.7 && markovPrediction.expectedReturn > 0.01) {
+            const markovBoost = markovPrediction.confidence * 0.1; // 10% max boost
+            signal.confidence = Math.min(0.99, signal.confidence + markovBoost);
+            console.log(`🔮 MARKOV BOOST: +${(markovBoost * 100).toFixed(1)}% confidence`);
+            signal.reason = `${signal.reason} | Markov: ${markovPrediction.mostLikelyNextState} predicted`;
+          }
+        } else {
+          console.log('🔮 Insufficient data for Markov analysis, need 10+ data points');
+        }
+        
+      } catch (markovError) {
+        console.warn('⚠️ Markov chain analysis failed, proceeding:', markovError.message);
+      }
     }
 
     // 🚀 QUANTUM SUPREMACY ENGINE INTEGRATION - GPU-ACCELERATED UNLIMITED INTELLIGENCE
@@ -1152,8 +1196,7 @@ class StrategyExecutionEngine {
       console.log(`🧠 MATHEMATICAL INTUITION ENGINE: Analyzing ${action} signal for ${strategyId}`);
       
       try {
-        const { MathematicalIntuitionEngine } = await import('./mathematical-intuition-engine');
-        const intuitionEngine = MathematicalIntuitionEngine.getInstance();
+        const { mathIntuitionEngine } = (await import('./mathematical-intuition-engine')).default;
         
         // Create signal object for analysis
         const tradingSignal = {
@@ -1174,7 +1217,7 @@ class StrategyExecutionEngine {
         };
         
         // Run REAL Mathematical Intuition vs Expectancy analysis
-        const analysisResult = await intuitionEngine.runParallelAnalysis(tradingSignal, marketData);
+        const analysisResult = await mathIntuitionEngine.runParallelAnalysis(tradingSignal, marketData);
         
         console.log(`📊 INTUITION ANALYSIS COMPLETE:`, {
           strategy: strategyId,
@@ -1243,13 +1286,8 @@ class StrategyExecutionEngine {
                 strategy: 'QUANTUM FORGE™',
                 isActive: true,
                 sessionStart: new Date(),
-                initialBalance: 10000.0, // $10K starting balance
-                currentBalance: 10000.0,
-                maxDrawdown: 0.0,
-                totalTrades: 0,
-                winningTrades: 0,
-                totalPnL: 0.0,
-                totalFees: 0.0
+                startingBalance: 10000.0, // $10K starting balance
+                startingEquity: 10000.0
               }
             });
             console.log(`✅ Created new QUANTUM FORGE™ session: ${session.id}`);
@@ -1271,6 +1309,16 @@ class StrategyExecutionEngine {
           const positionValue = basePositionValue * confidence;
           const quantity = positionValue / currentPrice;
           const tradeValue = quantity * currentPrice;
+          
+          // Send webhook for trade signal before execution
+          await webhookClient.sendTradeSignal({
+            action: action as 'BUY' | 'SELL' | 'HOLD',
+            symbol: symbol,
+            price: currentPrice,
+            confidence: confidence,
+            strategy: this.getStrategyName(strategyId),
+            reason: signalData.reason || 'GPU Strategy Signal'
+          });
           
           // Use QUANTUM FORGE™ Position Management System for complete trade lifecycle
           const tradingSignal = {
@@ -1299,16 +1347,95 @@ class StrategyExecutionEngine {
               status: result.action
             });
             
+            // 🔥 LIVE TRADING INTEGRATION: Execute on Kraken if enabled
+            if (result.action === 'opened' && (action === 'BUY' || action === 'SELL')) {
+              try {
+                console.log('🔥 Processing signal for LIVE TRADING execution...');
+                
+                const currentPhase = await phaseManager.getCurrentPhase();
+                const liveTradeResult = await quantumForgeLiveExecutor.processSignalForLiveExecution(
+                  {
+                    action: action as 'BUY' | 'SELL',
+                    symbol: symbol,
+                    price: currentPrice,
+                    confidence: confidence,
+                    strategy: this.getStrategyName(strategyId),
+                    aiSystemsUsed: this.getAISystemsUsed(tradingSignal),
+                    expectedMove: this.estimateExpectedMove(confidence),
+                    reason: signalData.reason || 'QUANTUM FORGE™ AI Signal'
+                  },
+                  currentPhase.phase
+                );
+                
+                if (liveTradeResult.success) {
+                  console.log(`🎊 LIVE TRADE EXECUTED:`, {
+                    orderId: liveTradeResult.orderId,
+                    positionSize: liveTradeResult.positionSize,
+                    expectedProfit: liveTradeResult.expectedProfit,
+                    message: liveTradeResult.message
+                  });
+                } else {
+                  console.log(`📄 PAPER ONLY:`, {
+                    reason: liveTradeResult.message,
+                    wouldTradeSize: liveTradeResult.positionSize
+                  });
+                }
+                
+              } catch (liveError) {
+                console.error('❌ Live trading execution error:', liveError.message);
+                console.log('📄 Continuing with paper trading only');
+              }
+            }
+            
             if (result.action === 'opened') {
               console.log(`📈 NEW POSITION OPENED: ${symbol} ${tradingSignal.action} @ $${currentPrice}`);
               console.log(`   Position ID: ${result.position?.id}`);
               console.log(`   Exit Strategy: SL ${result.position?.stopLoss || 'None'}, TP ${result.position?.takeProfit || 'None'}`);
+              
+              // Send webhook for position opened
+              await webhookClient.sendPositionOpened({
+                positionId: result.position?.id || '',
+                symbol: symbol,
+                side: tradingSignal.action === 'BUY' ? 'long' : 'short',
+                quantity: quantity,
+                entryPrice: currentPrice,
+                strategy: this.getStrategyName(strategyId)
+              });
+              
             } else if (result.action === 'closed') {
               console.log(`💰 POSITION CLOSED: ${symbol}`);
               console.log(`   P&L: $${result.pnl?.toFixed(2) || '0.00'}`);
               console.log(`   Entry: $${result.position?.entryPrice} → Exit: $${result.position?.exitPrice}`);
+              
+              // Send webhook for position closed
+              await webhookClient.sendPositionClosed({
+                positionId: result.position?.id || '',
+                symbol: symbol,
+                exitPrice: result.position?.exitPrice || currentPrice,
+                pnl: result.pnl || 0,
+                pnlPercent: result.position?.entryPrice ? 
+                  ((result.position?.exitPrice || currentPrice) - result.position?.entryPrice) / result.position?.entryPrice * 100 : 0,
+                holdingTime: result.position?.entryTime ? 
+                  Date.now() - result.position.entryTime.getTime() : 0,
+                strategy: this.getStrategyName(strategyId)
+              });
+              
             } else if (result.action === 'updated') {
               console.log(`🔄 POSITION UPDATED: ${symbol}`);
+            }
+            
+            // Send webhook for trade executed
+            if (result.trade?.id) {
+              await webhookClient.sendTradeExecuted({
+                tradeId: result.trade.id,
+                symbol: symbol,
+                side: orderSide,
+                quantity: quantity,
+                price: currentPrice,
+                value: tradeValue,
+                fees: 0, // Paper trading has no fees
+                strategy: this.getStrategyName(strategyId)
+              });
             }
             
             // Create trading signal for analysis (kept for dashboard/monitoring)
@@ -2155,10 +2282,95 @@ class StrategyExecutionEngine {
   }
   
   /**
+   * Prepare comprehensive market data for Mathematical Intuition Engine
+   */
+  private async prepareMarketDataForIntuition(signal: any, strategyId: string) {
+    try {
+      // Get recent trades for price history
+      const recentTrades = await this.prisma.managedTrade.findMany({
+        where: { symbol: signal.symbol || 'BTCUSD' },
+        orderBy: { executedAt: 'desc' },
+        take: 50, // Get enough for proper analysis
+        select: {
+          price: true,
+          quantity: true,
+          executedAt: true
+        }
+      });
+
+      // Build price history array
+      const priceHistory = recentTrades
+        .sort((a, b) => a.executedAt.getTime() - b.executedAt.getTime())
+        .map(t => t.price);
+
+      // Calculate total volume
+      const totalVolume = recentTrades.reduce((sum, t) => sum + t.quantity, 0);
+
+      // Get recent volatility data
+      const avgPrice = priceHistory.length > 0 
+        ? priceHistory.reduce((sum, p) => sum + p, 0) / priceHistory.length 
+        : signal.price;
+
+      return {
+        price: signal.price,
+        priceHistory: priceHistory.length > 0 ? priceHistory : [signal.price], // Fallback
+        volume: totalVolume > 0 ? totalVolume : 1.0, // Fallback
+        symbol: signal.symbol || 'BTCUSD',
+        timestamp: new Date(),
+        strategy: this.getStrategyName(strategyId),
+        avgPrice,
+        tradeCount: recentTrades.length,
+        // Additional context for better analysis
+        confidence: signal.confidence || 0.75,
+        action: signal.action
+      };
+
+    } catch (error) {
+      console.warn('⚠️ Failed to prepare comprehensive market data, using basic fallback:', error.message);
+      
+      // Fallback to basic market data
+      return {
+        price: signal.price,
+        priceHistory: [signal.price], // Single point fallback
+        volume: 1.0,
+        symbol: signal.symbol || 'BTCUSD',
+        timestamp: new Date(),
+        strategy: this.getStrategyName(strategyId),
+        avgPrice: signal.price,
+        tradeCount: 0
+      };
+    }
+  }
+
+  /**
    * Get strategy name by ID for notifications
    */
   private getStrategyName(strategyId: string): string {
     return this.strategyNames.get(strategyId) || strategyId;
+  }
+  
+  /**
+   * Get AI systems used in a trading signal
+   */
+  private getAISystemsUsed(tradingSignal: any): string[] {
+    const systems = [];
+    
+    if (tradingSignal.sentimentScore) systems.push('universal-sentiment-enhancer');
+    if (tradingSignal.mathIntuition) systems.push('mathematical-intuition-engine');
+    if (tradingSignal.multiLayerAI) systems.push('multi-layer-ai');
+    if (tradingSignal.orderBookAnalysis) systems.push('order-book-intelligence');
+    if (tradingSignal.markovPrediction) systems.push('markov-chain-predictor');
+    
+    return systems.length > 0 ? systems : ['gpu-strategy'];
+  }
+  
+  /**
+   * Estimate expected price move based on confidence
+   */
+  private estimateExpectedMove(confidence: number): number {
+    // Conservative estimate: higher confidence suggests higher expected move
+    // This could be enhanced with historical analysis
+    return Math.max(0.012, confidence * 0.04); // 1.2% to 4% expected move range
   }
 }
 

@@ -70,8 +70,7 @@ export class PositionService {
       
       let intuitionAnalysis = null;
       try {
-        const { MathematicalIntuitionEngine } = await import('../mathematical-intuition-engine');
-        const intuitionEngine = MathematicalIntuitionEngine.getInstance();
+        const { mathIntuitionEngine } = (await import('../mathematical-intuition-engine')).default;
         
         const marketData = {
           price: signal.price,
@@ -81,7 +80,7 @@ export class PositionService {
           strategy: signal.strategy || 'position-managed'
         };
         
-        intuitionAnalysis = await intuitionEngine.runParallelAnalysisSimple(signal, marketData);
+        intuitionAnalysis = await mathIntuitionEngine.runParallelAnalysisSimple(signal, marketData);
         
         console.log('🧠 INTUITION vs TRADITIONAL ANALYSIS:');
         console.log(`  Flow Field Resonance: ${((intuitionAnalysis?.intuition?.flowFieldResonance || 0) * 100).toFixed(1)}%`);

@@ -264,11 +264,11 @@ export class QuantumForgePhaseManager {
     if (this.isInitialized) return;
     
     try {
-      // Count total completed positions (entry + exit pairs)
-      const completedTrades = await prisma.managedPosition.count({
+      // Count entry trades as the primary phase progression metric
+      // Entry trades represent actual AI trading decisions made
+      const completedTrades = await prisma.managedTrade.count({
         where: {
-          exitPrice: { not: null },
-          exitTime: { not: null }
+          isEntry: true
         }
       });
       
@@ -370,10 +370,9 @@ export class QuantumForgePhaseManager {
   }
 
   async updateTradeCount(): Promise<PhaseConfig> {
-    const completedTrades = await prisma.managedPosition.count({
+    const completedTrades = await prisma.managedTrade.count({
       where: {
-        exitPrice: { not: null },
-        exitTime: { not: null }
+        isEntry: true
       }
     });
     

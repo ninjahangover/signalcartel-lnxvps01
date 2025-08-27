@@ -453,3 +453,6 @@ export class UniversalSentimentEnhancer {
 }
 
 export const universalSentimentEnhancer = new UniversalSentimentEnhancer();
+
+// Export class as default for compatibility
+export default UniversalSentimentEnhancer;
