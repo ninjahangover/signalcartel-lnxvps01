@@ -17,9 +17,9 @@ export interface RealPriceData {
 class RealTimePriceFetcher {
   private static instance: RealTimePriceFetcher | null = null;
   private cache: Map<string, { price: number; timestamp: Date }> = new Map();
-  private readonly CACHE_DURATION = 120000; // 2 minutes cache (longer for stability)
+  private readonly CACHE_DURATION = 300000; // 5 minutes cache (much longer for trading stability)
   private lastCoinGeckoRequest: number = 0;
-  private readonly COINGECKO_RATE_LIMIT_MS = 15000; // 15 seconds between requests to avoid rate limits
+  private readonly COINGECKO_RATE_LIMIT_MS = 20000; // 20 seconds between requests to avoid rate limits
 
   private constructor() {}
 

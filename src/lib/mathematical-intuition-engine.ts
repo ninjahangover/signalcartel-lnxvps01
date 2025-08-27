@@ -81,6 +81,20 @@ export class MathematicalIntuitionEngine {
   }
 
   /**
+   * Get real market price for a symbol - NO fallbacks
+   */
+  private async getRealPrice(symbol: string): Promise<number> {
+    const { realTimePriceFetcher } = await import('@/lib/real-time-price-fetcher');
+    const priceData = await realTimePriceFetcher.getCurrentPrice(symbol);
+    
+    if (!priceData.success || priceData.price <= 0) {
+      throw new Error(`❌ Cannot get real price for ${symbol}: ${priceData.error || 'Invalid price'}`);
+    }
+    
+    return priceData.price;
+  }
+
+  /**
    * CORE: Feel the mathematical flow field of the market
    * This is where intuition transcends calculation
    */
@@ -640,7 +654,7 @@ export class MathematicalIntuitionEngine {
           strategy: 'parallel-test',
           signalType: comparison.calculated.decision,
           originalConfidence: comparison.calculated.confidence,
-          signalPrice: 65000, // Default for test
+          signalPrice: await this.getRealPrice('BTCUSD'), // Real price only
           
           // Mathematical Intuition metrics
           flowFieldResonance: comparison.intuitive.flowField,

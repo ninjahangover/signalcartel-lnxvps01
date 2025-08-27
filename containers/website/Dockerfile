@@ -11,7 +11,7 @@ COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
 COPY src/lib/market-data-client ./src/lib/market-data-client/
 # Install dependencies and generate ALL Prisma clients for Alpine Linux
-RUN npm ci
+RUN npm install --production
 RUN npx prisma generate --schema=prisma/schema.prisma
 RUN npx prisma generate --schema=src/lib/market-data-client/schema.prisma
 
@@ -50,7 +50,7 @@ RUN adduser --system --uid 1001 nextjs
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
 COPY src/lib/market-data-client ./src/lib/market-data-client/
-RUN npm ci --only=production
+RUN npm install --production
 RUN npx prisma generate --schema=prisma/schema.prisma
 RUN npx prisma generate --schema=src/lib/market-data-client/schema.prisma
 # Verify both clients were generated with Alpine engines

@@ -141,21 +141,27 @@ export class PositionService {
   }
   
   /**
-   * Get current market prices for position monitoring
+   * Get current market prices for position monitoring - REAL DATA ONLY
    */
   private async getCurrentMarketPrices(): Promise<{ [symbol: string]: number }> {
-    // In production, this would fetch from real market data APIs
-    // For now, use reasonable current prices
-    return {
-      'BTCUSD': 65000,
-      'ETHUSD': 2500,
-      'SOLUSD': 150,
-      'ADAUSD': 0.50,
-      'LINKUSD': 15,
-      'DOTUSD': 8,
-      'AVAXUSD': 35,
-      'MATICUSD': 0.80
-    };
+    const { realTimePriceFetcher } = await import('@/lib/real-time-price-fetcher');
+    const symbols = ['BTCUSD', 'ETHUSD', 'SOLUSD', 'ADAUSD', 'LINKUSD', 'DOTUSD', 'AVAXUSD', 'MATICUSD'];
+    const prices: { [symbol: string]: number } = {};
+    
+    await Promise.all(symbols.map(async (symbol) => {
+      try {
+        const priceData = await realTimePriceFetcher.getCurrentPrice(symbol);
+        if (priceData.success && priceData.price > 0) {
+          prices[symbol] = priceData.price;
+        } else {
+          console.error(`❌ Failed to get real price for ${symbol}: ${priceData.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error(`❌ Error fetching price for ${symbol}:`, error);
+      }
+    }));
+    
+    return prices;
   }
   
   /**

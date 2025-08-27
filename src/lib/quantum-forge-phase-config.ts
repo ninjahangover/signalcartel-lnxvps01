@@ -3,7 +3,7 @@
  * Gradually enables AI/ML features based on data accumulation
  */
 
-import { prisma } from './prisma';
+import { PrismaClient } from '@prisma/client';
 
 export interface PhaseConfig {
   phase: number;
@@ -247,11 +247,16 @@ export class QuantumForgePhaseManager {
   private currentPhase: PhaseConfig | null = null;
   private tradeCount: number = 0;
   private isInitialized: boolean = false;
+  private prisma: PrismaClient;
   
   // Manual override controls
   private manualOverride: boolean = false;
   private forcedPhase: number | null = null;
   private disableAllRestrictions: boolean = false;
+
+  constructor() {
+    this.prisma = new PrismaClient();
+  }
 
   static getInstance(): QuantumForgePhaseManager {
     if (!QuantumForgePhaseManager.instance) {
@@ -266,7 +271,7 @@ export class QuantumForgePhaseManager {
     try {
       // Count entry trades as the primary phase progression metric
       // Entry trades represent actual AI trading decisions made
-      const completedTrades = await prisma.managedTrade.count({
+      const completedTrades = await this.prisma.managedTrade.count({
         where: {
           isEntry: true
         }
@@ -370,7 +375,7 @@ export class QuantumForgePhaseManager {
   }
 
   async updateTradeCount(): Promise<PhaseConfig> {
-    const completedTrades = await prisma.managedTrade.count({
+    const completedTrades = await this.prisma.managedTrade.count({
       where: {
         isEntry: true
       }

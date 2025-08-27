@@ -218,10 +218,13 @@ class PositionManagedStrategyLoader {
   // Simplified indicator calculations for demonstration
   // In production, these should use proper technical analysis libraries
   private calculateSimulatedRSI(price: number): number {
-    // Simulate RSI based on price movement (very basic simulation)
+    // Simulate RSI based on price movement - use dynamic thresholds based on current market
     const random = Math.random();
-    if (price > 65000) return 60 + (random * 20); // Higher prices = higher RSI
-    if (price < 62000) return 20 + (random * 20); // Lower prices = lower RSI
+    const highThreshold = price * 1.05; // 5% above current
+    const lowThreshold = price * 0.95;  // 5% below current
+    
+    if (price > highThreshold) return 60 + (random * 20); // Higher prices = higher RSI
+    if (price < lowThreshold) return 20 + (random * 20); // Lower prices = lower RSI
     return 40 + (random * 20); // Mid-range RSI
   }
 

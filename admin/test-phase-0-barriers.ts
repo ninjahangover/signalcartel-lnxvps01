@@ -7,6 +7,18 @@
 import { phaseManager } from './src/lib/quantum-forge-phase-config';
 import { positionService } from './src/lib/position-management/position-service';
 
+// Get real price helper
+async function getRealPrice(symbol: string): Promise<number> {
+  const { realTimePriceFetcher } = await import('./src/lib/real-time-price-fetcher');
+  const priceData = await realTimePriceFetcher.getCurrentPrice(symbol);
+  
+  if (!priceData.success || priceData.price <= 0) {
+    throw new Error(`❌ Cannot get real price for ${symbol}: ${priceData.error || 'Invalid price'}`);
+  }
+  
+  return priceData.price;
+}
+
 async function testPhase0Barriers() {
   console.log('🎯 TESTING PHASE 0 ULTRA-LOW BARRIERS');
   console.log('=' .repeat(80));
@@ -33,7 +45,7 @@ async function testPhase0Barriers() {
     const lowConfidenceSignal = {
       action: 'BUY' as const,
       symbol: 'BTCUSD',
-      price: 65000,
+      price: await getRealPrice('BTCUSD'),
       confidence: 0.15, // 15% - very low but should pass 10% threshold
       quantity: 0.001,
       strategy: 'phase-0-test',

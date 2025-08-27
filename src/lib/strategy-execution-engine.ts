@@ -166,6 +166,20 @@ class StrategyExecutionEngine {
     return StrategyExecutionEngine.instance;
   }
 
+  /**
+   * Get real market price for a symbol - NO fallbacks
+   */
+  private async getRealPrice(symbol: string): Promise<number> {
+    const { realTimePriceFetcher } = await import('@/lib/real-time-price-fetcher');
+    const priceData = await realTimePriceFetcher.getCurrentPrice(symbol);
+    
+    if (!priceData.success || priceData.price <= 0) {
+      throw new Error(`❌ Cannot get real price for ${symbol}: ${priceData.error || 'Invalid price'}`);
+    }
+    
+    return priceData.price;
+  }
+
   // Start monitoring strategies for execution
   startEngine() {
     if (this.isRunning) return;
@@ -1202,14 +1216,14 @@ class StrategyExecutionEngine {
         const tradingSignal = {
           action: action,
           confidence: signalData.confidence || 0.75,
-          price: signalData.price || 65000,
+          price: signalData.price || await this.getRealPrice(symbol),
           symbol: symbol,
           reason: `${strategyId} signal: ${JSON.stringify(signalData)}`
         };
         
         // Get current market data for analysis
         const marketData = {
-          price: signalData.price || 65000,
+          price: signalData.price || await this.getRealPrice(symbol),
           timestamp: new Date(),
           symbol: symbol,
           volume: signalData.volume || 1000,

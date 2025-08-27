@@ -75,7 +75,18 @@ export default function QuantumForgeCognitiveCore() {
             const totalTrades = trades.length;
             
             // Calculate real metrics from trading data (since pnl is null, use entry price logic)
-            const currentMarketPrice = 65000; // Approximate current market price
+            // Get real market price from API instead of hardcoded
+            let currentMarketPrice = 0;
+            try {
+              const priceResponse = await fetch('/api/real-btc-price');
+              const priceData = await priceResponse.json();
+              if (priceData.success && priceData.prices.BTCUSD.price > 0) {
+                currentMarketPrice = priceData.prices.BTCUSD.price;
+              }
+            } catch (error) {
+              console.error('Failed to fetch real BTC price:', error);
+              return; // Skip calculation if no real price available
+            }
             const profitableTrades = trades.filter(trade => {
                 if (trade.side === 'buy') {
                     return trade.price < currentMarketPrice; // Buy low, price higher = profitable

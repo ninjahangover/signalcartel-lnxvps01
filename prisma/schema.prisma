@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
@@ -24,8 +21,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -39,37 +35,29 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-
-  // Custom fields for Signal Cartel
-  role                 String    @default("user") // user, admin, super_admin
-  subscriptionTier     String    @default("none") // none, entry, professional, ultra_elite
-  subscriptionStatus   String    @default("inactive") // inactive, active, cancelled, past_due
-  stripeCustomerId     String?
-  stripeSubscriptionId String?
-  subscriptionEndsAt   DateTime?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-
-  // Trading related
-  krakenApiKey    String?
-  krakenSecretKey String?
-  apiKeysVerified Boolean @default(false)
-
-  // Admin logs
-  adminLogs AdminLog[]
-
-  // Pine Script strategies
-  pineStrategies PineStrategy[]
-
-  // Paper trading accounts
-  paperAccounts PaperAccount[]
+  id                      String                   @id @default(cuid())
+  name                    String?
+  email                   String                   @unique
+  emailVerified           DateTime?
+  image                   String?
+  role                    String                   @default("user")
+  subscriptionTier        String                   @default("none")
+  subscriptionStatus      String                   @default("inactive")
+  stripeCustomerId        String?
+  stripeSubscriptionId    String?
+  subscriptionEndsAt      DateTime?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  krakenApiKey            String?
+  krakenSecretKey         String?
+  apiKeysVerified         Boolean                  @default(false)
+  accounts                Account[]
+  adminLogs               AdminLog[]
+  LiveTradingSession      LiveTradingSession[]
+  paperAccounts           PaperAccount[]
+  pineStrategies          PineStrategy[]
+  sessions                Session[]
+  UserLiveTradingSettings UserLiveTradingSettings?
 }
 
 model VerificationToken {
@@ -88,160 +76,107 @@ model AdminLog {
   ipAddress   String?
   userAgent   String?
   createdAt   DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Pine Script Strategy Management Models
 model PineStrategy {
-  id          String  @id @default(cuid())
-  userId      String
-  name        String
-  description String?
-
-  // Pine Script content
-  pineScriptCode String // The actual Pine Script code
-  version        String @default("1.0")
-
-  // Strategy metadata
-  strategyType String // "RSI", "Fibonacci", "AI_Momentum", "Custom"
-  timeframe    String @default("1h") // 1m, 5m, 15m, 1h, 4h, 1d
-  tradingPairs String // JSON array of trading pairs ["BTCUSD", "ETHUSD"]
-
-  // Status and performance
-  isActive       Boolean @default(false)
-  isOptimized    Boolean @default(false)
-  currentWinRate Float?
-  totalTrades    Int     @default(0)
-  profitLoss     Float   @default(0.0)
-
-  // Timestamps
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id              String                 @id @default(cuid())
+  userId          String
+  name            String
+  description     String?
+  pineScriptCode  String
+  version         String                 @default("1.0")
+  strategyType    String
+  timeframe       String                 @default("1h")
+  tradingPairs    String
+  isActive        Boolean                @default(false)
+  isOptimized     Boolean                @default(false)
+  currentWinRate  Float?
+  totalTrades     Int                    @default(0)
+  profitLoss      Float                  @default(0.0)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
   lastOptimizedAt DateTime?
-
-  // Relations
-  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parameters    StrategyParameter[]
-  optimizations StrategyOptimization[]
-  performances  StrategyPerformance[]
+  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  optimizations   StrategyOptimization[]
+  parameters      StrategyParameter[]
+  performances    StrategyPerformance[]
 }
 
 model StrategyParameter {
-  id         String @id @default(cuid())
-  strategyId String
-
-  // Parameter identification
-  parameterName String // e.g., "rsi_period", "rsi_overbought", "stop_loss_pct"
-  parameterType String // "integer", "float", "boolean", "string"
-  category      String // "entry", "exit", "risk_management", "timeframe"
-
-  // Current and original values
-  currentValue  String // Stored as string, parsed based on type
-  originalValue String // Original value from Pine Script
-  minValue      String? // Min allowed value for optimization
-  maxValue      String? // Max allowed value for optimization
-
-  // Optimization settings
-  isOptimizable        Boolean @default(true)
-  optimizationPriority Int     @default(1) // 1=high, 2=medium, 3=low
-
-  // Market condition triggers
-  volatilityAdjustment Boolean @default(false) // Adjust based on volatility
-  volumeAdjustment     Boolean @default(false) // Adjust based on volume
-  momentumAdjustment   Boolean @default(false) // Adjust based on momentum
-
-  // Timestamps
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  lastChangedAt DateTime?
-
-  // Relations
-  strategy PineStrategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+  id                   String       @id @default(cuid())
+  strategyId           String
+  parameterName        String
+  parameterType        String
+  category             String
+  currentValue         String
+  originalValue        String
+  minValue             String?
+  maxValue             String?
+  isOptimizable        Boolean      @default(true)
+  optimizationPriority Int          @default(1)
+  volatilityAdjustment Boolean      @default(false)
+  volumeAdjustment     Boolean      @default(false)
+  momentumAdjustment   Boolean      @default(false)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  lastChangedAt        DateTime?
+  strategy             PineStrategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
 
   @@unique([strategyId, parameterName])
 }
 
 model StrategyOptimization {
-  id         String @id @default(cuid())
-  strategyId String
-
-  // Optimization details
-  optimizationType String // "scheduled", "market_change", "performance_trigger"
-  triggerReason    String // Reason for optimization
-
-  // Parameters changed
-  parametersChanged  String // JSON object of parameter changes
-  previousParameters String // JSON object of previous values
-
-  // Market conditions at time of optimization
-  marketVolatility Float?
-  marketMomentum   Float?
-  volumeAverage    Float?
-  marketRegime     String? // "trending", "ranging", "volatile", "calm"
-
-  // Results
-  backtestResults String? // JSON object with backtest performance
-  confidenceScore Float? // AI confidence in optimization (0-1)
-  wasApplied      Boolean @default(false)
-
-  // Timestamps
-  createdAt DateTime  @default(now())
-  appliedAt DateTime?
-
-  // Relations
-  strategy PineStrategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+  id                 String       @id @default(cuid())
+  strategyId         String
+  optimizationType   String
+  triggerReason      String
+  parametersChanged  String
+  previousParameters String
+  marketVolatility   Float?
+  marketMomentum     Float?
+  volumeAverage      Float?
+  marketRegime       String?
+  backtestResults    String?
+  confidenceScore    Float?
+  wasApplied         Boolean      @default(false)
+  createdAt          DateTime     @default(now())
+  appliedAt          DateTime?
+  strategy           PineStrategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
 }
 
 model StrategyPerformance {
-  id         String @id @default(cuid())
-  strategyId String
-
-  // Performance metrics
-  timeframe     String // "1h", "24h", "7d", "30d"
+  id            String       @id @default(cuid())
+  strategyId    String
+  timeframe     String
   totalTrades   Int
   winningTrades Int
   losingTrades  Int
-  winRate       Float // Percentage
-
-  // Financial metrics
-  totalPnL    Float // Total profit/loss
-  avgWin      Float // Average winning trade
-  avgLoss     Float // Average losing trade
-  maxDrawdown Float // Maximum drawdown percentage
-  sharpeRatio Float? // Risk-adjusted return
-
-  // Market conditions during performance period
+  winRate       Float
+  totalPnL      Float
+  avgWin        Float
+  avgLoss       Float
+  maxDrawdown   Float
+  sharpeRatio   Float?
   avgVolatility Float?
   avgVolume     Float?
-  marketTrend   String? // "bullish", "bearish", "sideways"
-
-  // Timestamps
-  periodStart  DateTime
-  periodEnd    DateTime
-  calculatedAt DateTime @default(now())
-
-  // Relations
-  strategy PineStrategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+  marketTrend   String?
+  periodStart   DateTime
+  periodEnd     DateTime
+  calculatedAt  DateTime     @default(now())
+  strategy      PineStrategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
 }
 
-// Market Data Models for Optimization
 model MarketData {
-  id String @id @default(cuid())
-
-  // Market identification
-  symbol    String // "BTCUSD", "ETHUSD", etc.
-  timeframe String @default("1m") // "1m", "5m", "15m", "1h", "4h", "1d"
-
-  // OHLCV data
-  timestamp DateTime
-  open      Float
-  high      Float
-  low       Float
-  close     Float
-  volume    Float @default(0.0)
-
-  // Calculated indicators
+  id              String   @id @default(cuid())
+  symbol          String
+  timeframe       String   @default("1m")
+  timestamp       DateTime
+  open            Float
+  high            Float
+  low             Float
+  close           Float
+  volume          Float    @default(0.0)
   rsi             Float?
   macd            Float?
   macdSignal      Float?
@@ -252,92 +187,62 @@ model MarketData {
   bollinger_upper Float?
   bollinger_lower Float?
   atr             Float?
-
-  // Market conditions
-  volatility    Float? // Rolling volatility
-  momentum      Float? // Price momentum indicator
-  volumeProfile String? // JSON object with volume analysis
-
-  // Timestamps
-  createdAt DateTime @default(now())
+  volatility      Float?
+  momentum        Float?
+  volumeProfile   String?
+  createdAt       DateTime @default(now())
 
   @@unique([symbol, timeframe, timestamp])
   @@index([symbol, timeframe])
   @@index([timestamp])
 }
 
-// Market Data Collection Status
 model MarketDataCollection {
-  id String @id @default(cuid())
-
-  // Collection identification
-  symbol String @unique // "BTCUSD", "ETHUSD", etc.
-
-  // Collection status
-  status         String  @default("ACTIVE") // "ACTIVE", "PAUSED", "ERROR"
-  enabled        Boolean @default(true)
-  interval       Int     @default(60) // Collection interval in seconds
-  dataPoints     Int     @default(0) // Total data points collected
-  completeness   Float   @default(0.0) // Percentage of expected data points
-
-  // Data tracking
-  oldestData    DateTime?
-  newestData    DateTime?
-  lastCollected DateTime?
-
-  // Error tracking
-  lastError    String?
-  errorCount   Int @default(0)
-  errorDetails String? // JSON object with error details
-
-  // Performance metrics
-  avgResponseTime Float? // Average API response time
-  successRate     Float @default(100.0) // Success rate percentage
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String    @id @default(cuid())
+  symbol          String    @unique
+  status          String    @default("ACTIVE")
+  enabled         Boolean   @default(true)
+  interval        Int       @default(60)
+  dataPoints      Int       @default(0)
+  completeness    Float     @default(0.0)
+  oldestData      DateTime?
+  newestData      DateTime?
+  lastCollected   DateTime?
+  lastError       String?
+  errorCount      Int       @default(0)
+  errorDetails    String?
+  avgResponseTime Float?
+  successRate     Float     @default(100.0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([symbol])
   @@index([status])
   @@index([enabled])
 }
 
-// Trading Signals Model
 model TradingSignal {
-  id String @id @default(cuid())
-
-  // Signal identification
-  symbol   String // "BTCUSD", "ETHUSD", etc.
-  strategy String // Strategy name that generated the signal
-
-  // Signal details
-  signalType    String // "BUY", "SELL", "CLOSE"
-  currentPrice  Float
-  targetPrice   Float?
-  stopLoss      Float?
-  confidence    Float // 0.0 to 1.0
-
-  // Signal metadata
-  timeframe     String? // "1m", "5m", "15m", etc.
-  indicators    String? // JSON object with indicator values
-  marketRegime  String? // "trending", "ranging", "volatile"
-  volume        Float?
-
-  // Execution status
-  executed      Boolean   @default(false)
-  executedAt    DateTime?
+  id             String    @id @default(cuid())
+  symbol         String
+  strategy       String
+  signalType     String
+  currentPrice   Float
+  targetPrice    Float?
+  stopLoss       Float?
+  confidence     Float
+  timeframe      String?
+  indicators     String?
+  marketRegime   String?
+  volume         Float?
+  executed       Boolean   @default(false)
+  executedAt     DateTime?
   executionPrice Float?
-  outcome       String?   // "WIN", "LOSS", "PENDING"
-
-  // Performance tracking
-  pnl           Float? // Profit/loss if closed
-  pnlPercent    Float? // P&L percentage
-  holdingPeriod Int?   // Minutes held
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  outcome        String?
+  pnl            Float?
+  pnlPercent     Float?
+  holdingPeriod  Int?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([symbol])
   @@index([strategy])
@@ -345,43 +250,32 @@ model TradingSignal {
   @@index([createdAt])
 }
 
-// Paper Trading Models - Completely Separate from Live Trading
 model PaperAccount {
-  id       String @id @default(cuid())
-  userId   String
-  platform String // "alpaca", "internal", "kraken_demo"
-
-  // Account identification
-  platformAccountId String // Alpaca account ID or internal ID
-  apiKey            String? // Encrypted API key
-  apiSecret         String? // Encrypted API secret
-
-  // Account balances
-  initialBalance        Float  @default(1000000.0) // Alpaca paper trading default: $1M
+  id                    String                @id @default(cuid())
+  userId                String
+  platform              String
+  platformAccountId     String
+  apiKey                String?
+  apiSecret             String?
+  initialBalance        Float                 @default(1000000.0)
   currentBalance        Float
   dayTradingBuyingPower Float?
   buyingPower           Float?
   equity                Float?
-
-  // Account lifecycle
-  status      String    @default("active") // "active", "expired", "archived", "reset"
-  createdAt   DateTime  @default(now())
-  expiresAt   DateTime?
-  lastResetAt DateTime?
-
-  // Performance summary
-  totalTrades   Int   @default(0)
-  winningTrades Int   @default(0)
-  totalPnL      Float @default(0.0)
-  maxDrawdown   Float @default(0.0)
-  bestDay       Float @default(0.0)
-  worstDay      Float @default(0.0)
-
-  // Relations
-  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tradingSessions PaperTradingSession[]
-  positions       PaperPosition[]
-  orders          PaperOrder[]
+  status                String                @default("active")
+  createdAt             DateTime              @default(now())
+  expiresAt             DateTime?
+  lastResetAt           DateTime?
+  totalTrades           Int                   @default(0)
+  winningTrades         Int                   @default(0)
+  totalPnL              Float                 @default(0.0)
+  maxDrawdown           Float                 @default(0.0)
+  bestDay               Float                 @default(0.0)
+  worstDay              Float                 @default(0.0)
+  user                  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders                PaperOrder[]
+  positions             PaperPosition[]
+  tradingSessions       PaperTradingSession[]
 
   @@index([userId])
   @@index([status])
@@ -389,50 +283,32 @@ model PaperAccount {
 }
 
 model PaperTradingSession {
-  id             String @id @default(cuid())
-  paperAccountId String
-
-  // Session details
-  sessionName String? // Optional user-defined name
-  strategy    String? // Strategy used during session
-
-  // Session lifecycle
-  sessionStart DateTime  @default(now())
-  sessionEnd   DateTime?
-  isActive     Boolean   @default(true)
-
-  // Starting balances
-  startingBalance Float
-  startingEquity  Float?
-
-  // Ending balances (filled when session ends)
-  endingBalance Float?
-  endingEquity  Float?
-
-  // Performance metrics
-  totalTrades   Int    @default(0)
-  winningTrades Int    @default(0)
-  winRate       Float  @default(0.0)
-  totalPnL      Float  @default(0.0)
-  maxDrawdown   Float  @default(0.0)
-  sharpeRatio   Float?
-
-  // Market conditions during session
-  marketRegime   String? // "bull", "bear", "sideways", "volatile"
-  avgVolatility  Float?
-  primarySymbols String? // JSON array of symbols traded
-
-  // Session notes
+  id               String       @id @default(cuid())
+  paperAccountId   String
+  sessionName      String?
+  strategy         String?
+  sessionStart     DateTime     @default(now())
+  sessionEnd       DateTime?
+  isActive         Boolean      @default(true)
+  startingBalance  Float
+  startingEquity   Float?
+  endingBalance    Float?
+  endingEquity     Float?
+  totalTrades      Int          @default(0)
+  winningTrades    Int          @default(0)
+  winRate          Float        @default(0.0)
+  totalPnL         Float        @default(0.0)
+  maxDrawdown      Float        @default(0.0)
+  sharpeRatio      Float?
+  marketRegime     String?
+  avgVolatility    Float?
+  primarySymbols   String?
   notes            String?
   performanceNotes String?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  paperAccount PaperAccount @relation(fields: [paperAccountId], references: [id], onDelete: Cascade)
-  trades       PaperTrade[]
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  trades           PaperTrade[]
+  paperAccount     PaperAccount @relation(fields: [paperAccountId], references: [id], onDelete: Cascade)
 
   @@index([paperAccountId])
   @@index([isActive])
@@ -440,47 +316,33 @@ model PaperTradingSession {
 }
 
 model PaperPosition {
-  id             String  @id @default(cuid())
-  paperAccountId String
-  sessionId      String?
-
-  // Position details
-  symbol        String
-  side          String // "long", "short"
-  quantity      Float
-  avgEntryPrice Float
-  currentPrice  Float
-
-  // P&L tracking
-  unrealizedPnL Float @default(0.0)
-  realizedPnL   Float @default(0.0)
-  totalCost     Float // Total cost basis
-  marketValue   Float // Current market value
-
-  // Risk management
+  id               String       @id @default(cuid())
+  paperAccountId   String
+  sessionId        String?
+  symbol           String
+  side             String
+  quantity         Float
+  avgEntryPrice    Float
+  currentPrice     Float
+  unrealizedPnL    Float        @default(0.0)
+  realizedPnL      Float        @default(0.0)
+  totalCost        Float
+  marketValue      Float
   stopLoss         Float?
   takeProfit       Float?
   maxPositionValue Float?
-
-  // Lifecycle
-  openedAt DateTime  @default(now())
-  closedAt DateTime?
-  isOpen   Boolean   @default(true)
-
-  // Strategy context
-  strategy    String?
-  entryReason String? // Why position was opened
-  exitReason  String? // Why position was closed
-
-  // Performance attribution
-  holdingPeriod Int? // Minutes held
-  maxGain       Float @default(0.0)
-  maxLoss       Float @default(0.0)
-
-  // Relations
-  paperAccount  PaperAccount @relation(fields: [paperAccountId], references: [id], onDelete: Cascade)
-  relatedTrades PaperTrade[]
-  relatedOrders PaperOrder[]
+  openedAt         DateTime     @default(now())
+  closedAt         DateTime?
+  isOpen           Boolean      @default(true)
+  strategy         String?
+  entryReason      String?
+  exitReason       String?
+  holdingPeriod    Int?
+  maxGain          Float        @default(0.0)
+  maxLoss          Float        @default(0.0)
+  relatedOrders    PaperOrder[]
+  paperAccount     PaperAccount @relation(fields: [paperAccountId], references: [id], onDelete: Cascade)
+  relatedTrades    PaperTrade[]
 
   @@index([paperAccountId])
   @@index([symbol])
@@ -489,43 +351,29 @@ model PaperPosition {
 }
 
 model PaperOrder {
-  id             String  @id @default(cuid())
-  paperAccountId String
-  positionId     String?
-
-  // Order identification
-  platformOrderId String? // ID from trading platform (Alpaca, etc.)
-  clientOrderId   String? // Client-generated ID
-
-  // Order details
-  symbol    String
-  side      String // "buy", "sell"
-  orderType String // "market", "limit", "stop", "stop_limit"
-  quantity  Float
-
-  // Pricing
-  limitPrice     Float?
-  stopPrice      Float?
-  filledPrice    Float?
-  filledQuantity Float  @default(0.0)
-
-  // Order lifecycle
-  status      String @default("pending") // "pending", "filled", "partially_filled", "cancelled", "rejected"
-  timeInForce String @default("day") // "day", "gtc", "ioc", "fok"
-
-  // Timestamps
-  submittedAt DateTime  @default(now())
-  filledAt    DateTime?
-  cancelledAt DateTime?
-
-  // Strategy context
-  strategy    String?
-  orderReason String? // Entry, exit, stop loss, take profit
-
-  // Relations
-  paperAccount PaperAccount   @relation(fields: [paperAccountId], references: [id], onDelete: Cascade)
-  position     PaperPosition? @relation(fields: [positionId], references: [id])
-  trades       PaperTrade[]
+  id              String         @id @default(cuid())
+  paperAccountId  String
+  positionId      String?
+  platformOrderId String?
+  clientOrderId   String?
+  symbol          String
+  side            String
+  orderType       String
+  quantity        Float
+  limitPrice      Float?
+  stopPrice       Float?
+  filledPrice     Float?
+  filledQuantity  Float          @default(0.0)
+  status          String         @default("pending")
+  timeInForce     String         @default("day")
+  submittedAt     DateTime       @default(now())
+  filledAt        DateTime?
+  cancelledAt     DateTime?
+  strategy        String?
+  orderReason     String?
+  paperAccount    PaperAccount   @relation(fields: [paperAccountId], references: [id], onDelete: Cascade)
+  position        PaperPosition? @relation(fields: [positionId], references: [id])
+  trades          PaperTrade[]
 
   @@index([paperAccountId])
   @@index([symbol])
@@ -534,48 +382,32 @@ model PaperOrder {
 }
 
 model PaperTrade {
-  id         String  @id @default(cuid())
-  sessionId  String
-  positionId String?
-  orderId    String?
-
-  // Trade details
-  symbol   String
-  side     String // "buy", "sell"
-  quantity Float
-  price    Float
-  value    Float // Total trade value
-
-  // Costs and fees
-  commission Float @default(0.0)
-  fees       Float @default(0.0)
-  netValue   Float // Value after fees
-
-  // P&L (only for closing trades)
-  pnl        Float?
-  pnlPercent Float?
-
-  // Trade classification
-  isEntry   Boolean // true for opening, false for closing
-  tradeType String // "market", "limit", "stop", "stop_limit"
-
-  // Strategy context
-  strategy     String?
-  signalSource String? // "manual", "ai", "pine_script", "webhook"
-  confidence   Float? // AI confidence or signal strength
-
-  // Market context
-  marketCondition String? // Market state when trade executed
-  volatility      Float? // Market volatility at time of trade
-  volume          Float? // Trading volume context
-
-  // Timestamps
-  executedAt DateTime @default(now())
-
-  // Relations
-  session  PaperTradingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  position PaperPosition?      @relation(fields: [positionId], references: [id])
-  order    PaperOrder?         @relation(fields: [orderId], references: [id])
+  id              String              @id @default(cuid())
+  sessionId       String
+  positionId      String?
+  orderId         String?
+  symbol          String
+  side            String
+  quantity        Float
+  price           Float
+  value           Float
+  commission      Float               @default(0.0)
+  fees            Float               @default(0.0)
+  netValue        Float
+  pnl             Float?
+  pnlPercent      Float?
+  isEntry         Boolean
+  tradeType       String
+  strategy        String?
+  signalSource    String?
+  confidence      Float?
+  marketCondition String?
+  volatility      Float?
+  volume          Float?
+  executedAt      DateTime            @default(now())
+  order           PaperOrder?         @relation(fields: [orderId], references: [id])
+  position        PaperPosition?      @relation(fields: [positionId], references: [id])
+  session         PaperTradingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
   @@index([symbol])
@@ -583,251 +415,172 @@ model PaperTrade {
   @@index([isEntry])
 }
 
-// Paper Trading Performance Analytics
 model PaperPerformanceSnapshot {
-  id             String @id @default(cuid())
-  paperAccountId String
-
-  // Snapshot timing
-  snapshotDate DateTime @default(now())
-  period       String // "daily", "weekly", "monthly"
-
-  // Account metrics
-  accountBalance Float
-  equity         Float
-  totalPnL       Float
-  dailyPnL       Float
-
-  // Trading metrics
-  tradesCount   Int
-  winningTrades Int
-  winRate       Float
-  avgWin        Float
-  avgLoss       Float
-  profitFactor  Float?
-
-  // Risk metrics
+  id              String   @id @default(cuid())
+  paperAccountId  String
+  snapshotDate    DateTime @default(now())
+  period          String
+  accountBalance  Float
+  equity          Float
+  totalPnL        Float
+  dailyPnL        Float
+  tradesCount     Int
+  winningTrades   Int
+  winRate         Float
+  avgWin          Float
+  avgLoss         Float
+  profitFactor    Float?
   maxDrawdown     Float
   currentDrawdown Float
   sharpeRatio     Float?
   sortinoRatio    Float?
   volatility      Float?
-
-  // Position metrics
-  openPositions Int
-  totalExposure Float
-  longExposure  Float
-  shortExposure Float
-
-  // Market context
+  openPositions   Int
+  totalExposure   Float
+  longExposure    Float
+  shortExposure   Float
   marketCondition String?
-  benchmarkReturn Float? // SPY or relevant benchmark
-  correlation     Float? // Correlation to benchmark
+  benchmarkReturn Float?
+  correlation     Float?
 
   @@index([paperAccountId])
   @@index([snapshotDate])
   @@index([period])
 }
 
-// Sentiment Analysis Models
 model SentimentData {
-  id              String   @id @default(cuid())
-  symbol          String   // BTC, ETH, etc.
-  source          String   // twitter, reddit, news, etc.
-  score           Float    // -1.0 (bearish) to +1.0 (bullish)
-  confidence      Float    // 0.0 to 1.0
-  tweetCount      Int?     // Number of tweets analyzed
-  positiveCount   Int?     // Number of positive mentions
-  negativeCount   Int?     // Number of negative mentions
-  neutralCount    Int?     // Number of neutral mentions
-  
-  // Raw data for analysis
-  keywords        String?  // JSON array of keywords found
-  rawData         String?  // Original tweets/content for debugging
-  
-  // Metadata
-  timestamp       DateTime @default(now())
-  processingTime  Int?     // MS taken to process
-  
+  id             String   @id @default(cuid())
+  symbol         String
+  source         String
+  score          Float
+  confidence     Float
+  tweetCount     Int?
+  positiveCount  Int?
+  negativeCount  Int?
+  neutralCount   Int?
+  keywords       String?
+  rawData        String?
+  timestamp      DateTime @default(now())
+  processingTime Int?
+
   @@index([symbol, timestamp])
   @@index([source, timestamp])
   @@index([score, confidence])
 }
 
 model EnhancedTradingSignal {
-  id                 String   @id @default(cuid())
-  symbol             String
-  strategy           String   // RSI, Bollinger, etc.
-  
-  // Technical signal data
-  technicalScore     Float    // Original strategy confidence
-  technicalAction    String   // BUY, SELL, HOLD
-  
-  // Sentiment validation
-  sentimentScore     Float?   // Sentiment score at time of signal
-  sentimentConfidence Float?  // Confidence in sentiment
-  sentimentConflict  Boolean  @default(false) // True if sentiment conflicts with technical
-  
-  // Combined signal
-  combinedConfidence Float    // Final confidence after sentiment adjustment
-  finalAction        String   // Final recommended action
-  confidenceBoost    Float?   // How much sentiment boosted/reduced confidence
-  
-  // Execution tracking
-  wasExecuted        Boolean  @default(false)
-  executeReason      String?  // Why it was/wasn't executed
-  
-  // Link to actual trade if executed
-  tradeId            String?  // Link to PaperTrade
-  
-  // Timestamps
-  signalTime         DateTime @default(now())
-  executionTime      DateTime?
-  
+  id                  String    @id @default(cuid())
+  symbol              String
+  strategy            String
+  technicalScore      Float
+  technicalAction     String
+  sentimentScore      Float?
+  sentimentConfidence Float?
+  sentimentConflict   Boolean   @default(false)
+  combinedConfidence  Float
+  finalAction         String
+  confidenceBoost     Float?
+  wasExecuted         Boolean   @default(false)
+  executeReason       String?
+  tradeId             String?
+  signalTime          DateTime  @default(now())
+  executionTime       DateTime?
+
   @@index([symbol, signalTime])
   @@index([strategy, signalTime])
   @@index([wasExecuted])
 }
 
-// Mathematical Intuition Analysis Storage
 model IntuitionAnalysis {
-  id             String   @id @default(cuid())
-  
-  // Signal identification
-  symbol         String   // "BTC", "ETH", etc.
-  strategy       String   // Strategy name
-  signalType     String   // "BUY", "SELL", "CLOSE"
-  
-  // Original signal data
-  originalConfidence Float
-  signalPrice        Float
-  
-  // Mathematical Intuition metrics
-  flowFieldResonance    Float // 0.0 to 1.0 - probability current alignment
-  patternResonance      Float // 0.0 to 1.0 - pattern matching confidence
-  temporalIntuition     Float // 0.0 to 1.0 - time-based flow sensing
-  overallIntuition      Float // 0.0 to 1.0 - combined intuition score
-  
-  // Traditional Calculation metrics
-  expectancyScore       Float // 0.0 to 1.0 - traditional expectancy calculation
-  winRateProjection     Float // Projected win rate based on history
-  riskRewardRatio       Float // Traditional risk/reward analysis
-  
-  // Comparison and Recommendation
-  recommendation        String // "intuition" or "calculation"
-  performanceGap        Float  // Difference between approaches
-  confidenceGap         Float  // Final confidence difference
-  
-  // Flow Field Analysis Details (JSON)
-  flowFieldData         String? // JSON with detailed flow analysis
-  patternData           String? // JSON with pattern matching details
-  temporalData          String? // JSON with temporal analysis
-  
-  // Outcome tracking (filled after trade closes)
-  actualOutcome         String? // "WIN", "LOSS", "PENDING"
-  actualPnL             Float?  // Actual profit/loss
-  intuitionAccuracy     Boolean? // Was intuition right?
-  calculationAccuracy   Boolean? // Was calculation right?
-  outperformed          String?  // Which method performed better: "intuition" or "calculation"
-  
-  // Performance Learning
-  marketConditions      String? // JSON with market state during analysis
-  learningWeight        Float   @default(1.0) // Weight for machine learning
-  
-  // Timestamps
-  analysisTime          DateTime @default(now())
-  outcomeTime           DateTime? // When outcome was determined
-  
+  id                  String    @id @default(cuid())
+  symbol              String
+  strategy            String
+  signalType          String
+  originalConfidence  Float
+  signalPrice         Float
+  flowFieldResonance  Float
+  patternResonance    Float
+  temporalIntuition   Float
+  overallIntuition    Float
+  expectancyScore     Float
+  winRateProjection   Float
+  riskRewardRatio     Float
+  recommendation      String
+  performanceGap      Float
+  confidenceGap       Float
+  flowFieldData       String?
+  patternData         String?
+  temporalData        String?
+  actualOutcome       String?
+  actualPnL           Float?
+  intuitionAccuracy   Boolean?
+  calculationAccuracy Boolean?
+  outperformed        String?
+  marketConditions    String?
+  learningWeight      Float     @default(1.0)
+  analysisTime        DateTime  @default(now())
+  outcomeTime         DateTime?
+
   @@index([symbol, analysisTime])
   @@index([strategy, analysisTime])
   @@index([recommendation])
   @@index([actualOutcome])
 }
 
-// Intuition vs Calculation Performance Tracking
 model IntuitionPerformance {
-  id                    String   @id @default(cuid())
-  
-  // Performance period
-  timeframe             String   // "1h", "24h", "7d", "30d"
-  periodStart           DateTime
-  periodEnd             DateTime
-  
-  // Overall statistics
-  totalAnalyses         Int
-  intuitionRecommended  Int
-  calculationRecommended Int
-  
-  // Accuracy metrics
-  intuitionCorrect      Int
-  calculationCorrect    Int
-  intuitionAccuracy     Float // Percentage
-  calculationAccuracy   Float // Percentage
-  
-  // Performance metrics
-  intuitionAvgPnL       Float
-  calculationAvgPnL     Float
-  intuitionTotalPnL     Float
-  calculationTotalPnL   Float
-  performanceAdvantage  Float // Which is performing better
-  
-  // Confidence analysis
+  id                        String   @id @default(cuid())
+  timeframe                 String
+  periodStart               DateTime
+  periodEnd                 DateTime
+  totalAnalyses             Int
+  intuitionRecommended      Int
+  calculationRecommended    Int
+  intuitionCorrect          Int
+  calculationCorrect        Int
+  intuitionAccuracy         Float
+  calculationAccuracy       Float
+  intuitionAvgPnL           Float
+  calculationAvgPnL         Float
+  intuitionTotalPnL         Float
+  calculationTotalPnL       Float
+  performanceAdvantage      Float
   avgIntuitionConfidence    Float
   avgCalculationConfidence  Float
-  confidenceCorrelation     Float // How well confidence predicts success
-  
-  // Market condition analysis
-  strongTrendingPerformance   Float // Performance in strong trending markets
-  rangingMarketPerformance    Float // Performance in ranging markets
-  volatileMarketPerformance   Float // Performance in volatile markets
-  
-  // Learning evolution
-  improvementRate           Float // How quickly intuition is improving
-  convergenceRate           Float // How quickly both methods are converging
-  optimalBlendRatio         Float // Optimal ratio of intuition vs calculation
-  
-  // Timestamps
+  confidenceCorrelation     Float
+  strongTrendingPerformance Float
+  rangingMarketPerformance  Float
+  volatileMarketPerformance Float
+  improvementRate           Float
+  convergenceRate           Float
+  optimalBlendRatio         Float
   calculatedAt              DateTime @default(now())
-  
+
   @@index([timeframe, periodStart])
   @@index([calculatedAt])
 }
 
-// Position Management System Models
 model ManagedPosition {
-  id       String @id @default(cuid())
-  strategy String
-  symbol   String
-  side     String // 'long' or 'short'
-
-  // Entry details
-  entryPrice   Float
-  quantity     Float
-  entryTradeId String
-  entryTime    DateTime
-
-  // Exit details (when closed)
-  exitPrice   Float?
-  exitTradeId String?
-  exitTime    DateTime?
-
-  // Status and P&L
-  status        String @default("open") // 'open', 'closed', 'partial'
+  id            String        @id @default(cuid())
+  strategy      String
+  symbol        String
+  side          String
+  entryPrice    Float
+  quantity      Float
+  entryTradeId  String
+  entryTime     DateTime
+  exitPrice     Float?
+  exitTradeId   String?
+  exitTime      DateTime?
+  status        String        @default("open")
   realizedPnL   Float?
   unrealizedPnL Float?
-
-  // Risk management
-  stopLoss     Float?
-  takeProfit   Float?
-  maxHoldTime  Int? // milliseconds
-
-  // Metadata
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  entryTrade ManagedTrade? @relation("EntryTrade", fields: [entryTradeId], references: [id])
-  exitTrade  ManagedTrade? @relation("ExitTrade", fields: [exitTradeId], references: [id])
+  stopLoss      Float?
+  takeProfit    Float?
+  maxHoldTime   Int?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  entryTrade    ManagedTrade  @relation("EntryTrade", fields: [entryTradeId], references: [id])
+  exitTrade     ManagedTrade? @relation("ExitTrade", fields: [exitTradeId], references: [id])
 
   @@index([strategy, symbol])
   @@index([status])
@@ -836,21 +589,19 @@ model ManagedPosition {
 }
 
 model ManagedTrade {
-  id         String @id @default(cuid())
-  positionId String  // Reference to position but no FK constraint to avoid circular dependency
-  side       String // 'buy' or 'sell'
-  symbol     String
-  quantity   Float
-  price      Float
-  value      Float
-  strategy   String
-  executedAt DateTime
-  pnl        Float?
-  isEntry    Boolean
-
-  // Relations (no direct FK to position to avoid circular dependency)
-  entryPositions     ManagedPosition[] @relation("EntryTrade")
-  exitPositions      ManagedPosition[] @relation("ExitTrade")
+  id             String            @id @default(cuid())
+  positionId     String
+  side           String
+  symbol         String
+  quantity       Float
+  price          Float
+  value          Float
+  strategy       String
+  executedAt     DateTime
+  pnl            Float?
+  isEntry        Boolean
+  entryPositions ManagedPosition[] @relation("EntryTrade")
+  exitPositions  ManagedPosition[] @relation("ExitTrade")
 
   @@index([positionId])
   @@index([strategy, symbol])
@@ -859,25 +610,306 @@ model ManagedTrade {
 }
 
 model ExitStrategy {
-  id       String @id @default(cuid())
-  strategy String
-  symbol   String? // null means applies to all symbols for this strategy
-
-  // Profit/Loss targets
-  takeProfitPercent  Float? // 0.05 = 5%
-  stopLossPercent    Float? // 0.03 = 3%
+  id                  String   @id @default(cuid())
+  strategy            String
+  symbol              String?
+  takeProfitPercent   Float?
+  stopLossPercent     Float?
   trailingStopPercent Float?
-
-  // Time-based exits
-  maxHoldMinutes Int? // Close after X minutes
-
-  // Technical exits  
-  reverseSignalExit Boolean @default(false) // Close when opposite signal occurs
-
-  // Metadata
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  maxHoldMinutes      Int?
+  reverseSignalExit   Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@unique([strategy, symbol])
   @@index([strategy])
+}
+
+model LivePerformanceSnapshot {
+  id                  String             @id
+  sessionId           String
+  snapshotTime        DateTime           @default(now())
+  intervalType        String
+  accountBalance      Float
+  totalValue          Float
+  totalExposure       Float
+  availableMargin     Float
+  totalPnL            Float
+  dailyPnL            Float
+  unrealizedPnL       Float
+  realizedPnL         Float
+  tradesCount         Int
+  winningTrades       Int
+  losingTrades        Int
+  winRate             Float
+  currentDrawdown     Float
+  maxDrawdown         Float
+  riskExposure        Float
+  leverageRatio       Float?
+  openPositions       Int
+  longPositions       Int
+  shortPositions      Int
+  avgPositionSize     Float
+  profitFactor        Float?
+  sharpeRatio         Float?
+  sortinoRatio        Float?
+  calmarRatio         Float?
+  marketVolatility    Float?
+  correlationToMarket Float?
+  marketCondition     String?
+  executionLatency    Float?
+  apiResponseTime     Float?
+  systemUptime        Float              @default(100.0)
+  LiveTradingSession  LiveTradingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([intervalType])
+  @@index([sessionId])
+  @@index([snapshotTime])
+}
+
+model LivePosition {
+  id                 String             @id
+  sessionId          String
+  symbol             String
+  strategy           String
+  side               String
+  quantity           Float
+  entryPrice         Float
+  entryValue         Float
+  entryTime          DateTime
+  entryTradeIds      String
+  status             String             @default("open")
+  currentPrice       Float?
+  unrealizedPnL      Float              @default(0.0)
+  exitPrice          Float?
+  exitValue          Float?
+  exitTime           DateTime?
+  exitTradeIds       String?
+  realizedPnL        Float?
+  stopLossPrice      Float?
+  takeProfitPrice    Float?
+  trailingStopPrice  Float?
+  maxHoldTime        Int?
+  totalCommissions   Float              @default(0.0)
+  totalFees          Float              @default(0.0)
+  netPnL             Float?
+  positionNotes      String?
+  marketConditions   String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime
+  LiveTradingSession LiveTradingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  LiveTrade          LiveTrade[]
+
+  @@index([entryTime])
+  @@index([sessionId])
+  @@index([status])
+  @@index([strategy])
+  @@index([symbol])
+}
+
+model LiveTrade {
+  id                 String             @id
+  sessionId          String
+  positionId         String?
+  exchangeOrderId    String?
+  exchangeTradeId    String?
+  symbol             String
+  side               String
+  type               String
+  quantity           Float
+  price              Float
+  value              Float
+  commission         Float              @default(0.0)
+  fees               Float              @default(0.0)
+  netValue           Float
+  purpose            String
+  isEntry            Boolean
+  strategy           String
+  signalConfidence   Float?
+  signalSource       String?
+  preTradeRisk       String?
+  portfolioImpact    Float?
+  requestedAt        DateTime
+  submittedAt        DateTime
+  executedAt         DateTime?
+  acknowledgedAt     DateTime?
+  orderStatus        String             @default("pending")
+  fillStatus         String             @default("unfilled")
+  filledQuantity     Float              @default(0.0)
+  remainingQuantity  Float
+  marketPrice        Float?
+  spread             Float?
+  slippage           Float?
+  marketCondition    String?
+  pnl                Float?
+  pnlPercent         Float?
+  holdingPeriod      Int?
+  tradeNotes         String?
+  riskNotes          String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime
+  LivePosition       LivePosition?      @relation(fields: [positionId], references: [id], map: "LiveTrade_entryPosition_fkey")
+  LiveTradingSession LiveTradingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([exchangeOrderId])
+  @@index([executedAt])
+  @@index([isEntry])
+  @@index([orderStatus])
+  @@index([sessionId])
+  @@index([strategy])
+  @@index([symbol])
+}
+
+model LiveTradeFailure {
+  id                 String             @id
+  sessionId          String
+  symbol             String
+  side               String
+  quantity           Float
+  intendedPrice      Float?
+  strategy           String
+  failureType        String
+  errorCode          String?
+  errorMessage       String
+  exchangeResponse   String?
+  portfolioState     String?
+  riskAssessment     String?
+  signalSource       String?
+  signalConfidence   Float?
+  marketCondition    String?
+  retryAttempted     Boolean            @default(false)
+  retryCount         Int                @default(0)
+  alternativeAction  String?
+  opportunityCost    Float?
+  riskAvoided        Float?
+  wasPreventable     Boolean?
+  lessonLearned      String?
+  systemImprovement  String?
+  attemptedAt        DateTime
+  failedAt           DateTime           @default(now())
+  resolvedAt         DateTime?
+  LiveTradingSession LiveTradingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([failedAt])
+  @@index([failureType])
+  @@index([sessionId])
+  @@index([strategy])
+  @@index([symbol])
+}
+
+model LiveTradingSession {
+  id                      String                    @id
+  userId                  String
+  sessionName             String
+  strategy                String
+  exchange                String                    @default("kraken")
+  mode                    String                    @default("validate")
+  status                  String                    @default("inactive")
+  startedAt               DateTime?
+  stoppedAt               DateTime?
+  initialCapital          Float
+  currentCapital          Float
+  totalExposure           Float                     @default(0.0)
+  maxDailyLoss            Float
+  maxPositionSize         Float
+  maxTotalExposure        Float                     @default(80.0)
+  totalTrades             Int                       @default(0)
+  winningTrades           Int                       @default(0)
+  totalPnL                Float                     @default(0.0)
+  dailyPnL                Float                     @default(0.0)
+  maxDrawdown             Float                     @default(0.0)
+  averageWin              Float?
+  averageLoss             Float?
+  profitFactor            Float?
+  sharpeRatio             Float?
+  emergencyStopTriggered  Boolean                   @default(false)
+  emergencyStopReason     String?
+  emergencyStopTime       DateTime?
+  sessionNotes            String?
+  riskParameters          String?
+  tradingHours            String?
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime
+  LivePerformanceSnapshot LivePerformanceSnapshot[]
+  LivePosition            LivePosition[]
+  LiveTrade               LiveTrade[]
+  LiveTradeFailure        LiveTradeFailure[]
+  User                    User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([exchange])
+  @@index([startedAt])
+  @@index([status])
+  @@index([userId])
+}
+
+model LiveTradingSystemHealth {
+  id               String    @id
+  hostname         String
+  processId        Int
+  version          String
+  status           String
+  uptime           Int
+  lastHeartbeat    DateTime  @default(now())
+  cpuUsage         Float
+  memoryUsage      Float
+  diskUsage        Float?
+  networkLatency   Float?
+  activeSessions   Int       @default(0)
+  pendingOrders    Int       @default(0)
+  apiCallsPerMin   Int       @default(0)
+  errorRate        Float     @default(0.0)
+  krakenStatus     String    @default("unknown")
+  krakenLatency    Float?
+  dataFeedStatus   String    @default("unknown")
+  lastMarketData   DateTime?
+  totalExposure    Float     @default(0.0)
+  riskLimit        Float
+  emergencyStops   Int       @default(0)
+  activeAlerts     String?
+  warningMessages  String?
+  criticalIssues   String?
+  lastRecoveryTime DateTime?
+  recoveryCount    Int       @default(0)
+  backupStatus     String    @default("unknown")
+  reportTime       DateTime  @default(now())
+
+  @@index([hostname])
+  @@index([lastHeartbeat])
+  @@index([reportTime])
+  @@index([status])
+}
+
+model UserLiveTradingSettings {
+  id                   String    @id
+  userId               String    @unique
+  liveTradingEnabled   Boolean   @default(false)
+  maxDailyRisk         Float     @default(100.0)
+  maxPositionSize      Float     @default(5.0)
+  maxSimultaneousPos   Int       @default(3)
+  preferredExchange    String    @default("kraken")
+  exchangeApiKey       String?
+  exchangeApiSecret    String?
+  exchangePassphrase   String?
+  testMode             Boolean   @default(true)
+  riskTolerance        String    @default("conservative")
+  emergencyStopEnabled Boolean   @default(true)
+  emergencyStopLoss    Float     @default(10.0)
+  tradingHours         String?
+  weekendTrading       Boolean   @default(false)
+  holidayTrading       Boolean   @default(false)
+  enableEmailAlerts    Boolean   @default(true)
+  enableSmsAlerts      Boolean   @default(false)
+  emergencyContacts    String?
+  liveTradingStartDate DateTime?
+  totalLiveCapital     Float     @default(0.0)
+  lifetimePnL          Float     @default(0.0)
+  bestSession          Float     @default(0.0)
+  worstSession         Float     @default(0.0)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime
+  lastLiveTradeAt      DateTime?
+  User                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([liveTradingEnabled])
+  @@index([userId])
 }

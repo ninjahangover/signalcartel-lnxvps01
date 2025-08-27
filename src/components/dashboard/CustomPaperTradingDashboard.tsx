@@ -118,7 +118,28 @@ export default function CustomPaperTradingDashboard() {
     const completedTrades = trades; // All trades since we're using entry price logic
     
     // Calculate win rate based on entry prices vs current market price (since pnl is null)
-    const currentMarketPrice = 65000; // Approximate current market price
+    // Fetch real market price instead of hardcoded value
+    const [currentMarketPrice, setCurrentMarketPrice] = useState<number>(0);
+    
+    // Fetch real market price on component mount
+    useEffect(() => {
+      const fetchRealPrice = async () => {
+        try {
+          const response = await fetch('/api/real-btc-price');
+          const data = await response.json();
+          if (data.success && data.prices.BTCUSD.price > 0) {
+            setCurrentMarketPrice(data.prices.BTCUSD.price);
+          }
+        } catch (error) {
+          console.error('Failed to fetch real BTC price:', error);
+        }
+      };
+      
+      fetchRealPrice();
+      // Refresh price every 2 minutes
+      const interval = setInterval(fetchRealPrice, 120000);
+      return () => clearInterval(interval);
+    }, []);
     const winningTrades = completedTrades.filter(trade => {
       if (trade.side === 'buy') {
         return trade.price < currentMarketPrice; // Buy low, current price higher = profitable

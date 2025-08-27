@@ -229,7 +229,28 @@ export default function QuantumForgeAnalyticsHub() {
   const totalTrades = trades.length;
   
   // Calculate win rate based on entry prices vs current market price (since pnl is null)
-  const currentMarketPrice = 65000; // Approximate current BTC price
+  // Use real market price - will be fetched from real data API
+  const [currentMarketPrice, setCurrentMarketPrice] = useState<number>(0);
+  
+  // Fetch real market price on component mount
+  useEffect(() => {
+    const fetchRealPrice = async () => {
+      try {
+        const response = await fetch('/api/real-btc-price');
+        const data = await response.json();
+        if (data.success && data.prices.BTCUSD.price > 0) {
+          setCurrentMarketPrice(data.prices.BTCUSD.price);
+        }
+      } catch (error) {
+        console.error('Failed to fetch real BTC price:', error);
+      }
+    };
+    
+    fetchRealPrice();
+    // Refresh price every 2 minutes
+    const interval = setInterval(fetchRealPrice, 120000);
+    return () => clearInterval(interval);
+  }, []);
   const profitableTrades = trades.filter(trade => {
     if (trade.side === 'buy') {
       return trade.price < currentMarketPrice; // Buy low, current price higher = profitable

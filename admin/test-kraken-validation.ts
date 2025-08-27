@@ -6,6 +6,18 @@
 
 import { quantumForgeLiveExecutor } from '../src/lib/live-trading/quantum-forge-live-executor';
 
+// Get real price helper
+async function getRealPrice(symbol: string): Promise<number> {
+  const { realTimePriceFetcher } = await import('../src/lib/real-time-price-fetcher');
+  const priceData = await realTimePriceFetcher.getCurrentPrice(symbol);
+  
+  if (!priceData.success || priceData.price <= 0) {
+    throw new Error(`❌ Cannot get real price for ${symbol}: ${priceData.error || 'Invalid price'}`);
+  }
+  
+  return priceData.price;
+}
+
 async function main() {
   console.log('🔥 QUANTUM FORGE™ KRAKEN API VALIDATION TEST');
   console.log('=' .repeat(80));
@@ -22,7 +34,7 @@ async function main() {
       {
         action: 'BUY' as const,
         symbol: 'BTCUSD',
-        price: 65000,
+        price: await getRealPrice('BTCUSD'),
         confidence: 0.92, // Ultra-high confidence
         strategy: 'mathematical-intuition-multi-layer',
         aiSystemsUsed: ['mathematical-intuition-engine', 'multi-layer-ai', 'order-book-intelligence'],
@@ -32,7 +44,7 @@ async function main() {
       {
         action: 'BUY' as const,
         symbol: 'BTCUSD', 
-        price: 65000,
+        price: await getRealPrice('BTCUSD'),
         confidence: 0.88, // High confidence
         strategy: 'order-book-sentiment-fusion',
         aiSystemsUsed: ['order-book-intelligence', 'universal-sentiment-enhancer'],
@@ -42,7 +54,7 @@ async function main() {
       {
         action: 'BUY' as const,
         symbol: 'BTCUSD',
-        price: 65000,
+        price: await getRealPrice('BTCUSD'),
         confidence: 0.82, // Good confidence
         strategy: 'markov-chain-prediction',
         aiSystemsUsed: ['markov-chain-predictor', 'multi-layer-ai'],
@@ -52,7 +64,7 @@ async function main() {
       {
         action: 'SELL' as const,
         symbol: 'BTCUSD',
-        price: 65000,
+        price: await getRealPrice('BTCUSD'),
         confidence: 0.85, // High confidence short
         strategy: 'sentiment-orderbook-divergence',
         aiSystemsUsed: ['order-book-intelligence', 'universal-sentiment-enhancer'],
@@ -62,7 +74,7 @@ async function main() {
       {
         action: 'BUY' as const,
         symbol: 'BTCUSD',
-        price: 65000,
+        price: await getRealPrice('BTCUSD'),
         confidence: 0.78, // Below live threshold
         strategy: 'basic-gpu-rsi',
         aiSystemsUsed: ['gpu-strategy'],

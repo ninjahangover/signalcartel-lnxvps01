@@ -53,15 +53,21 @@ export async function GET(request: NextRequest) {
     let totalInvested = 0;
     let totalCurrentValue = 0;
     
-    const currentPrices: { [symbol: string]: number } = {
-      'BTCUSD': 65000,
-      'ETHUSD': 2500,
-      'SOLUSD': 150,
-      'ADAUSD': 0.50,
-      'LINKUSD': 15,
-      'DOTUSD': 8,
-      'AVAXUSD': 35,
-      'MATICUSD': 0.80
+    // Get real current prices from API
+    const { realTimePriceFetcher } = await import('@/lib/real-time-price-fetcher');
+    const symbols = ['BTCUSD', 'ETHUSD', 'SOLUSD', 'ADAUSD', 'LINKUSD', 'DOTUSD', 'AVAXUSD', 'MATICUSD'];
+    const currentPrices: { [symbol: string]: number } = {};
+    
+    await Promise.all(symbols.map(async (symbol) => {
+      try {
+        const priceData = await realTimePriceFetcher.getCurrentPrice(symbol);
+        if (priceData.success && priceData.price > 0) {
+          currentPrices[symbol] = priceData.price;
+        }
+      } catch (error) {
+        console.error(`Error fetching price for ${symbol}:`, error);
+      }
+    }));
     };
 
     for (const trade of allTrades) {

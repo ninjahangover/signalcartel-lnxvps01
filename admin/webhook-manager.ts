@@ -6,6 +6,18 @@
 
 import { WebhookDestination } from '../src/lib/webhooks/webhook-service';
 
+// Get real price helper
+async function getRealPrice(symbol: string): Promise<number> {
+  const { realTimePriceFetcher } = await import('../src/lib/real-time-price-fetcher');
+  const priceData = await realTimePriceFetcher.getCurrentPrice(symbol);
+  
+  if (!priceData.success || priceData.price <= 0) {
+    throw new Error(`❌ Cannot get real price for ${symbol}: ${priceData.error || 'Invalid price'}`);
+  }
+  
+  return priceData.price;
+}
+
 interface WebhookServiceHealth {
   status: string;
   uptime: number;
@@ -249,7 +261,7 @@ class WebhookServiceManager {
       data: {
         action: 'BUY',
         symbol: 'BTCUSD',
-        price: 65000,
+        price: await getRealPrice('BTCUSD'),
         message: 'This is a test webhook from the manager CLI'
       },
       metadata: {

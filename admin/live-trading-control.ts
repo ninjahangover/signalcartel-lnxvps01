@@ -6,6 +6,18 @@
 
 import { quantumForgeLiveExecutor } from '../src/lib/live-trading/quantum-forge-live-executor';
 
+// Get real price helper
+async function getRealPrice(symbol: string): Promise<number> {
+  const { realTimePriceFetcher } = await import('../src/lib/real-time-price-fetcher');
+  const priceData = await realTimePriceFetcher.getCurrentPrice(symbol);
+  
+  if (!priceData.success || priceData.price <= 0) {
+    throw new Error(`❌ Cannot get real price for ${symbol}: ${priceData.error || 'Invalid price'}`);
+  }
+  
+  return priceData.price;
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const command = args[0];
@@ -53,7 +65,7 @@ async function main() {
         const testSignal = {
           action: 'BUY' as const,
           symbol: 'BTCUSD',
-          price: 65000,
+          price: await getRealPrice('BTCUSD'),
           confidence: 0.85,
           strategy: 'test-integration',
           aiSystemsUsed: ['mathematical-intuition-engine', 'multi-layer-ai'],

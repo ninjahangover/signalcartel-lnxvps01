@@ -9,6 +9,18 @@ import { positionService } from './src/lib/position-management/position-service'
 
 const prisma = new PrismaClient();
 
+// Get real price helper
+async function getRealPrice(symbol: string): Promise<number> {
+  const { realTimePriceFetcher } = await import('./src/lib/real-time-price-fetcher');
+  const priceData = await realTimePriceFetcher.getCurrentPrice(symbol);
+  
+  if (!priceData.success || priceData.price <= 0) {
+    throw new Error(`❌ Cannot get real price for ${symbol}: ${priceData.error || 'Invalid price'}`);
+  }
+  
+  return priceData.price;
+}
+
 async function testPositionTracking() {
   console.log('🧪 TESTING QUANTUM FORGE™ POSITION MANAGEMENT');
   console.log('=' .repeat(80));
@@ -19,7 +31,7 @@ async function testPositionTracking() {
     const buySignal = {
       action: 'BUY' as const,
       symbol: 'BTCUSD',
-      price: 65000,
+      price: await getRealPrice('BTCUSD'),
       confidence: 0.75,
       quantity: 0.001,
       strategy: 'test-strategy',
