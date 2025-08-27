@@ -230,7 +230,319 @@ class AutomatedDataSyncService {
         }
       }
 
-      // 4. Update sync timestamp
+      // 4. Sync recent market data
+      console.log('   Syncing market data...');
+      const recentMarketData = await prisma.marketData.findMany({
+        where: {
+          timestamp: { gte: lastSync }
+        },
+        take: 500, // Limit for performance
+        select: {
+          id: true,
+          symbol: true,
+          timeframe: true,
+          timestamp: true,
+          open: true,
+          high: true,
+          low: true,
+          close: true,
+          volume: true,
+          rsi: true,
+          macd: true,
+          macdSignal: true,
+          ema20: true,
+          ema50: true,
+          sma20: true,
+          sma50: true,
+          bollinger_upper: true,
+          bollinger_lower: true,
+          atr: true,
+          volatility: true,
+          momentum: true,
+          volumeProfile: true
+        }
+      });
+
+      for (const marketData of recentMarketData) {
+        try {
+          await this.analyticsDb.$executeRaw`
+            INSERT INTO consolidated_market_data (
+              instance_id,
+              original_data_id,
+              symbol,
+              timeframe,
+              timestamp,
+              open_price,
+              high_price,
+              low_price,
+              close_price,
+              volume,
+              rsi,
+              macd,
+              macd_signal,
+              ema_20,
+              ema_50,
+              sma_20,
+              sma_50,
+              bollinger_upper,
+              bollinger_lower,
+              atr,
+              volatility,
+              momentum,
+              volume_profile,
+              data_hash,
+              last_updated
+            ) VALUES (
+              ${this.instanceId},
+              ${marketData.id},
+              ${marketData.symbol},
+              ${marketData.timeframe},
+              ${marketData.timestamp},
+              ${marketData.open},
+              ${marketData.high},
+              ${marketData.low},
+              ${marketData.close},
+              ${marketData.volume},
+              ${marketData.rsi},
+              ${marketData.macd},
+              ${marketData.macdSignal},
+              ${marketData.ema20},
+              ${marketData.ema50},
+              ${marketData.sma20},
+              ${marketData.sma50},
+              ${marketData.bollinger_upper},
+              ${marketData.bollinger_lower},
+              ${marketData.atr},
+              ${marketData.volatility},
+              ${marketData.momentum},
+              ${marketData.volumeProfile},
+              ${marketData.id.toString() + marketData.symbol + marketData.timeframe},
+              NOW()
+            )
+            ON CONFLICT (instance_id, original_data_id)
+            DO UPDATE SET 
+              close_price = EXCLUDED.close_price,
+              high_price = EXCLUDED.high_price,
+              low_price = EXCLUDED.low_price,
+              volume = EXCLUDED.volume,
+              rsi = EXCLUDED.rsi,
+              macd = EXCLUDED.macd,
+              last_updated = NOW()
+          `;
+          stats.positionsSynced++; // Reuse this counter for market data
+        } catch (error: any) {
+          stats.errors++;
+          if (!error.message.includes('duplicate key') && !error.message.includes('does not exist')) {
+            console.log(`⚠️ Market data sync error for ${marketData.symbol}:`, error.message.split('\n')[0]);
+          }
+        }
+      }
+
+      // 5. Sync trading signals
+      console.log('   Syncing trading signals...');
+      const recentSignals = await prisma.tradingSignal.findMany({
+        where: {
+          createdAt: { gte: lastSync }
+        },
+        take: 200,
+        select: {
+          id: true,
+          symbol: true,
+          strategy: true,
+          signalType: true,
+          currentPrice: true,
+          targetPrice: true,
+          stopLoss: true,
+          confidence: true,
+          timeframe: true,
+          indicators: true,
+          marketRegime: true,
+          executed: true,
+          outcome: true,
+          pnl: true,
+          createdAt: true
+        }
+      });
+
+      for (const signal of recentSignals) {
+        try {
+          await this.analyticsDb.$executeRaw`
+            INSERT INTO consolidated_trading_signals (
+              instance_id,
+              original_signal_id,
+              symbol,
+              strategy_name,
+              signal_type,
+              current_price,
+              target_price,
+              stop_loss,
+              confidence,
+              timeframe,
+              indicators,
+              market_regime,
+              was_executed,
+              outcome,
+              pnl,
+              signal_time,
+              data_hash,
+              last_updated
+            ) VALUES (
+              ${this.instanceId},
+              ${signal.id},
+              ${signal.symbol},
+              ${signal.strategy},
+              ${signal.signalType},
+              ${signal.currentPrice},
+              ${signal.targetPrice},
+              ${signal.stopLoss},
+              ${signal.confidence},
+              ${signal.timeframe},
+              ${signal.indicators},
+              ${signal.marketRegime},
+              ${signal.executed},
+              ${signal.outcome},
+              ${signal.pnl},
+              ${signal.createdAt},
+              ${signal.id.toString() + signal.symbol + signal.strategy},
+              NOW()
+            )
+            ON CONFLICT (instance_id, original_signal_id)
+            DO UPDATE SET 
+              was_executed = EXCLUDED.was_executed,
+              outcome = EXCLUDED.outcome,
+              pnl = EXCLUDED.pnl,
+              last_updated = NOW()
+          `;
+          stats.tradesSynced++; // Reuse this counter for signals
+        } catch (error: any) {
+          stats.errors++;
+          if (!error.message.includes('duplicate key') && !error.message.includes('does not exist')) {
+            console.log(`⚠️ Signal sync error for ${signal.symbol}:`, error.message.split('\n')[0]);
+          }
+        }
+      }
+
+      // 6. Sync sentiment data from IntuitionAnalysis (the actual active sentiment system)
+      console.log('   Syncing sentiment data from IntuitionAnalysis...');
+      const recentIntuitionData = await prisma.intuitionAnalysis.findMany({
+        where: {
+          analysisTime: { gte: lastSync }
+        },
+        take: 100,
+        select: {
+          id: true,
+          symbol: true,
+          strategy: true,
+          signalType: true,
+          originalConfidence: true,
+          overallIntuition: true,
+          expectancyScore: true,
+          recommendation: true,
+          marketConditions: true,
+          analysisTime: true
+        }
+      });
+
+      for (const intuitionData of recentIntuitionData) {
+        try {
+          await this.analyticsDb.$executeRaw`
+            INSERT INTO consolidated_sentiment (
+              instance_id,
+              symbol,
+              source,
+              sentiment_score,
+              confidence,
+              raw_data,
+              collected_at,
+              data_hash
+            ) VALUES (
+              ${this.instanceId},
+              ${intuitionData.symbol},
+              ${'mathematical-intuition'},
+              ${intuitionData.overallIntuition},
+              ${intuitionData.originalConfidence},
+              ${JSON.stringify({
+                strategy: intuitionData.strategy,
+                signalType: intuitionData.signalType,
+                expectancyScore: intuitionData.expectancyScore,
+                recommendation: intuitionData.recommendation,
+                marketConditions: intuitionData.marketConditions
+              })},
+              ${intuitionData.analysisTime},
+              ${intuitionData.id.toString() + intuitionData.symbol}
+            )
+            ON CONFLICT (instance_id, data_hash)
+            DO UPDATE SET 
+              sentiment_score = EXCLUDED.sentiment_score,
+              confidence = EXCLUDED.confidence,
+              raw_data = EXCLUDED.raw_data
+          `;
+          stats.tradesSynced++; // Reuse counter for sentiment
+        } catch (error: any) {
+          stats.errors++;
+          console.log(`⚠️ Sentiment sync error for ${intuitionData.symbol}:`, error.message.split('\n')[0]);
+        }
+      }
+
+      // 7. Sync data collection metadata
+      console.log('   Syncing data collection metadata...');
+      const dataCollectionRecords = await prisma.marketDataCollection.findMany({
+        where: {
+          updatedAt: { gte: lastSync }
+        },
+        take: 50
+      });
+
+      for (const collectionData of dataCollectionRecords) {
+        try {
+          await this.analyticsDb.$executeRaw`
+            INSERT INTO consolidated_data_collection (
+              instance_id,
+              original_collection_id,
+              symbol,
+              status,
+              enabled,
+              data_points,
+              completeness,
+              oldest_data,
+              newest_data,
+              last_collected,
+              success_rate,
+              error_count,
+              data_hash
+            ) VALUES (
+              ${this.instanceId},
+              ${collectionData.id},
+              ${collectionData.symbol},
+              ${collectionData.status},
+              ${collectionData.enabled},
+              ${collectionData.dataPoints || 0},
+              ${collectionData.completeness || 0.0},
+              ${collectionData.oldestData},
+              ${collectionData.newestData},
+              ${collectionData.lastCollected},
+              ${collectionData.successRate || 100.0},
+              ${collectionData.errorCount || 0},
+              ${collectionData.id.toString() + collectionData.symbol}
+            )
+            ON CONFLICT (instance_id, original_collection_id)
+            DO UPDATE SET 
+              data_points = EXCLUDED.data_points,
+              completeness = EXCLUDED.completeness,
+              newest_data = EXCLUDED.newest_data,
+              last_collected = EXCLUDED.last_collected,
+              success_rate = EXCLUDED.success_rate,
+              error_count = EXCLUDED.error_count,
+              last_updated = NOW()
+          `;
+          stats.positionsSynced++; // Reuse counter for collection data
+        } catch (error: any) {
+          stats.errors++;
+          console.log(`⚠️ Collection sync error for ${collectionData.symbol}:`, error.message.split('\n')[0]);
+        }
+      }
+
+      // 8. Update sync timestamp
       await this.updateSyncTimestamp();
 
       const syncTime = Date.now() - syncStart;

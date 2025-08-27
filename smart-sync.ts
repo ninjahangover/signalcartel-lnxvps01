@@ -1,17 +1,18 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env tsx
 
 /**
  * Smart Sync - Essential data for AI services
  * Handles schema issues by focusing on core data needed for cross-site AI
  */
 
-import { prisma } from './src/lib/prisma.js';
 import { PrismaClient } from '@prisma/client';
 
+const prisma = new PrismaClient({
+  datasources: { db: { url: process.env.DATABASE_URL } }
+});
+
 const analyticsDb = new PrismaClient({
-  datasources: {
-    db: { url: process.env.ANALYTICS_DB_URL }
-  }
+  datasources: { db: { url: process.env.ANALYTICS_DB_URL } }
 });
 
 const instanceId = process.env.INSTANCE_ID || 'site-primary-main';
@@ -81,7 +82,7 @@ async function smartSync() {
         positionsSynced++;
       } catch (error: any) {
         if (!error.message.includes('duplicate key')) {
-          console.log(`  ⚠️ Position ${position.id}: ${error.message.split('\n')[0]}`);
+          console.log(`  ⚠️ Position ${position.id}: ${error.message.split('\\n')[0]}`);
         }
       }
     }
@@ -144,13 +145,56 @@ async function smartSync() {
         tradesSynced++;
       } catch (error: any) {
         if (!error.message.includes('duplicate key')) {
-          console.log(`  ⚠️ Trade ${trade.id}: ${error.message.split('\n')[0]}`);
+          console.log(`  ⚠️ Trade ${trade.id}: ${error.message.split('\\n')[0]}`);
         }
       }
     }
     console.log(`  ✅ Synced ${tradesSynced}/${trades.length} trades`);
 
-    // 3. Skip market data sync - not supported in analytics database
+    // 3. Sync essential sentiment data (IntuitionAnalysis)
+    console.log('🎯 Syncing essential sentiment data...');
+    const recentIntuition = await prisma.intuitionAnalysis.findMany({
+      where: {
+        analysisTime: { gte: new Date(Date.now() - 60 * 60 * 1000) } // Last hour
+      },
+      take: 100,
+      orderBy: { analysisTime: 'desc' },
+      select: {
+        id: true,
+        symbol: true,
+        overallIntuition: true,    // AI needs: sentiment score
+        originalConfidence: true,   // AI needs: confidence level
+        analysisTime: true         // AI needs: when
+      }
+    });
+    
+    console.log(`📊 Found ${recentIntuition.length} sentiment records`);
+    
+    let sentimentSynced = 0;
+    for (const data of recentIntuition) {
+      try {
+        // Simple insert with only essential fields
+        await analyticsDb.$executeRaw`
+          INSERT INTO consolidated_sentiment (
+            instance_id, symbol, source, sentiment_score, confidence, collected_at, data_hash
+          ) VALUES (
+            ${instanceId}, 
+            ${data.symbol}, 
+            ${'mathematical-intuition'}, 
+            ${Number(data.overallIntuition) || 0}, 
+            ${Number(data.originalConfidence) || 0}, 
+            ${data.analysisTime}, 
+            ${'smart-' + data.id}
+          ) ON CONFLICT (instance_id, data_hash) DO NOTHING
+        `;
+        sentimentSynced++;
+      } catch (error: any) {
+        // Skip bad records instead of failing
+        if (sentimentSynced < 5) console.log(`⚠️ Skipped bad sentiment record: ${error.message.split('\\n')[0]}`);
+      }
+    }
+
+    // 4. Skip market data sync - not supported in analytics database
     console.log('📈 Skipping market data sync (not supported in analytics database)');
     const marketDataSynced = 0;
 
@@ -158,6 +202,7 @@ async function smartSync() {
     console.log('✅ SMART SYNC COMPLETED SUCCESSFULLY');
     console.log(`   Positions: ${positionsSynced} synced`);
     console.log(`   Trades: ${tradesSynced} synced`);
+    console.log(`   Sentiment: ${sentimentSynced} synced`);
     console.log(`   Market Data: ${marketDataSynced} synced (skipped - not supported)`);
 
   } catch (error: any) {

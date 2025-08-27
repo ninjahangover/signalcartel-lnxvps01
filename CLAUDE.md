@@ -307,6 +307,117 @@ tail -f /tmp/signalcartel-enhanced-logs/enhanced-trading-*.log | grep -i 'cross-
 ./admin/manage-data-sync.sh logs     # Follow sync logs
 ```
 
+### 🔧 **Enhanced Data Sync & Monitoring Procedures** (NEW - August 27, 2025)
+```bash
+# ═══════════════════════════════════════════════════════════════════════════════════
+# 📊 TERMINAL DASHBOARD MONITORING (Primary Command)
+# ═══════════════════════════════════════════════════════════════════════════════════
+
+# Launch comprehensive terminal monitoring dashboard
+./admin/terminal-dashboard.sh
+
+# Custom refresh intervals
+./admin/terminal-dashboard.sh 5     # 5-second refresh (fast monitoring)
+./admin/terminal-dashboard.sh 10    # 10-second refresh (balanced)
+
+# Key monitoring sections:
+#   • Phase System Status (Phase 3 - Order Book Intelligence)  
+#   • Trading Statistics (entry trades, win rate, P&L)
+#   • Local Data Warehouse (market data collection status)
+#   • Cross-Site Analytics (consolidated data from all sites)
+
+# Expected consolidated data counts:
+#   • Data Collection: 2-5 (active symbol tracking configs)
+#   • Cross-site Sentiment: 100+ (IntuitionAnalysis records - MOST IMPORTANT)
+#   • Consolidated Market Data: 500+ (real-time price feeds)
+#   • Trading Signals: varies (AI-generated trading recommendations)
+
+# ═══════════════════════════════════════════════════════════════════════════════════
+# 🧠 SMART DATA SYNC PROCEDURES 
+# ═══════════════════════════════════════════════════════════════════════════════════
+
+# Problem: Schema errors preventing data sync
+# Solution: Smart sync with essential fields only
+
+# 1. SMART SYNC - Essential data for AI services
+ANALYTICS_DB_URL="postgresql://warehouse_user:quantum_forge_warehouse_2024@localhost:5433/signalcartel_analytics?schema=public" \
+DATABASE_URL="postgresql://warehouse_user:quantum_forge_warehouse_2024@localhost:5433/signalcartel?schema=public" \
+npx tsx -r dotenv/config smart-sync.ts
+
+# 2. TARGETED SENTIMENT SYNC - IntuitionAnalysis data (most important)  
+ANALYTICS_DB_URL="postgresql://warehouse_user:quantum_forge_warehouse_2024@localhost:5433/signalcartel_analytics?schema=public" \
+DATABASE_URL="postgresql://warehouse_user:quantum_forge_warehouse_2024@localhost:5433/signalcartel?schema=public" \
+npx tsx -r dotenv/config sync-intuition-signals.ts
+
+# 3. QUICK COLLECTION SYNC - Data collection metadata
+ANALYTICS_DB_URL="postgresql://warehouse_user:quantum_forge_warehouse_2024@localhost:5433/signalcartel_analytics?schema=public" \
+DATABASE_URL="postgresql://warehouse_user:quantum_forge_warehouse_2024@localhost:5433/signalcartel?schema=public" \
+npx tsx -r dotenv/config quick-sync-test.ts
+
+# 4. MANUAL DATABASE VERIFICATION
+echo "=== CONSOLIDATED DATA STATUS ==="
+docker exec signalcartel-warehouse psql -U warehouse_user -d signalcartel_analytics -c "
+SELECT 'Data Collection' as table_name, COUNT(*) as records FROM consolidated_data_collection
+UNION ALL SELECT 'Cross-site Sentiment', COUNT(*) FROM consolidated_sentiment  
+UNION ALL SELECT 'Market Data', COUNT(*) FROM consolidated_market_data
+UNION ALL SELECT 'Trading Signals', COUNT(*) FROM consolidated_trading_signals
+ORDER BY table_name;"
+
+# ═══════════════════════════════════════════════════════════════════════════════════
+# 🚨 TROUBLESHOOTING DATA SYNC ISSUES
+# ═══════════════════════════════════════════════════════════════════════════════════
+
+# ISSUE: "Data Collection: 0" or "Sentiment Records: 0"
+# CAUSE: Schema errors in automated sync service
+# SOLUTION: Use smart sync approach instead of complex schema mapping
+
+# 1. Check what data is actually available
+docker exec signalcartel-warehouse psql -U warehouse_user -d signalcartel -c "
+SELECT 'MarketDataCollection' as table_name, COUNT(*) as records FROM \"MarketDataCollection\"
+UNION ALL SELECT 'IntuitionAnalysis', COUNT(*) FROM \"IntuitionAnalysis\" 
+UNION ALL SELECT 'TradingSignal', COUNT(*) FROM \"TradingSignal\";"
+
+# 2. Run smart sync to push essential data
+npx tsx -r dotenv/config smart-sync.ts
+
+# 3. Verify sync worked  
+./admin/terminal-dashboard.sh 5
+
+# KEY INSIGHT: IntuitionAnalysis = Most Important Data
+# - Contains Mathematical Intuition Engine results
+# - 5,000+ records per hour of AI analysis  
+# - Syncs to "Cross-site Sentiment" in consolidated database
+# - More critical than traditional "Trading Signals"
+
+# ═══════════════════════════════════════════════════════════════════════════════════
+# 📈 MONITORING BEST PRACTICES
+# ═══════════════════════════════════════════════════════════════════════════════════
+
+# 1. Daily monitoring routine
+./admin/terminal-dashboard.sh 10    # Check overall system health
+
+# 2. Weekly sync verification  
+npx tsx -r dotenv/config smart-sync.ts    # Push any missing data
+
+# 3. Monthly consolidation check
+docker exec signalcartel-warehouse psql -U warehouse_user -d signalcartel_analytics -c "
+SELECT table_name, COUNT(*) as records, 
+       MAX(last_updated) as last_update
+FROM (
+  SELECT 'sentiment' as table_name, created_at as last_updated FROM consolidated_sentiment
+  UNION ALL
+  SELECT 'market_data', last_updated FROM consolidated_market_data  
+  UNION ALL
+  SELECT 'data_collection', last_updated FROM consolidated_data_collection
+) t GROUP BY table_name;"
+
+# 4. Cross-site data quality check
+# Expected growth rates:
+#   • Cross-site Sentiment: 100+ new records per sync cycle
+#   • Market Data: 200+ new records per hour  
+#   • Data Collection: 2-5 stable tracking configs
+```
+
 **🛡️ Production Safety Features:**
 - ✅ **ZERO IMPACT** on production trading systems - all operations are READ-ONLY
 - ✅ **SEPARATE DATABASE** - Creates `signalcartel_analytics` database completely separate from production

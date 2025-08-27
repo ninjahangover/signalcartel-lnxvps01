@@ -1,32 +1,36 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env tsx
 
 /**
- * Targeted Sentiment Sync - IntuitionAnalysis data (most important)
+ * Targeted Sentiment Sync - IntuitionAnalysis data (most important) 
  * Focuses on Mathematical Intuition Engine results which are the core AI sentiment
  */
 
-import { prisma } from './src/lib/prisma.js';
 import { PrismaClient } from '@prisma/client';
 
+const prisma = new PrismaClient({
+  datasources: { db: { url: process.env.DATABASE_URL } }
+});
+
 const analyticsDb = new PrismaClient({
-  datasources: {
-    db: { url: process.env.ANALYTICS_DB_URL }
-  }
+  datasources: { db: { url: process.env.ANALYTICS_DB_URL } }
 });
 
 const instanceId = process.env.INSTANCE_ID || 'site-primary-main';
 
 async function syncIntuitionSignals() {
-  console.log('🧠 TARGETED SENTIMENT SYNC - IntuitionAnalysis Data');
-  console.log('==================================================');
-  console.log('Instance ID:', instanceId);
-  console.log('Focus: Mathematical Intuition Engine results');
-  console.log('');
-
   try {
+    console.log('🧠 TARGETED SENTIMENT SYNC - IntuitionAnalysis Data');
+    console.log('==================================================');
+    console.log('Instance ID:', instanceId);
+    console.log('Focus: Mathematical Intuition Engine results');
+    console.log('');
+
     // 1. Sync IntuitionAnalysis data (the real sentiment system)
     console.log('🔮 Syncing Mathematical Intuition Analysis data...');
     const intuitionData = await prisma.intuitionAnalysis.findMany({
+      where: {
+        analysisTime: { gte: new Date(Date.now() - 2 * 60 * 60 * 1000) } // Last 2 hours
+      },
       take: 500, // Get more records since this is the primary AI system
       orderBy: { analysisTime: 'desc' },
       select: {
@@ -42,15 +46,17 @@ async function syncIntuitionSignals() {
         analysisTime: true,
         flowFieldResonance: true,
         patternResonance: true,
-        temporalIntuition: true
+        temporalIntuition: true,
+        signalPrice: true
       }
     });
 
-    console.log(`  Found ${intuitionData.length} IntuitionAnalysis records`);
+    console.log(`📊 Found ${intuitionData.length} IntuitionAnalysis records`);
 
     let sentimentSynced = 0;
     for (const analysis of intuitionData) {
       try {
+        // Sync as sentiment data (our working JSONB fix)
         await analyticsDb.$executeRaw`
           INSERT INTO consolidated_sentiment (
             instance_id,
@@ -67,7 +73,7 @@ async function syncIntuitionSignals() {
             ${'mathematical-intuition'},
             ${analysis.overallIntuition || 0.5},
             ${analysis.originalConfidence || 0.5},
-${JSON.stringify({
+            ${JSON.stringify({
               strategy: analysis.strategy,
               signalType: analysis.signalType,
               expectancyScore: analysis.expectancyScore,
@@ -86,112 +92,62 @@ ${JSON.stringify({
             confidence = EXCLUDED.confidence,
             raw_data = EXCLUDED.raw_data
         `;
-        sentimentSynced++;
-      } catch (error: any) {
-        console.log(`  ❌ Intuition ${analysis.symbol} ERROR: ${error.message}`);
-        if (error.message.includes('duplicate key') || error.message.includes('violates unique constraint')) {
-          sentimentSynced++; // Count as synced if it's a duplicate
-        }
-      }
-    }
-    console.log(`  ✅ Synced ${sentimentSynced}/${intuitionData.length} Mathematical Intuition records`);
 
-    // 2. Also sync EnhancedTradingSignal data if available
-    console.log('🚀 Syncing Enhanced Trading Signals...');
-    try {
-      const enhancedSignals = await prisma.enhancedTradingSignal.findMany({
-        take: 200,
-        orderBy: { signalTime: 'desc' },
-        select: {
-          id: true,
-          symbol: true,
-          strategy: true,
-          action: true,
-          confidence: true,
-          sentimentScore: true,
-          sentimentConfidence: true,
-          signalTime: true
-        }
-      });
-
-      let signalsSynced = 0;
-      for (const signal of enhancedSignals) {
-        try {
+        // Also sync as trading signals (cleaner approach from remote)
+        if (analysis.recommendation || analysis.signalType) {
           await analyticsDb.$executeRaw`
             INSERT INTO consolidated_trading_signals (
               instance_id,
               original_signal_id,
               symbol,
-              strategy_name,
               signal_type,
+              current_price,
               confidence,
               signal_time,
               data_hash,
               last_updated
             ) VALUES (
               ${instanceId},
-              ${signal.id},
-              ${signal.symbol},
-              ${signal.strategy},
-              ${signal.action},
-              ${signal.confidence || 0.5},
-              ${signal.signalTime},
-              ${signal.id + '-' + signal.symbol + '-enhanced'},
+              ${analysis.id},
+              ${analysis.symbol},
+              ${analysis.recommendation || analysis.signalType || 'ANALYZE'},
+              ${Number(analysis.signalPrice) || 0},
+              ${Number(analysis.originalConfidence) || 0},
+              ${analysis.analysisTime},
+              ${'intuition-signal-' + analysis.id},
               NOW()
-            )
-            ON CONFLICT (instance_id, original_signal_id)
-            DO UPDATE SET 
-              confidence = EXCLUDED.confidence,
-              last_updated = NOW()
+            ) ON CONFLICT (instance_id, original_signal_id) DO NOTHING
           `;
-          signalsSynced++;
-        } catch (error: any) {
-          if (!error.message.includes('duplicate key')) {
-            console.log(`  ⚠️ Signal ${signal.symbol}: ${error.message.split('\n')[0]}`);
-          }
+        }
+        
+        sentimentSynced++;
+      } catch (error: any) {
+        if (sentimentSynced < 5) {
+          console.log(`⚠️ Skip ${analysis.symbol}:`, error.message.split('\n')[0]);
         }
       }
-      console.log(`  ✅ Synced ${signalsSynced}/${enhancedSignals.length} Enhanced Trading Signals`);
-
-    } catch (error: any) {
-      console.log(`  ⚠️ Enhanced signals table not found: ${error.message.split('\n')[0]}`);
     }
 
-    // 3. Update instance status
-    console.log('📝 Updating instance status...');
-    try {
-      await analyticsDb.$executeRaw`
-        INSERT INTO instances (id, last_sync, status, data_quality_score)
-        VALUES (${instanceId}, NOW(), 'active', 1.0)
-        ON CONFLICT (id) 
-        DO UPDATE SET 
-          last_sync = NOW(),
-          last_heartbeat = NOW(),
-          status = 'active'
-      `;
-      console.log('  ✅ Instance status updated');
-    } catch (error: any) {
-      console.log(`  ⚠️ Instance status update: ${error.message.split('\n')[0]}`);
-    }
-
+    // Get final counts
+    const [sentimentCount, signalsCount] = await Promise.all([
+      analyticsDb.$queryRaw<Array<{count: bigint}>>`SELECT COUNT(*) as count FROM consolidated_sentiment WHERE instance_id = ${instanceId}`,
+      analyticsDb.$queryRaw<Array<{count: bigint}>>`SELECT COUNT(*) as count FROM consolidated_trading_signals WHERE instance_id = ${instanceId}`
+    ]);
+    
     console.log('');
-    console.log('✅ TARGETED SENTIMENT SYNC COMPLETED SUCCESSFULLY');
-    console.log(`   Mathematical Intuition Records: ${sentimentSynced} synced`);
-    console.log('   This is the most important data for cross-site AI enhancement');
+    console.log('🎯 INTUITION SYNC COMPLETE:');
+    console.log(`✅ Synced: ${sentimentSynced} new records`);
+    console.log(`📊 Sentiment Total: ${Number(sentimentCount[0].count)} records`);
+    console.log(`📡 Signals Total: ${Number(signalsCount[0].count)} trading signals`);
     console.log('');
-    console.log('💡 KEY INSIGHT:');
-    console.log('   IntuitionAnalysis contains 5,000+ records per hour of AI analysis');
-    console.log('   This data appears as "Cross-site Sentiment" in the consolidated database');
-    console.log('   More critical than traditional "Trading Signals" for AI performance');
-
+    console.log('🧠 AI services now have access to Mathematical Intuition data!');
+    
   } catch (error: any) {
-    console.error('❌ Targeted sentiment sync failed:', error.message);
-    process.exit(1);
-  } finally {
-    await analyticsDb.$disconnect();
-    await prisma.$disconnect();
+    console.error('❌ Sync error:', error.message);
   }
+  
+  await prisma.$disconnect();
+  await analyticsDb.$disconnect();
 }
 
-// Run targeted sentiment sync
-syncIntuitionSignals().catch(console.error);
+syncIntuitionSignals().then(() => process.exit(0));

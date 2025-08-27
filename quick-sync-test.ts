@@ -1,17 +1,18 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env tsx
 
 /**
  * Quick Collection Sync - Data collection metadata
  * Simple sync test for MarketDataCollection table
  */
 
-import { prisma } from './src/lib/prisma.js';
 import { PrismaClient } from '@prisma/client';
 
+const prisma = new PrismaClient({
+  datasources: { db: { url: process.env.DATABASE_URL } }
+});
+
 const analyticsDb = new PrismaClient({
-  datasources: {
-    db: { url: process.env.ANALYTICS_DB_URL }
-  }
+  datasources: { db: { url: process.env.ANALYTICS_DB_URL } }
 });
 
 const instanceId = process.env.INSTANCE_ID || 'site-primary-main';
@@ -70,7 +71,7 @@ async function quickSyncTest() {
         });
         console.log('    ✅ Created sample BTCUSD collection record');
       } catch (error: any) {
-        console.log(`    ⚠️ Could not create sample record: ${error.message.split('\n')[0]}`);
+        console.log(`    ⚠️ Could not create sample record: ${error.message.split('\\n')[0]}`);
       }
       return;
     }
@@ -123,7 +124,7 @@ async function quickSyncTest() {
         syncedCount++;
         console.log(`    ✅ Synced ${record.symbol} collection data`);
       } catch (error: any) {
-        console.log(`    ❌ Failed to sync ${record.symbol}: ${error.message.split('\n')[0]}`);
+        console.log(`    ❌ Failed to sync ${record.symbol}: ${error.message.split('\\n')[0]}`);
       }
     }
 
