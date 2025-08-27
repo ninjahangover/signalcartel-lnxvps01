@@ -5,6 +5,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import consolidatedDataService from './consolidated-ai-data-service.js';
 
 const prisma = new PrismaClient();
 
@@ -98,7 +99,7 @@ export class MathematicalIntuitionEngine {
    * CORE: Feel the mathematical flow field of the market
    * This is where intuition transcends calculation
    */
-  async senseMarketFlowField(marketData: any): Promise<FlowFieldData> {
+  async senseMarketFlowField(marketData: any, crossSiteData?: any): Promise<FlowFieldData> {
     const priceHistory = marketData.priceHistory || [];
     const volume = marketData.volume || 0;
     const volatility = this.calculateVolatility(priceHistory);
@@ -106,7 +107,14 @@ export class MathematicalIntuitionEngine {
     // Feel the probability current strength
     const momentum = this.calculateMomentum(priceHistory);
     const volumeFlow = volume > 0 ? Math.log(volume) / 10 : 0;
-    const currentStrength = this.synthesizeFlowStrength(momentum, volumeFlow, volatility);
+    let currentStrength = this.synthesizeFlowStrength(momentum, volumeFlow, volatility);
+    
+    // Enhance with cross-site market insights
+    if (crossSiteData && crossSiteData.marketInsights.length > 0) {
+      const marketBoost = Math.min(0.15, crossSiteData.marketInsights.length * 0.03);
+      currentStrength = Math.min(1.0, currentStrength + marketBoost);
+      console.log(`🌐 FLOW FIELD NETWORK: Cross-site market data enhances flow by ${(marketBoost * 100).toFixed(1)}%`);
+    }
     
     // Detect resistance points (where flow encounters friction)
     const resistancePoints = this.feelResistancePoints(priceHistory);
@@ -115,7 +123,16 @@ export class MathematicalIntuitionEngine {
     const accelerationZones = this.findAccelerationZones(priceHistory, volume);
     
     // Measure harmonic resonance (is market in rhythm?)
-    const harmonicResonance = this.measureHarmonicResonance(priceHistory);
+    let harmonicResonance = this.measureHarmonicResonance(priceHistory);
+    
+    // Enhance harmonic resonance with cross-site performance data
+    if (crossSiteData && crossSiteData.strategyPerformance.length > 0) {
+      const avgPerformance = crossSiteData.strategyPerformance.reduce((sum: number, perf: any) => 
+        sum + (perf.win_rate || 0.5), 0) / crossSiteData.strategyPerformance.length;
+      const harmonicBonus = Math.min(0.1, (avgPerformance - 0.5) * 0.4);
+      harmonicResonance = Math.max(0, Math.min(1, harmonicResonance + harmonicBonus));
+      console.log(`🎵 HARMONIC NETWORK: Cross-site performance creates ${(harmonicBonus * 100).toFixed(1)}% resonance boost`);
+    }
     
     return {
       currentStrength,
@@ -129,19 +146,26 @@ export class MathematicalIntuitionEngine {
    * REVOLUTIONARY: Pattern resonance - does this pattern "feel" right?
    * Beyond technical analysis - pure pattern intuition
    */
-  feelPatternResonance(signal: any, marketData: any): number {
+  feelPatternResonance(signal: any, marketData: any, crossSiteData?: any): number {
     const technicalPattern = signal.technicalScore || 0.5;
     const sentimentAlignment = signal.sentimentScore || 0.5;
     const volumeConfirmation = this.feelVolumeConfirmation(marketData);
     const timeframeHarmony = this.feelTimeframeHarmony(marketData);
     
     // Intuitive pattern synthesis - not mathematical, felt
-    const resonance = this.synthesizePatternFeeling([
+    let resonance = this.synthesizePatternFeeling([
       technicalPattern * 0.3,
       sentimentAlignment * 0.3,
       volumeConfirmation * 0.2,
       timeframeHarmony * 0.2
     ]);
+    
+    // Enhance with cross-site historical patterns
+    if (crossSiteData && crossSiteData.historicalPatterns.length > 0) {
+      const patternBonus = Math.min(0.2, crossSiteData.historicalPatterns.length * 0.04);
+      resonance = Math.min(1.0, resonance + patternBonus);
+      console.log('🔗 PATTERN NETWORK: Cross-site patterns boost resonance by', (patternBonus * 100).toFixed(1) + '%');
+    }
     
     return Math.max(0, Math.min(1, resonance));
   }
@@ -175,14 +199,17 @@ export class MathematicalIntuitionEngine {
   /**
    * CORE INTUITIVE ANALYSIS: Synthesize all intuitive inputs
    */
-  async analyzeIntuitively(signal: any, marketData: any): Promise<IntuitiveSignal> {
+  async analyzeIntuitively(signal: any, marketData: any, crossSiteData?: any): Promise<IntuitiveSignal> {
     console.log('🧠 INTUITIVE ANALYSIS: Feeling market mathematical consciousness...');
+    if (crossSiteData && crossSiteData.crossSiteConfidence > 0.5) {
+      console.log('🌐 NETWORK ENHANCED: Cross-site confidence:', (crossSiteData.crossSiteConfidence * 100).toFixed(1) + '%');
+    }
     
-    // Sense the flow field
-    const flowField = await this.senseMarketFlowField(marketData);
+    // Sense the flow field (enhanced with cross-site data)
+    const flowField = await this.senseMarketFlowField(marketData, crossSiteData);
     
-    // Feel pattern resonance
-    const patternResonance = this.feelPatternResonance(signal, marketData);
+    // Feel pattern resonance (enhanced with historical patterns from other sites)
+    const patternResonance = this.feelPatternResonance(signal, marketData, crossSiteData);
     
     // Access timing intuition
     const timingIntuition = this.accessTemporalIntuition(signal);
@@ -225,15 +252,76 @@ export class MathematicalIntuitionEngine {
   }
 
   /**
+   * CROSS-SITE DATA ENHANCEMENT: Get insights from other SignalCartel instances
+   */
+  private async getCrossSiteEnhancedData(symbol: string, strategy?: string) {
+    try {
+      const [marketInsights, strategyPerformance, aiComparison, learningInsights] = await Promise.all([
+        consolidatedDataService.getMarketConditionInsights(symbol),
+        strategy ? consolidatedDataService.getUnifiedStrategyPerformance(strategy, symbol) : [],
+        consolidatedDataService.getAISystemComparison('mathematical-intuition'),
+        consolidatedDataService.getLearningInsights('pattern', symbol, 0.6)
+      ]);
+
+      return {
+        marketInsights: marketInsights || [],
+        strategyPerformance: strategyPerformance || [],
+        aiComparison: aiComparison || [],
+        learningInsights: learningInsights || [],
+        crossSiteConfidence: this.calculateCrossSiteConfidence(marketInsights, strategyPerformance),
+        historicalPatterns: this.extractHistoricalPatterns(learningInsights),
+        networkEffect: this.calculateNetworkEffect(aiComparison)
+      };
+    } catch (error) {
+      console.log('⚠️ Cross-site data not available, using local analysis only');
+      return {
+        marketInsights: [],
+        strategyPerformance: [],
+        aiComparison: [],
+        learningInsights: [],
+        crossSiteConfidence: 0.5,
+        historicalPatterns: [],
+        networkEffect: 0.5
+      };
+    }
+  }
+
+  private calculateCrossSiteConfidence(marketInsights: any[], strategyPerformance: any[]): number {
+    const insightsCount = marketInsights.length;
+    const performanceRecords = strategyPerformance.length;
+    
+    // More data from other instances = higher confidence
+    const baseConfidence = Math.min(0.9, 0.3 + (insightsCount * 0.1) + (performanceRecords * 0.05));
+    return baseConfidence;
+  }
+
+  private extractHistoricalPatterns(learningInsights: any[]): string[] {
+    return learningInsights
+      .filter(insight => insight.confidence > 0.7)
+      .map(insight => insight.title || insight.description)
+      .slice(0, 5); // Top 5 patterns
+  }
+
+  private calculateNetworkEffect(aiComparison: any[]): number {
+    // Network effect increases with more participating instances
+    const instanceCount = aiComparison.length;
+    return Math.min(0.95, 0.4 + (instanceCount * 0.15));
+  }
+
+  /**
    * PARALLEL COMPARISON: Run both calculated and intuitive analysis
    */
   async runParallelAnalysis(signal: any, marketData: any, calculatedResult?: any): Promise<ParallelTradeComparison> {
     console.log('⚡ PARALLEL ANALYSIS: Running calculated vs intuitive comparison...');
+    console.log('🌐 CROSS-SITE DATA: Enhancing analysis with multi-instance data...');
     
-    const intuitiveResult = await this.analyzeIntuitively(signal, marketData);
+    // Enhance with cross-site data from other SignalCartel instances
+    const crossSiteData = await this.getCrossSiteEnhancedData(signal.symbol || marketData.symbol, signal.strategy);
+    
+    const intuitiveResult = await this.analyzeIntuitively(signal, marketData, crossSiteData);
     
     // Calculate traditional metrics if not provided
-    const traditionalResult = calculatedResult || await this.calculateTraditionalMetrics(signal, marketData);
+    const traditionalResult = calculatedResult || await this.calculateTraditionalMetrics(signal, marketData, crossSiteData);
     
     // Measure agreement between approaches
     const agreementLevel = this.measureAgreementLevel(traditionalResult, intuitiveResult);
@@ -589,14 +677,36 @@ export class MathematicalIntuitionEngine {
   /**
    * Calculate traditional expectancy-based metrics
    */
-  private async calculateTraditionalMetrics(signal: any, marketData: any): Promise<any> {
+  private async calculateTraditionalMetrics(signal: any, marketData: any, crossSiteData?: any): Promise<any> {
     // Simple expectancy calculation based on signal confidence
-    const confidence = signal.confidence || 0.5;
+    let confidence = signal.confidence || 0.5;
     
-    // Mock traditional calculation (in real system would use historical data)
-    const winRate = confidence * 0.8; // Assume 80% of confidence translates to win rate
-    const avgWin = 0.02; // 2% average win
-    const avgLoss = 0.01; // 1% average loss
+    // Enhance confidence with cross-site AI comparison data
+    if (crossSiteData && crossSiteData.aiComparison.length > 0) {
+      const avgAiConfidence = crossSiteData.aiComparison.reduce((sum: number, ai: any) => 
+        sum + (ai.avg_confidence_across_sites || 0.5), 0) / crossSiteData.aiComparison.length;
+      const confidenceBoost = Math.min(0.15, (avgAiConfidence - 0.5) * 0.3);
+      confidence = Math.max(0, Math.min(1, confidence + confidenceBoost));
+      console.log(`🤖 AI NETWORK: Cross-site AI confidence boosts traditional metrics by ${(confidenceBoost * 100).toFixed(1)}%`);
+    }
+    
+    // Enhanced calculation using cross-site performance data
+    let winRate = confidence * 0.8; // Base assumption: 80% of confidence translates to win rate
+    let avgWin = 0.02; // Base: 2% average win  
+    let avgLoss = 0.01; // Base: 1% average loss
+    
+    // Improve metrics with cross-site strategy performance
+    if (crossSiteData && crossSiteData.strategyPerformance.length > 0) {
+      const crossSiteWinRate = crossSiteData.strategyPerformance.reduce((sum: number, perf: any) => 
+        sum + (perf.win_rate || 0.5), 0) / crossSiteData.strategyPerformance.length;
+      const crossSiteAvgPnl = crossSiteData.strategyPerformance.reduce((sum: number, perf: any) => 
+        sum + (Math.abs(perf.avg_pnl) || 0.02), 0) / crossSiteData.strategyPerformance.length;
+      
+      // Blend local and cross-site data (70% local, 30% cross-site)
+      winRate = (winRate * 0.7) + (crossSiteWinRate * 0.3);
+      avgWin = (avgWin * 0.7) + (crossSiteAvgPnl * 0.3);
+      console.log(`📊 TRADITIONAL NETWORK: Cross-site data improves win rate to ${(winRate * 100).toFixed(1)}%`);
+    }
     
     const expectancy = (winRate * avgWin) - ((1 - winRate) * avgLoss);
     
@@ -606,7 +716,7 @@ export class MathematicalIntuitionEngine {
       winRateProjection: winRate,
       riskRewardRatio: avgWin / avgLoss,
       action: signal.action,
-      reason: 'Traditional expectancy calculation'
+      reason: crossSiteData ? 'Cross-site enhanced expectancy calculation' : 'Traditional expectancy calculation'
     };
   }
 

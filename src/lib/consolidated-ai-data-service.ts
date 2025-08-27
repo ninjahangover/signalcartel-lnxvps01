@@ -136,7 +136,14 @@ export class ConsolidatedAIDataService {
         ai.avg_confidence_across_sites,
         ai.sites_deployed
       FROM ai_system_comparison ai
-      WHERE ai.global_win_rate > 0
+      INNER JOIN (
+        SELECT DISTINCT unnest(all_ai_systems_used) as ai_system
+        FROM unified_position_performance upp
+        INNER JOIN consolidated_positions cp ON cp.strategy_name = upp.strategy_name
+        WHERE cp.symbol = '${symbol}'
+          AND (cp.market_conditions->>'volatility')::decimal BETWEEN ${volatility * 0.8} AND ${volatility * 1.2}
+          AND cp.market_conditions->>'trend' = '${trend}'
+      ) relevant ON relevant.ai_system = ai.ai_system_name
       ORDER BY ai.global_win_rate DESC, ai.global_pnl DESC
       LIMIT 10
     `);
