@@ -94,12 +94,22 @@ db_query() {
     local query="$1"
     local database="${2:-signalcartel}"
     local result
-    result=$(docker exec -e PGPASSWORD=quantum_forge_warehouse_2024 signalcartel-warehouse psql -U warehouse_user -d "$database" -t -c "$query" 2>/dev/null | tr -d ' ' | head -1)
-    if [[ -n "$result" && "$result" != "" ]]; then
-        echo "$result"
-    else
-        echo "0"
-    fi
+    local retry_count=0
+    local max_retries=3
+    
+    while [[ $retry_count -lt $max_retries ]]; do
+        result=$(PGPASSWORD=quantum_forge_warehouse_2024 docker exec signalcartel-warehouse psql -U warehouse_user -d "$database" -t -c "$query" 2>/dev/null | tr -d ' ' | head -1)
+        
+        if [[ -n "$result" && "$result" != "" && "$result" != "FATAL:" ]]; then
+            echo "$result"
+            return 0
+        fi
+        
+        ((retry_count++))
+        sleep 0.1
+    done
+    
+    echo "0"
 }
 
 # Function to get trading statistics directly from database
@@ -278,9 +288,9 @@ show_phase_info() {
         local progress=$(extract_json_value "$phase_data" "data.progress.progress" "0")
         local trades_needed=$(extract_json_value "$phase_data" "data.progress.tradesNeeded" "0")
         
-        # Get actual trade count directly from PostgreSQL database
+        # Get actual trade count directly from PostgreSQL database using db_query function
         local actual_trades
-        actual_trades=$(PGPASSWORD=quantum_forge_warehouse_2024 docker exec signalcartel-warehouse psql -U warehouse_user -d signalcartel -t -c "SELECT COUNT(*) FROM \"ManagedTrade\" WHERE \"isEntry\" = true;" 2>/dev/null | tr -d ' ')
+        actual_trades=$(db_query "SELECT COUNT(*) FROM \"ManagedTrade\" WHERE \"isEntry\" = true;")
         
         # Validate and default actual_trades
         if [[ ! "$actual_trades" =~ ^[0-9]+$ ]]; then
@@ -580,36 +590,44 @@ show_data_warehousing() {
     echo -e "${BOLD}${PURPLE}📊 LOCAL DATA WAREHOUSE${NC}"
     echo -e "${PURPLE}═══════════════════════════════════════${NC}"
     
-    local overview_data
-    overview_data=$(api_call "/dashboard/overview-metrics")
+    # Always get warehouse data directly from database
+    # Get market data warehouse record counts - with recent activity focus
+    local market_data_points=$(db_query "SELECT COUNT(*) FROM \"MarketData\";")
+    local market_data_1h=$(db_query "SELECT COUNT(*) FROM \"MarketData\" WHERE \"timestamp\" > NOW() - INTERVAL '1 hour';")
+    local trading_signals=$(db_query "SELECT COUNT(*) FROM \"TradingSignal\";")
+    local recent_trading_signals=$(db_query "SELECT COUNT(*) FROM \"TradingSignal\" WHERE \"createdAt\" > NOW() - INTERVAL '24 hours';")
+    local enhanced_signals=$(db_query "SELECT COUNT(*) FROM \"EnhancedTradingSignal\";")
     
-    if json_success "$overview_data"; then
-        # API mode - would need to add these endpoints
-        echo -e "  ${RED}❌ Warehouse data not available via API${NC}"
+    # Analytics database consolidated data
+    local consolidated_market_data=$(db_query "SELECT COUNT(*) FROM \"consolidated_market_data\";" "signalcartel_analytics")
+    
+    echo -e "  ${YELLOW}📊 Direct database access${NC}"
+    echo -e "  ${WHITE}Market Data (Local):${NC}   ${CYAN}$(format_number $market_data_points)${NC}"
+    echo -e "  ${WHITE}Market Data (1hr):${NC}     ${GREEN}$(format_number $market_data_1h)${NC}"
+    echo -e "  ${WHITE}Trading Signals:${NC}       ${CYAN}$(format_number $trading_signals)${NC}"
+    echo -e "  ${WHITE}Recent Signals (24h):${NC}  ${GREEN}$(format_number $recent_trading_signals)${NC}"
+    echo -e "  ${WHITE}Enhanced Signals:${NC}      ${PURPLE}$(format_number $enhanced_signals)${NC}"
+    
+    # Data collection health indicator
+    if [[ "$market_data_1h" -gt 100 ]]; then
+        echo -e "  ${WHITE}Collection Status:${NC}    ${GREEN}ACTIVE${NC} ($(format_number $market_data_1h)/hr)"
+    elif [[ "$market_data_1h" -gt 10 ]]; then
+        echo -e "  ${WHITE}Collection Status:${NC}    ${YELLOW}SLOW${NC} ($(format_number $market_data_1h)/hr)"
     else
-        echo -e "  ${YELLOW}⚠️  Using database fallback${NC}"
-        echo -e "  ${WHITE}Market Data (Local):${NC}   ${CYAN}$(format_number $FALLBACK_MARKET_DATA_POINTS)${NC}"
-        echo -e "  ${WHITE}Market Data (1hr):${NC}     ${GREEN}$(format_number $FALLBACK_MARKET_DATA_1H)${NC}"
-        echo -e "  ${WHITE}Trading Signals:${NC}       ${CYAN}$(format_number $FALLBACK_TRADING_SIGNALS)${NC}"
-        echo -e "  ${WHITE}Recent Signals (24h):${NC}  ${GREEN}$(format_number $FALLBACK_RECENT_TRADING_SIGNALS)${NC}"
-        
-        # Data collection health indicator
-        if [[ "$FALLBACK_MARKET_DATA_1H" -gt 100 ]]; then
-            echo -e "  ${WHITE}Collection Status:${NC}    ${GREEN}ACTIVE${NC} ($(format_number $FALLBACK_MARKET_DATA_1H)/hr)"
-        elif [[ "$FALLBACK_MARKET_DATA_1H" -gt 10 ]]; then
-            echo -e "  ${WHITE}Collection Status:${NC}    ${YELLOW}SLOW${NC} ($(format_number $FALLBACK_MARKET_DATA_1H)/hr)"
-        else
-            echo -e "  ${WHITE}Collection Status:${NC}    ${RED}STALLED${NC} ($(format_number $FALLBACK_MARKET_DATA_1H)/hr)"
-        fi
-        
-        # Show consolidated data status
-        if [[ "$FALLBACK_CONSOLIDATED_MARKET_DATA" -gt 0 ]]; then
-            echo -e "  ${WHITE}Multi-Instance Sync:${NC}  ${GREEN}ACTIVE${NC}"
-            echo -e "  ${WHITE}Consolidated Available:${NC} ${GREEN}$(format_number $FALLBACK_CONSOLIDATED_MARKET_DATA)${NC} records"
-        else
-            echo -e "  ${WHITE}Multi-Instance Sync:${NC}  ${RED}NOT SYNCING${NC}"
-            echo -e "  ${WHITE}Expected vs Actual:${NC}   ${RED}23k+ vs $(format_number $FALLBACK_MARKET_DATA_POINTS)${NC}"
-        fi
+        echo -e "  ${WHITE}Collection Status:${NC}    ${RED}STALLED${NC} ($(format_number $market_data_1h)/hr)"
+    fi
+    
+    # Show consolidated data status - check if ANY consolidated data exists (not just market data)
+    local consolidated_trades=$(db_query "SELECT COUNT(*) FROM \"consolidated_trades\";" "signalcartel_analytics")
+    local consolidated_positions=$(db_query "SELECT COUNT(*) FROM \"consolidated_positions\";" "signalcartel_analytics") 
+    local consolidated_sentiment=$(db_query "SELECT COUNT(*) FROM \"consolidated_sentiment\";" "signalcartel_analytics")
+    local total_consolidated=$((consolidated_trades + consolidated_positions + consolidated_sentiment))
+    if [[ "$total_consolidated" -gt 100 ]]; then
+        echo -e "  ${WHITE}Multi-Instance Sync:${NC}  ${GREEN}ACTIVE${NC}"
+        echo -e "  ${WHITE}Consolidated Available:${NC} ${GREEN}$(format_number $total_consolidated)${NC} records"
+    else
+        echo -e "  ${WHITE}Multi-Instance Sync:${NC}  ${RED}NOT SYNCING${NC}"
+        echo -e "  ${WHITE}Expected vs Actual:${NC}   ${RED}Need 100+ vs $(format_number $total_consolidated)${NC}"
     fi
     echo ""
 }
@@ -619,44 +637,58 @@ show_analytics_status() {
     echo -e "${BOLD}${CYAN}🌐 CROSS-SITE ANALYTICS${NC}"
     echo -e "${CYAN}═══════════════════════════════════════${NC}"
     
-    local overview_data
-    overview_data=$(api_call "/dashboard/overview-metrics")
+    # Always get analytics data directly from database
+    # Check analytics database connection
+    local analytics_db_status="offline"
+    if timeout 3s docker exec -e PGPASSWORD=quantum_forge_warehouse_2024 signalcartel-warehouse pg_isready -U warehouse_user -d signalcartel_analytics > /dev/null 2>&1; then
+        analytics_db_status="online"
+    fi
     
-    if json_success "$overview_data"; then
-        # API mode - would need to add these endpoints
-        echo -e "  ${RED}❌ Analytics data not available via API${NC}"
+    # Analytics database record counts (consolidated data)
+    local consolidated_trades=$(db_query "SELECT COUNT(*) FROM \"consolidated_trades\";" "signalcartel_analytics")
+    local consolidated_positions=$(db_query "SELECT COUNT(*) FROM \"consolidated_positions\";" "signalcartel_analytics") 
+    local consolidated_sentiment=$(db_query "SELECT COUNT(*) FROM \"consolidated_sentiment\";" "signalcartel_analytics")
+    local consolidated_market_data=$(db_query "SELECT COUNT(*) FROM \"consolidated_market_data\";" "signalcartel_analytics")
+    local consolidated_signals=$(db_query "SELECT COUNT(*) FROM \"consolidated_trading_signals\";" "signalcartel_analytics")
+    local consolidated_data_collection=$(db_query "SELECT COUNT(*) FROM \"consolidated_data_collection\";" "signalcartel_analytics")
+    local learning_insights=$(db_query "SELECT COUNT(*) FROM \"learning_insights\";" "signalcartel_analytics")
+    
+    # Get production data for comparison
+    local intuition_analysis=$(db_query "SELECT COUNT(*) FROM \"IntuitionAnalysis\";")
+    local enhanced_signals=$(db_query "SELECT COUNT(*) FROM \"EnhancedTradingSignal\";")
+    
+    echo -e "  ${YELLOW}🌐 Direct analytics database access${NC}"
+    
+    # Analytics DB status
+    if [[ "$analytics_db_status" == "online" ]]; then
+        echo -e "  ${WHITE}Analytics DB:${NC}         ${GREEN}ONLINE${NC}"
     else
-        echo -e "  ${YELLOW}⚠️  Using database fallback${NC}"
-        
-        # Analytics DB status
-        if [[ "$FALLBACK_ANALYTICS_DB_STATUS" == "online" ]]; then
-            echo -e "  ${WHITE}Analytics DB:${NC}         ${GREEN}ONLINE${NC}"
-        else
-            echo -e "  ${WHITE}Analytics DB:${NC}         ${RED}OFFLINE${NC}"
-        fi
-        
-        echo -e "  ${WHITE}Consolidated Market Data:${NC} ${GREEN}$(format_number $FALLBACK_CONSOLIDATED_MARKET_DATA)${NC}"
-        echo -e "  ${WHITE}Consolidated Trades:${NC}     ${CYAN}$(format_number $FALLBACK_CONSOLIDATED_TRADES)${NC}"
-        echo -e "  ${WHITE}Consolidated Signals:${NC}    ${CYAN}$(format_number $FALLBACK_CONSOLIDATED_SIGNALS)${NC}"
-        echo -e "  ${WHITE}Cross-site Sentiment:${NC}    ${GREEN}$(format_number $FALLBACK_CONSOLIDATED_SENTIMENT)${NC}"
-        # Show consolidated data collection system status
-        if [[ "$FALLBACK_CONSOLIDATED_DATA_COLLECTION" -eq 0 ]]; then
-            echo -e "  ${WHITE}Data Collection:${NC}         ${RED}$(format_number $FALLBACK_CONSOLIDATED_DATA_COLLECTION)${NC} ❌ NOT SYNCED"
-        else
-            echo -e "  ${WHITE}Data Collection:${NC}         ${GREEN}$(format_number $FALLBACK_CONSOLIDATED_DATA_COLLECTION)${NC} ✅ SYNCED"
-        fi
-        
-        # Show what IS working
-        echo -e "  ${WHITE}Intuition Analysis:${NC}      ${GREEN}$(format_number $FALLBACK_INTUITION_ANALYSIS)${NC} ✅ WORKING"
-        echo -e "  ${WHITE}Enhanced Signals:${NC}        ${CYAN}$(format_number $FALLBACK_ENHANCED_SIGNALS)${NC}"
-        echo -e "  ${WHITE}Learning Insights:${NC}       ${PURPLE}$(format_number $FALLBACK_LEARNING_INSIGHTS)${NC}"
-        
-        # Multi-instance sync service status
-        if pgrep -f "automated-data-sync-service.ts" > /dev/null; then
-            echo -e "  ${WHITE}Data Sync Service:${NC}    ${GREEN}RUNNING${NC}"
-        else
-            echo -e "  ${WHITE}Data Sync Service:${NC}    ${RED}STOPPED${NC}"
-        fi
+        echo -e "  ${WHITE}Analytics DB:${NC}         ${RED}OFFLINE${NC}"
+    fi
+    
+    echo -e "  ${WHITE}Consolidated Trades:${NC}     ${CYAN}$(format_number $consolidated_trades)${NC}"
+    echo -e "  ${WHITE}Consolidated Positions:${NC}  ${CYAN}$(format_number $consolidated_positions)${NC}"
+    echo -e "  ${WHITE}Consolidated Signals:${NC}    ${CYAN}$(format_number $consolidated_signals)${NC}"
+    echo -e "  ${WHITE}Cross-site Sentiment:${NC}    ${GREEN}$(format_number $consolidated_sentiment)${NC}"
+    echo -e "  ${WHITE}Consolidated Market Data:${NC} ${PURPLE}$(format_number $consolidated_market_data)${NC}"
+    
+    # Show consolidated data collection system status
+    if [[ "$consolidated_data_collection" -eq 0 ]]; then
+        echo -e "  ${WHITE}Data Collection:${NC}      ${RED}$(format_number $consolidated_data_collection)${NC} ❌ NOT SYNCED"
+    else
+        echo -e "  ${WHITE}Data Collection:${NC}      ${GREEN}$(format_number $consolidated_data_collection)${NC} ✅ SYNCED"
+    fi
+    
+    # Show production source data
+    echo -e "  ${WHITE}Intuition Analysis:${NC}    ${GREEN}$(format_number $intuition_analysis)${NC} ✅ SOURCE"
+    echo -e "  ${WHITE}Enhanced Signals:${NC}      ${CYAN}$(format_number $enhanced_signals)${NC}"
+    echo -e "  ${WHITE}Learning Insights:${NC}     ${PURPLE}$(format_number $learning_insights)${NC}"
+    
+    # Multi-instance sync service status
+    if pgrep -f "automated-data-sync-service.ts" > /dev/null; then
+        echo -e "  ${WHITE}Data Sync Service:${NC}    ${GREEN}RUNNING${NC}"
+    else
+        echo -e "  ${WHITE}Data Sync Service:${NC}    ${RED}STOPPED${NC}"
     fi
     echo ""
 }
