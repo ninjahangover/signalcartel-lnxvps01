@@ -262,7 +262,7 @@ show_system_health() {
         fi
         
         # Check website container
-        if docker ps | grep -q "signalcartel-website.*Up"; then
+        if docker ps --format "table {{.Names}}\t{{.Status}}" | grep -q "signalcartel-website.*Up"; then
             echo -e "  ${WHITE}Website:${NC}            ${GREEN}RUNNING${NC}"
         else
             echo -e "  ${WHITE}Website:${NC}            ${RED}STOPPED${NC}"
