@@ -381,6 +381,15 @@ export class PositionManager {
   }
   
   /**
+   * Get all open positions for a symbol (public method)
+   */
+  getOpenPositionsBySymbol(symbol: string): Position[] {
+    return Array.from(this.positions.values()).filter(
+      p => p.symbol === symbol && p.status === 'open'
+    );
+  }
+  
+  /**
    * Save position trade to database (uses new ManagedTrade table)
    */
   private async savePositionTrade(trade: PositionTrade) {

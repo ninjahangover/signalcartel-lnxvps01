@@ -1,4 +1,4 @@
-import { PrismaClient } from '.prisma/market-data-client';
+import { PrismaClient } from '@prisma/client';
 
 // Configure PostgreSQL client for market data
 const marketDataDatabaseUrl = process.env.NODE_ENV === 'production' 

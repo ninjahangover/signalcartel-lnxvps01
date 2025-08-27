@@ -4,8 +4,8 @@
  * Shows current phase and analyzes readiness for next phase
  */
 
-import { phaseManager } from './src/lib/quantum-forge-phase-config';
-import { adaptivePhaseManager } from './src/lib/quantum-forge-adaptive-phase-manager';
+import { phaseManager } from '../src/lib/quantum-forge-phase-config';
+import { adaptivePhaseManager } from '../src/lib/quantum-forge-adaptive-phase-manager';
 
 async function checkPhaseTransitionStatus() {
   console.log('🎯 QUANTUM FORGE™ PHASE TRANSITION ANALYSIS');

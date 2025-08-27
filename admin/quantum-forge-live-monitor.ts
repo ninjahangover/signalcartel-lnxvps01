@@ -5,8 +5,8 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { phaseManager } from './src/lib/quantum-forge-phase-config';
-import { adaptivePhaseManager } from './src/lib/quantum-forge-adaptive-phase-manager';
+import { phaseManager } from '../src/lib/quantum-forge-phase-config';
+import { adaptivePhaseManager } from '../src/lib/quantum-forge-adaptive-phase-manager';
 import fs from 'fs';
 import path from 'path';
 

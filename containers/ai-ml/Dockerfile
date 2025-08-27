@@ -13,10 +13,11 @@ WORKDIR /app
 
 # Copy package files (context is set to root in docker-compose)
 COPY package*.json ./
-COPY prisma ./prisma/
+# Use PostgreSQL-specific schema for AI-ML
+COPY prisma/schema-postgres.prisma ./prisma/schema.prisma
 
 # Install Node.js production dependencies
-RUN npm ci --only=production && \
+RUN npm install --production && \
     npx prisma generate
 
 # Note: Python ML packages removed for now to avoid build issues
@@ -32,6 +33,8 @@ COPY --from=deps /app/prisma ./prisma
 
 # Copy all source files
 COPY . .
+# Restore PostgreSQL schema that may have been overwritten
+COPY prisma/schema-postgres.prisma ./prisma/schema.prisma
 
 # Build TypeScript files if build script exists
 RUN if [ -f "package.json" ] && grep -q '"build"' package.json; then \

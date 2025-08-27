@@ -10,6 +10,7 @@ Dockerfile
 README.md
 docs/
 scripts/
+!scripts/engines/
 containers/
 openstatus/
 *.md
