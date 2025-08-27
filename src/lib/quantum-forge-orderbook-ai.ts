@@ -11,6 +11,7 @@
 
 import { AdvancedOrderBookAnalyzer, OrderFlowMetrics, OrderBookSnapshot } from './advanced-orderbook-analyzer';
 import { BaseStrategySignal, SentimentEnhancedSignal } from './sentiment/universal-sentiment-enhancer';
+import consolidatedDataService from './consolidated-ai-data-service.js';
 
 export interface OrderBookAISignal {
   // Basic Signal Enhancement
@@ -145,7 +146,13 @@ export class QuantumForgeOrderBookAI {
     
     // 5. Calculate AI confidence enhancement
     const aiConfidenceBoost = this.calculateAIConfidenceBoost(metrics, signal, marketRegime);
-    const enhancedConfidence = Math.min(0.95, signal.confidence + aiConfidenceBoost);
+    
+    // 5.5. Cross-Site Historical Pattern Enhancement
+    const crossSiteBoost = await this.enhanceWithCrossSiteOrderBookPatterns(signal, metrics);
+    console.log(`   🌐 Order Book Cross-Site Enhancement: ${(crossSiteBoost.patternBoost * 100).toFixed(1)}% boost from ${crossSiteBoost.historicalPatterns} historical patterns`);
+    
+    const totalAiBoost = aiConfidenceBoost + crossSiteBoost.patternBoost;
+    const enhancedConfidence = Math.min(0.95, signal.confidence + totalAiBoost);
     
     // 6. Determine optimal execution strategy
     const { optimalOrderSize, entryStrategy, preferredTimeframe } = this.determineOptimalExecution(
@@ -168,7 +175,7 @@ export class QuantumForgeOrderBookAI {
     return {
       originalConfidence: signal.confidence,
       enhancedConfidence,
-      aiConfidenceBoost,
+      aiConfidenceBoost: totalAiBoost,
       microstructureScore,
       liquidityQuality: this.categorizeLiquidityQuality(metrics.liquidityScore),
       marketRegime,
@@ -553,6 +560,76 @@ export class QuantumForgeOrderBookAI {
       spread: orderBookData.spreadPercent || 0,
       spreadBps: (orderBookData.spreadPercent || 0) * 100
     };
+  }
+  
+  /**
+   * Cross-Site Historical Order Book Pattern Enhancement
+   */
+  private async enhanceWithCrossSiteOrderBookPatterns(
+    signal: BaseStrategySignal,
+    metrics: OrderFlowMetrics
+  ): Promise<any> {
+    try {
+      // Get market condition insights from all sites for similar order book scenarios
+      const marketInsights = await consolidatedDataService.getMarketConditionInsights(signal.symbol);
+      
+      // Get best performing AI systems for current market microstructure
+      const bestAIForCondition = await consolidatedDataService.getBestAIForMarketCondition(
+        signal.symbol,
+        metrics.volatilityEstimate || 0.02, // Default 2% volatility
+        signal.action === 'BUY' ? 'bullish' : signal.action === 'SELL' ? 'bearish' : 'neutral'
+      );
+      
+      // Get historical pattern data for phase progression
+      const phaseInsights = await consolidatedDataService.getPhaseProgressionInsights();
+      
+      // Calculate pattern strength based on historical data
+      let patternStrength = 0;
+      let historicalPatterns = 0;
+      
+      if (marketInsights.length > 0) {
+        historicalPatterns = marketInsights.length;
+        // Higher pattern strength if we have similar market conditions
+        patternStrength += Math.min(0.1, historicalPatterns * 0.005);
+      }
+      
+      if (bestAIForCondition.length > 0) {
+        // Boost confidence if current conditions match historically successful AI patterns
+        const avgWinRate = bestAIForCondition.reduce((sum: number, ai: any) => sum + (ai.global_win_rate || 0), 0) / bestAIForCondition.length;
+        patternStrength += Math.min(0.05, (avgWinRate - 0.5) * 0.2); // Up to 5% boost for high win rate patterns
+      }
+      
+      if (phaseInsights.length > 0) {
+        // Add phase progression boost for pattern recognition
+        patternStrength += Math.min(0.03, phaseInsights.length * 0.001);
+      }
+      
+      // Apply liquidity and microstructure pattern multipliers
+      const liquidityMultiplier = metrics.liquidityScore > 70 ? 1.2 : metrics.liquidityScore < 30 ? 0.8 : 1.0;
+      const microstructureMultiplier = metrics.spreadBps < 10 ? 1.1 : metrics.spreadBps > 50 ? 0.9 : 1.0;
+      
+      const finalPatternBoost = patternStrength * liquidityMultiplier * microstructureMultiplier;
+      
+      return {
+        patternBoost: Math.min(0.15, finalPatternBoost), // Cap at 15% boost
+        historicalPatterns,
+        liquidityMultiplier,
+        microstructureMultiplier,
+        crossSiteEnabled: true,
+        enhancementLevel: 'ORDER_BOOK_INTELLIGENCE'
+      };
+      
+    } catch (error) {
+      // Return neutral enhancement if consolidation fails
+      return {
+        patternBoost: 0,
+        historicalPatterns: 0,
+        liquidityMultiplier: 1.0,
+        microstructureMultiplier: 1.0,
+        crossSiteEnabled: false,
+        enhancementLevel: 'STANDALONE'
+      };
+    }
   }
 }
 

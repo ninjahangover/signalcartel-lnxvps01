@@ -3,6 +3,7 @@ import { realMarketData } from './real-market-data';
 import { cleanTestingService } from './clean-testing-service';
 import { adaptiveThresholdManager } from './adaptive-threshold-manager';
 import { markovPredictor, type MarkovPrediction } from './markov-chain-predictor';
+import consolidatedDataService from './consolidated-ai-data-service.js';
 
 export interface AITradingDecision {
   decision: 'BUY' | 'SELL' | 'HOLD' | 'CLOSE_LONG' | 'CLOSE_SHORT';
@@ -148,6 +149,10 @@ class StratusEngineAI {
     const intelligence = marketIntelligence.getMarketIntelligence(symbol);
     const currentPrice = await realMarketData.getCurrentPrice(symbol);
     const aiModel = this.aiModels.get(symbol);
+    
+    // CROSS-SITE ENHANCEMENT: Multi-Instance Strategy Performance
+    console.log(`   🌐 STRATUS CROSS-SITE: Enhancing analysis with unified strategy performance...`);
+    const crossSiteEnhancement = await this.enhanceWithUnifiedStrategyPerformance(symbol, intelligence);
 
     if (!intelligence || !aiModel) {
       return this.generateFallbackDecision(symbol, currentPrice);
@@ -178,7 +183,12 @@ class StratusEngineAI {
     
     // Apply Law of Large Numbers confidence adjustment
     const llnAdjustedScore = this.applyLLNConfidence(baseAiScore, llnMetrics.currentAverageConfidence);
-    const aiScore = llnAdjustedScore;
+    
+    // Apply cross-site strategy performance enhancement
+    const crossSiteMultiplier = 1 + crossSiteEnhancement.performanceBoost;
+    const aiScore = Math.min(95, Math.max(5, llnAdjustedScore * crossSiteMultiplier));
+    
+    console.log(`   🌐 Stratus Cross-Site ✅ Performance Boost: ${(crossSiteEnhancement.performanceBoost * 100).toFixed(1)}%, Global Win Rate: ${(crossSiteEnhancement.globalWinRate * 100).toFixed(1)}%`);
 
     // AI decision logic optimized for 100% win rate
     const decision = this.makeAIDecision(aiScore, intelligence, currentPrice);
@@ -698,6 +708,100 @@ class StratusEngineAI {
     this.isLearning = false;
     if (this.optimizationInterval) {
       clearInterval(this.optimizationInterval);
+    }
+  }
+  
+  /**
+   * Cross-Site Strategy Performance Enhancement
+   */
+  private async enhanceWithUnifiedStrategyPerformance(
+    symbol: string,
+    intelligence: MarketIntelligenceData | null
+  ): Promise<any> {
+    try {
+      // Get unified strategy performance for all Stratus-related strategies
+      const stratusStrategies = await consolidatedDataService.getUnifiedStrategyPerformance('stratus-engine', symbol);
+      const neuralStrategies = await consolidatedDataService.getUnifiedStrategyPerformance('neural-strategy', symbol);
+      const quantumStrategies = await consolidatedDataService.getUnifiedStrategyPerformance('quantum-oscillator', symbol);
+      
+      // Get AI system comparison data
+      const aiSystemPerformance = await consolidatedDataService.getAISystemComparison('stratus-engine');
+      
+      // Get learning insights for strategy optimization
+      const strategyInsights = await consolidatedDataService.getLearningInsights(
+        'strategy_optimization',
+        symbol,
+        0.7 // Higher confidence for strategy insights
+      );
+      
+      // Calculate global win rate and performance metrics
+      const allStrategies = [...stratusStrategies, ...neuralStrategies, ...quantumStrategies];
+      let globalWinRate = 0.6; // Default
+      let totalTrades = 0;
+      let performanceBoost = 0;
+      
+      if (allStrategies.length > 0) {
+        globalWinRate = allStrategies.reduce((sum: number, strategy: any) => {
+          totalTrades += strategy.total_trades || 0;
+          return sum + (strategy.win_rate || 0.6);
+        }, 0) / allStrategies.length;
+        
+        // Performance boost based on cross-site success
+        performanceBoost = Math.min(0.25, (globalWinRate - 0.6) * 0.5); // Up to 25% boost
+      }
+      
+      if (aiSystemPerformance.length > 0) {
+        // Additional boost from AI system performance across sites
+        const aiWinRate = aiSystemPerformance.reduce((sum: number, ai: any) => sum + (ai.global_win_rate || 0.6), 0) / aiSystemPerformance.length;
+        performanceBoost += Math.min(0.15, (aiWinRate - 0.6) * 0.3); // Up to 15% additional boost
+      }
+      
+      if (strategyInsights.length > 0) {
+        // Boost from specific learning insights
+        const insightBoost = strategyInsights.reduce((sum, insight) => sum + insight.confidence, 0) / strategyInsights.length;
+        performanceBoost += Math.min(0.1, (insightBoost - 0.5) * 0.4); // Up to 10% insight boost
+      }
+      
+      // Market condition multipliers
+      let conditionMultiplier = 1.0;
+      if (intelligence) {
+        // Boost for favorable market conditions
+        if (intelligence.regime.regime === 'trending_up' && intelligence.momentum.momentum > 0.5) {
+          conditionMultiplier = 1.1;
+        } else if (intelligence.regime.regime === 'trending_down' && intelligence.momentum.momentum < -0.5) {
+          conditionMultiplier = 1.1;
+        } else if (intelligence.regime.volatility_level === 'low' && intelligence.momentum.trend_strength > 70) {
+          conditionMultiplier = 1.05;
+        }
+      }
+      
+      const finalPerformanceBoost = performanceBoost * conditionMultiplier;
+      
+      return {
+        globalWinRate,
+        performanceBoost: finalPerformanceBoost,
+        totalTrades,
+        strategyCount: allStrategies.length,
+        aiSystemsCount: aiSystemPerformance.length,
+        learningInsights: strategyInsights.length,
+        conditionMultiplier,
+        crossSiteEnabled: true,
+        enhancementLevel: 'UNIFIED_STRATEGY_INTELLIGENCE'
+      };
+      
+    } catch (error) {
+      // Return neutral enhancement if consolidation fails
+      return {
+        globalWinRate: 0.6,
+        performanceBoost: 0,
+        totalTrades: 0,
+        strategyCount: 0,
+        aiSystemsCount: 0,
+        learningInsights: 0,
+        conditionMultiplier: 1.0,
+        crossSiteEnabled: false,
+        enhancementLevel: 'STANDALONE'
+      };
     }
   }
 }

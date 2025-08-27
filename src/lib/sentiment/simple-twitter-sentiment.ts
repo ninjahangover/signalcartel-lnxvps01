@@ -1,7 +1,10 @@
 /**
  * Simple Twitter Sentiment Analyzer
  * Phase 1: Keyword-based sentiment analysis for crypto mentions
+ * Enhanced with Multi-Instance Data Consolidation
  */
+
+import consolidatedDataService from '../consolidated-ai-data-service.js';
 
 export interface SimpleSentimentScore {
   symbol: string;
@@ -950,6 +953,120 @@ export class SimpleTwitterSentiment {
     const boost = 1.0 + (sentimentStrength * sentiment.confidence * maxBoost);
     
     return Math.min(boost, 1.0 + maxBoost); // Cap the maximum boost
+  }
+  
+  /**
+   * Enhanced sentiment calculation with cross-site insights
+   */
+  async calculateEnhancedSentimentBoost(
+    sentiment: SimpleSentimentScore,
+    maxBoost: number = 0.2
+  ): Promise<{ boost: number; crossSiteEnhancement: any }> {
+    try {
+      console.log(`   🌐 SENTIMENT CROSS-SITE: Analyzing sentiment patterns across all sites for ${sentiment.symbol}...`);
+      
+      // Get base boost from local sentiment
+      const baseBoost = this.calculateSentimentBoost(sentiment, maxBoost);
+      
+      // Get cross-site sentiment insights
+      const crossSiteEnhancement = await this.enhanceWithCrossSiteSentimentData(sentiment);
+      
+      // Apply cross-site sentiment patterns
+      const crossSiteMultiplier = 1 + crossSiteEnhancement.sentimentConsensusBoost;
+      const enhancedBoost = Math.min(1.0 + maxBoost * 1.5, baseBoost * crossSiteMultiplier);
+      
+      console.log(`   🌐 Sentiment Cross-Site ✅ Consensus: ${(crossSiteEnhancement.sentimentConsensus * 100).toFixed(1)}%, Historical Accuracy: ${(crossSiteEnhancement.historicalAccuracy * 100).toFixed(1)}%`);
+      
+      return {
+        boost: enhancedBoost,
+        crossSiteEnhancement
+      };
+      
+    } catch (error) {
+      // Fallback to base boost if cross-site fails
+      return {
+        boost: this.calculateSentimentBoost(sentiment, maxBoost),
+        crossSiteEnhancement: {
+          sentimentConsensus: 0.5,
+          sentimentConsensusBoost: 0,
+          historicalAccuracy: 0.5,
+          crossSiteEnabled: false
+        }
+      };
+    }
+  }
+  
+  /**
+   * Cross-Site Sentiment Pattern Enhancement
+   */
+  private async enhanceWithCrossSiteSentimentData(sentiment: SimpleSentimentScore): Promise<any> {
+    try {
+      // Get market condition insights for sentiment correlation
+      const marketInsights = await consolidatedDataService.getMarketConditionInsights(sentiment.symbol);
+      
+      // Get learning insights specifically for sentiment patterns
+      const sentimentInsights = await consolidatedDataService.getLearningInsights(
+        'sentiment_pattern',
+        sentiment.symbol,
+        0.6 // Minimum confidence for sentiment insights
+      );
+      
+      // Get best AI systems for current sentiment conditions
+      const sentimentDirection = sentiment.score > 0.1 ? 'bullish' : sentiment.score < -0.1 ? 'bearish' : 'neutral';
+      const bestAIForSentiment = await consolidatedDataService.getBestAIForMarketCondition(
+        sentiment.symbol,
+        0.02, // Low volatility for sentiment analysis
+        sentimentDirection
+      );
+      
+      // Calculate sentiment consensus across sites
+      let sentimentConsensus = 0.5; // Neutral default
+      let historicalAccuracy = 0.5; // Default accuracy
+      let consensusBoost = 0;
+      
+      if (sentimentInsights.length > 0) {
+        // Calculate sentiment consensus from cross-site patterns
+        sentimentConsensus = sentimentInsights.reduce((sum, insight) => sum + insight.confidence, 0) / sentimentInsights.length;
+        
+        // Boost based on sentiment pattern strength
+        consensusBoost += Math.min(0.1, (sentimentConsensus - 0.5) * 0.3);
+      }
+      
+      if (marketInsights.length > 0) {
+        // Historical sentiment accuracy from market insights
+        historicalAccuracy = Math.min(0.95, marketInsights.length * 0.01 + 0.5);
+        consensusBoost += Math.min(0.05, (historicalAccuracy - 0.5) * 0.2);
+      }
+      
+      if (bestAIForSentiment.length > 0) {
+        // Additional boost for historically successful sentiment-based AI
+        const avgSentimentAI = bestAIForSentiment.reduce((sum: number, ai: any) => sum + (ai.global_win_rate || 0), 0) / bestAIForSentiment.length;
+        consensusBoost += Math.min(0.05, (avgSentimentAI - 0.5) * 0.15);
+      }
+      
+      return {
+        sentimentConsensus,
+        sentimentConsensusBoost: consensusBoost,
+        historicalAccuracy,
+        sentimentPatterns: sentimentInsights.length,
+        marketCorrelations: marketInsights.length,
+        aiSystems: bestAIForSentiment.length,
+        crossSiteEnabled: true,
+        enhancementLevel: 'MULTI_SOURCE_SENTIMENT'
+      };
+      
+    } catch (error) {
+      return {
+        sentimentConsensus: 0.5,
+        sentimentConsensusBoost: 0,
+        historicalAccuracy: 0.5,
+        sentimentPatterns: 0,
+        marketCorrelations: 0,
+        aiSystems: 0,
+        crossSiteEnabled: false,
+        enhancementLevel: 'STANDALONE'
+      };
+    }
   }
 }
 

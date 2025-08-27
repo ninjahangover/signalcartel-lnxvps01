@@ -12,6 +12,7 @@
 
 import { BaseStrategySignal, SentimentEnhancedSignal, UniversalSentimentEnhancer } from './sentiment/universal-sentiment-enhancer';
 import { quantumForgeOrderBookAI, OrderBookAISignal } from './quantum-forge-orderbook-ai';
+import consolidatedDataService from './consolidated-ai-data-service.js';
 
 export interface MultiLayerAISignal {
   // Original Strategy Signal (Layer 1)
@@ -150,9 +151,14 @@ export class QuantumForgeMultiLayerAI {
       
       console.log(`   Layer 3 ✅ Order Book: ${orderBookSignal.microstructureScore.toFixed(1)} microstructure, ${orderBookSignal.liquidityQuality} liquidity`);
       
+      // CROSS-SITE DATA ENHANCEMENT: Multi-Instance Intelligence
+      console.log(`   🌐 CROSS-SITE ENHANCEMENT: Leveraging multi-instance data...`);
+      const crossSiteEnhancement = await this.enhanceWithCrossSiteData(signal);
+      console.log(`   🌐 Cross-Site ✅ AI Performance: ${crossSiteEnhancement.aiPerformanceBoost.toFixed(1)}x, Strategy Win Rate: ${(crossSiteEnhancement.strategyWinRate * 100).toFixed(1)}%`);
+      
       // LAYER 4: Final Fusion Engine
-      console.log(`   Layer 4 ⚡ Running Final Fusion Engine...`);
-      const finalDecision = this.runFusionEngine(signal, sentimentSignal, orderBookSignal, effectiveConfig);
+      console.log(`   Layer 4 ⚡ Running Final Fusion Engine with Cross-Site Intelligence...`);
+      const finalDecision = this.runFusionEngine(signal, sentimentSignal, orderBookSignal, crossSiteEnhancement, effectiveConfig);
       
       // Cross-Layer Analysis
       const layerAgreement = this.analyzeLeyerAgreement(sentimentSignal, orderBookSignal);
@@ -212,6 +218,7 @@ export class QuantumForgeMultiLayerAI {
     originalSignal: BaseStrategySignal,
     sentimentSignal: SentimentEnhancedSignal,
     orderBookSignal: OrderBookAISignal,
+    crossSiteEnhancement: any,
     config: MultiLayerConfig
   ) {
     // Calculate weighted confidence
@@ -225,8 +232,9 @@ export class QuantumForgeMultiLayerAI {
       orderBookConfidence * config.orderBookWeight
     );
     
-    // Calculate total boost from all layers
-    const totalBoost = sentimentSignal.confidenceModifier + orderBookSignal.aiConfidenceBoost;
+    // Calculate total boost from all layers including cross-site enhancement
+    const crossSiteBoost = crossSiteEnhancement.confidenceBoost || 0;
+    const totalBoost = sentimentSignal.confidenceModifier + orderBookSignal.aiConfidenceBoost + crossSiteBoost;
     const finalConfidence = Math.min(0.95, Math.max(0.05, weightedConfidence + totalBoost));
     
     // Determine final action
@@ -430,6 +438,67 @@ export class QuantumForgeMultiLayerAI {
       averageProcessingTime: undefined,
       successRate: undefined
     };
+  }
+  
+  /**
+   * Cross-Site Data Enhancement - Multi-Instance Intelligence
+   */
+  private async enhanceWithCrossSiteData(signal: BaseStrategySignal): Promise<any> {
+    try {
+      // Get unified strategy performance across all sites
+      const strategyPerformance = await consolidatedDataService.getUnifiedStrategyPerformance(
+        signal.strategy || 'unknown',
+        signal.symbol
+      );
+      
+      // Get AI system comparison data
+      const aiComparison = await consolidatedDataService.getAISystemComparison();
+      
+      // Get market condition insights
+      const marketInsights = await consolidatedDataService.getMarketConditionInsights(signal.symbol);
+      
+      // Calculate performance boosts from consolidated data
+      const strategyWinRate = strategyPerformance.length > 0 
+        ? strategyPerformance.reduce((sum: number, perf: any) => sum + (perf.win_rate || 0), 0) / strategyPerformance.length
+        : 0.5; // Default if no data
+        
+      const aiPerformanceBoost = aiComparison.length > 0
+        ? Math.min(2.0, aiComparison.reduce((sum: number, ai: any) => sum + (ai.global_win_rate || 1.0), 0) / aiComparison.length)
+        : 1.0; // Default multiplier
+        
+      const marketConditionMultiplier = marketInsights.length > 0 ? 1.1 : 1.0;
+      
+      // Calculate final confidence boost (0-20% boost potential)
+      const confidenceBoost = Math.min(0.2, 
+        (strategyWinRate > 0.6 ? 0.05 : 0) +
+        (aiPerformanceBoost > 1.2 ? 0.05 : 0) +
+        (marketConditionMultiplier > 1.0 ? 0.05 : 0) +
+        (strategyPerformance.length > 10 ? 0.05 : 0) // Data volume bonus
+      );
+      
+      return {
+        strategyWinRate,
+        aiPerformanceBoost,
+        marketConditionMultiplier,
+        confidenceBoost,
+        dataVolume: strategyPerformance.length,
+        crossSiteEnabled: true,
+        enhancementLevel: 'MULTI_INSTANCE_INTELLIGENCE'
+      };
+      
+    } catch (error) {
+      console.log(`   🌐 Cross-Site Enhancement unavailable: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // Return neutral enhancement if consolidation fails
+      return {
+        strategyWinRate: 0.5,
+        aiPerformanceBoost: 1.0,
+        marketConditionMultiplier: 1.0,
+        confidenceBoost: 0,
+        dataVolume: 0,
+        crossSiteEnabled: false,
+        enhancementLevel: 'STANDALONE'
+      };
+    }
   }
 }
 
