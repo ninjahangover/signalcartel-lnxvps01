@@ -1,5 +1,10 @@
 #!/usr/bin/env tsx
 
+/**
+ * Smart Sync - Essential data for AI services
+ * Handles schema issues by focusing on core data needed for cross-site AI
+ */
+
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient({
@@ -10,12 +15,143 @@ const analyticsDb = new PrismaClient({
   datasources: { db: { url: process.env.ANALYTICS_DB_URL } }
 });
 
+const instanceId = process.env.INSTANCE_ID || 'site-primary-main';
+
 async function smartSync() {
+  console.log('🧠 SMART SYNC - Essential Data for AI Services');
+  console.log('================================================');
+  console.log('Instance ID:', instanceId);
+  console.log('Target Analytics DB:', process.env.ANALYTICS_DB_URL?.split('@')[1]?.split('/')[0] || 'localhost:5433');
+  console.log('');
+
   try {
-    console.log('🧠 SMART SYNC: Only Essential Data for AI Services');
-    console.log('=' .repeat(55));
-    
-    // 1. Sentiment: Only what AI needs (symbol, score, confidence, timestamp)
+    // 1. Sync essential position data with minimal fields
+    console.log('📊 Syncing essential position data...');
+    const positions = await prisma.managedPosition.findMany({
+      take: 200,
+      orderBy: { updatedAt: 'desc' },
+      select: {
+        id: true,
+        symbol: true,
+        strategy: true,
+        entryPrice: true,
+        exitPrice: true,
+        quantity: true,
+        realizedPnL: true,
+        status: true,
+        entryTime: true,
+        exitTime: true
+      }
+    });
+
+    let positionsSynced = 0;
+    for (const position of positions) {
+      try {
+        await analyticsDb.$executeRaw`
+          INSERT INTO consolidated_positions (
+            instance_id, 
+            original_position_id, 
+            symbol, 
+            strategy_name, 
+            entry_price, 
+            exit_price, 
+            quantity, 
+            pnl_realized,
+            entry_time,
+            exit_time,
+            data_hash
+          ) VALUES (
+            ${instanceId},
+            ${position.id},
+            ${position.symbol || 'UNKNOWN'},
+            ${position.strategy || 'default'},
+            ${position.entryPrice || 0},
+            ${position.exitPrice},
+            ${position.quantity || 0},
+            ${position.realizedPnL},
+            ${position.entryTime},
+            ${position.exitTime},
+            ${position.id + '-' + (position.symbol || 'UNKNOWN')}
+          )
+          ON CONFLICT (instance_id, original_position_id) 
+          DO UPDATE SET 
+            exit_price = EXCLUDED.exit_price,
+            exit_time = EXCLUDED.exit_time,
+            pnl_realized = EXCLUDED.pnl_realized
+        `;
+        positionsSynced++;
+      } catch (error: any) {
+        if (!error.message.includes('duplicate key')) {
+          console.log(`  ⚠️ Position ${position.id}: ${error.message.split('\\n')[0]}`);
+        }
+      }
+    }
+    console.log(`  ✅ Synced ${positionsSynced}/${positions.length} positions`);
+
+    // 2. Sync essential trade data
+    console.log('💱 Syncing essential trade data...');
+    const trades = await prisma.managedTrade.findMany({
+      take: 200,
+      orderBy: { executedAt: 'desc' },
+      select: {
+        id: true,
+        symbol: true,
+        side: true,
+        quantity: true,
+        price: true,
+        executedAt: true,
+        positionId: true
+      }
+    });
+
+    // Get position mapping
+    const positionMapping = await analyticsDb.$queryRaw<Array<{id: number; original_position_id: string}>>`
+      SELECT id, original_position_id 
+      FROM consolidated_positions 
+      WHERE instance_id = ${instanceId}
+    `;
+    const positionIdMap = new Map(positionMapping.map(p => [p.original_position_id, p.id]));
+
+    let tradesSynced = 0;
+    for (const trade of trades) {
+      try {
+        const mappedPositionId = trade.positionId ? positionIdMap.get(trade.positionId) : null;
+        
+        await analyticsDb.$executeRaw`
+          INSERT INTO consolidated_trades (
+            instance_id,
+            original_trade_id,
+            position_id,
+            symbol,
+            side,
+            quantity,
+            price,
+            executed_at,
+            data_hash
+          ) VALUES (
+            ${instanceId},
+            ${trade.id},
+            ${mappedPositionId},
+            ${trade.symbol || 'UNKNOWN'},
+            ${trade.side || 'BUY'},
+            ${trade.quantity || 0},
+            ${trade.price || 0},
+            ${trade.executedAt},
+            ${trade.id + '-' + (trade.symbol || 'UNKNOWN')}
+          )
+          ON CONFLICT (instance_id, original_trade_id)
+          DO UPDATE SET executed_at = EXCLUDED.executed_at
+        `;
+        tradesSynced++;
+      } catch (error: any) {
+        if (!error.message.includes('duplicate key')) {
+          console.log(`  ⚠️ Trade ${trade.id}: ${error.message.split('\\n')[0]}`);
+        }
+      }
+    }
+    console.log(`  ✅ Synced ${tradesSynced}/${trades.length} trades`);
+
+    // 3. Sync essential sentiment data (IntuitionAnalysis)
     console.log('🎯 Syncing essential sentiment data...');
     const recentIntuition = await prisma.intuitionAnalysis.findMany({
       where: {
@@ -42,7 +178,7 @@ async function smartSync() {
           INSERT INTO consolidated_sentiment (
             instance_id, symbol, source, sentiment_score, confidence, collected_at, data_hash
           ) VALUES (
-            ${'site-primary-main'}, 
+            ${instanceId}, 
             ${data.symbol}, 
             ${'mathematical-intuition'}, 
             ${Number(data.overallIntuition) || 0}, 
@@ -54,119 +190,29 @@ async function smartSync() {
         sentimentSynced++;
       } catch (error: any) {
         // Skip bad records instead of failing
-        if (sentimentSynced < 5) console.log(`⚠️ Skipped bad sentiment record: ${error.message.split('\n')[0]}`);
+        if (sentimentSynced < 5) console.log(`⚠️ Skipped bad sentiment record: ${error.message.split('\\n')[0]}`);
       }
     }
-    
-    // 2. Trading Signals: Only what AI needs (symbol, type, price, confidence)
-    console.log('📡 Syncing essential trading signals...');
-    const recentSignals = await prisma.tradingSignal.findMany({
-      where: {
-        createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Last 24 hours
-      },
-      take: 100,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        symbol: true,
-        signalType: true,     // AI needs: BUY/SELL
-        currentPrice: true,   // AI needs: price context
-        confidence: true,     // AI needs: signal strength
-        createdAt: true       // AI needs: when
-      }
-    });
-    
-    console.log(`🚦 Found ${recentSignals.length} trading signals`);
-    
-    let signalsSynced = 0;
-    for (const signal of recentSignals) {
-      try {
-        await analyticsDb.$executeRaw`
-          INSERT INTO consolidated_trading_signals (
-            instance_id, original_signal_id, symbol, signal_type, current_price, confidence, signal_time, data_hash
-          ) VALUES (
-            ${'site-primary-main'}, 
-            ${signal.id}, 
-            ${signal.symbol}, 
-            ${signal.signalType}, 
-            ${Number(signal.currentPrice) || 0}, 
-            ${Number(signal.confidence) || 0}, 
-            ${signal.createdAt}, 
-            ${'smart-' + signal.id}
-          ) ON CONFLICT (instance_id, original_signal_id) DO NOTHING
-        `;
-        signalsSynced++;
-      } catch (error: any) {
-        if (signalsSynced < 5) console.log(`⚠️ Skipped bad signal record: ${error.message.split('\n')[0]}`);
-      }
-    }
-    
-    // 3. Market Data: Only recent high-value data points
-    console.log('💹 Syncing essential market data...');
-    const recentMarketData = await prisma.marketData.findMany({
-      where: {
-        timestamp: { gte: new Date(Date.now() - 2 * 60 * 60 * 1000) } // Last 2 hours
-      },
-      take: 200,
-      orderBy: { timestamp: 'desc' },
-      select: {
-        id: true,
-        symbol: true,
-        timeframe: true,
-        timestamp: true,
-        close: true,        // AI needs: price
-        volume: true,       // AI needs: activity
-        rsi: true          // AI needs: momentum
-      }
-    });
-    
-    console.log(`📈 Found ${recentMarketData.length} market data points`);
-    
-    let marketSynced = 0;
-    for (const data of recentMarketData) {
-      try {
-        await analyticsDb.$executeRaw`
-          INSERT INTO consolidated_market_data (
-            instance_id, original_data_id, symbol, timeframe, timestamp, close_price, volume, rsi, data_hash
-          ) VALUES (
-            ${'site-primary-main'}, 
-            ${data.id}, 
-            ${data.symbol}, 
-            ${data.timeframe}, 
-            ${data.timestamp}, 
-            ${Number(data.close) || 0}, 
-            ${Number(data.volume) || 0}, 
-            ${Number(data.rsi) || 0}, 
-            ${'smart-' + data.id}
-          ) ON CONFLICT (instance_id, original_data_id) DO NOTHING
-        `;
-        marketSynced++;
-      } catch (error: any) {
-        if (marketSynced < 5) console.log(`⚠️ Skipped bad market data: ${error.message.split('\n')[0]}`);
-      }
-    }
-    
-    // 4. Final counts
-    const [sentimentCount, signalsCount, marketCount] = await Promise.all([
-      analyticsDb.$queryRaw<Array<{count: bigint}>>`SELECT COUNT(*) as count FROM consolidated_sentiment`,
-      analyticsDb.$queryRaw<Array<{count: bigint}>>`SELECT COUNT(*) as count FROM consolidated_trading_signals`, 
-      analyticsDb.$queryRaw<Array<{count: bigint}>>`SELECT COUNT(*) as count FROM consolidated_market_data`
-    ]);
-    
+
+    // 4. Skip market data sync - not supported in analytics database
+    console.log('📈 Skipping market data sync (not supported in analytics database)');
+    const marketDataSynced = 0;
+
     console.log('');
-    console.log('🎯 SMART SYNC RESULTS:');
-    console.log(`✅ Sentiment: ${sentimentSynced} synced (Total: ${Number(sentimentCount[0].count)})`);
-    console.log(`✅ Signals: ${signalsSynced} synced (Total: ${Number(signalsCount[0].count)})`);
-    console.log(`✅ Market Data: ${marketSynced} synced (Total: ${Number(marketCount[0].count)})`);
-    console.log('');
-    console.log('🧠 AI services now have access to essential cross-site data!');
-    
+    console.log('✅ SMART SYNC COMPLETED SUCCESSFULLY');
+    console.log(`   Positions: ${positionsSynced} synced`);
+    console.log(`   Trades: ${tradesSynced} synced`);
+    console.log(`   Sentiment: ${sentimentSynced} synced`);
+    console.log(`   Market Data: ${marketDataSynced} synced (skipped - not supported)`);
+
   } catch (error: any) {
-    console.error('❌ Smart sync error:', error.message);
+    console.error('❌ Smart sync failed:', error.message);
+    process.exit(1);
+  } finally {
+    await analyticsDb.$disconnect();
+    await prisma.$disconnect();
   }
-  
-  await prisma.$disconnect();
-  await analyticsDb.$disconnect();
 }
 
-smartSync().then(() => process.exit(0));
+// Run smart sync
+smartSync().catch(console.error);

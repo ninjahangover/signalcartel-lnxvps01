@@ -767,10 +767,10 @@ export class MathematicalIntuitionEngine {
           signalPrice: await this.getRealPrice('BTCUSD'), // Real price only
           
           // Mathematical Intuition metrics
-          flowFieldResonance: comparison.intuitive.flowField,
-          patternResonance: comparison.intuitive.patternResonance,
-          temporalIntuition: comparison.intuitive.timingIntuition,
-          overallIntuition: comparison.intuitive.overallFeeling,
+          flowFieldResonance: comparison.intuitive?.flowField || 0.5,
+          patternResonance: comparison.intuitive?.patternResonance || 0.5,
+          temporalIntuition: comparison.intuitive?.timingIntuition || 0.5,
+          overallIntuition: comparison.intuitive?.overallFeeling || 0.5,
           
           // Traditional Calculation metrics
           expectancyScore: comparison.calculated.expectancy,

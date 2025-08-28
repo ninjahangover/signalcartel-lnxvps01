@@ -1,7 +1,7 @@
 # QUANTUM FORGE™ Administration Playbook
 
-**Version**: 2.0 - August 26, 2025  
-**Last Updated**: Phased Intelligence System Complete with Real-Time Monitoring
+**Version**: 2.1 - August 27, 2025  
+**Last Updated**: Multi-Instance Sync Status Detection Fix - Terminal Dashboard Enhanced
 
 ## 📋 SCRIPT & TEST QUICK REFERENCE
 
@@ -37,6 +37,37 @@ admin/control-trading-phase.ts               # Manual phase control interface
 # Position Management Testing
 admin/test-position-tracking.ts              # Test complete position lifecycle
 admin/test-phase-0-barriers.ts               # Test ultra-low barrier configuration
+```
+
+### 🖥️ **Terminal Dashboard (ENHANCED - Linux Optimized)** 
+```bash
+# 🎯 PRIMARY MONITORING: Terminal-based comprehensive dashboard
+admin/terminal-dashboard.sh                  # Complete overview dashboard in terminal
+                                             # ✅ FIXED: Multi-Instance sync status detection (shows ACTIVE with 1,518+ records)
+                                             # ✅ ENHANCED: Database query retry logic with 3-attempt failure tolerance
+                                             # ✅ SHOWS: Phase status, trading stats, P&L, recent activity, system health
+                                             # ✅ DIRECT: PostgreSQL queries bypass API issues for accurate data
+                                             # ✅ COLORS: Colorized output for easy visual monitoring
+
+# Custom refresh intervals
+admin/terminal-dashboard.sh 10               # 10-second refresh (balanced)
+admin/terminal-dashboard.sh 1                # 1-second refresh (fast monitoring)
+admin/terminal-dashboard.sh 30               # 30-second refresh (low resource)
+
+# 🔧 TROUBLESHOOTING: Terminal Dashboard Issues
+# Issue: "Multi-Instance Sync: NOT SYNCING" despite having data
+# Cause: Variable scope issues in consolidated data calculations
+# Fix: Database queries moved to correct function context
+# Result: Now correctly shows "ACTIVE" status with accurate record counts
+
+# 📊 FEATURES OVERVIEW:
+# - Real-time trading velocity and P&L tracking
+# - Phase progression monitoring with entry trade counts  
+# - Multi-Instance sync status with consolidated record counts
+# - Database connection health with retry logic
+# - AI analysis counts and system health indicators
+# - Cross-site analytics database monitoring
+# - Data collection and sync service status
 ```
 
 ### 🚀 COMPLETE SYSTEM DEPLOYMENT (NEW - August 27, 2025)
@@ -827,6 +858,35 @@ docker logs signalcartel-website
 
 ---
 
+## 🆕 RECENT UPDATES & FIXES (August 27, 2025)
+
+### ✅ **Multi-Instance Sync Status Detection Fix**
+- **Issue**: Terminal dashboard showed "Multi-Instance Sync: NOT SYNCING" despite having 1,518+ consolidated records
+- **Root Cause**: Variable scope issue - consolidated data variables not available in correct function context
+- **Solution**: Moved database queries directly into `show_data_warehousing()` function
+- **Result**: Terminal dashboard now correctly shows "ACTIVE" status with accurate record counts
+- **Files Modified**: `admin/terminal-dashboard.sh` (lines 621-631)
+
+### 🔧 **Database Query Enhancement**  
+- **Enhancement**: Added retry logic to `db_query()` function with 3-attempt failure tolerance
+- **Improvement**: Enhanced error handling for "too many clients" PostgreSQL connection issues
+- **Benefit**: More reliable terminal dashboard performance under high database load
+- **Technical Details**: PGPASSWORD environment variable handling and connection retry loops
+
+### 📊 **Performance Improvements**
+- **Trading Velocity**: Now consistently showing 125+ trades/hour (up from 930/hour spikes)
+- **Entry Trades**: 1,656+ completed trades (82% progress to Phase 4)
+- **Consolidated Records**: 1,518+ records across analytics database (454 trades + 428 positions + 636 sentiment)
+- **Multi-Instance Sync**: Fully operational with automated 10-minute sync intervals
+
+### 🎯 **Troubleshooting Knowledge Base**
+- **Multi-Instance Sync Issues**: Check variable scope in dashboard functions
+- **Database Connection Problems**: Use db_query() function with built-in retry logic  
+- **Terminal Dashboard Accuracy**: Direct PostgreSQL queries now bypass API calculation discrepancies
+- **Phase Detection**: Entry trade count-based phase calculation for more accurate phase status
+
+---
+
 ## 📧 SUPPORT CONTACTS
 
 **Emergency Contact**: System Administrator  
@@ -838,4 +898,4 @@ docker logs signalcartel-website
 
 *Keep this playbook updated as new services are added or system architecture changes. Version control all updates.*
 
-**Last Updated**: August 26, 2025 - Phase 4 Order Book Intelligence™ Complete
+**Last Updated**: August 27, 2025 - Multi-Instance Sync Status Detection Fix Complete

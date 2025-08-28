@@ -1,5 +1,10 @@
 #!/usr/bin/env tsx
 
+/**
+ * Targeted Sentiment Sync - IntuitionAnalysis data (most important) 
+ * Focuses on Mathematical Intuition Engine results which are the core AI sentiment
+ */
+
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient({
@@ -10,77 +15,132 @@ const analyticsDb = new PrismaClient({
   datasources: { db: { url: process.env.ANALYTICS_DB_URL } }
 });
 
-async function syncIntuitionAsSignals() {
+const instanceId = process.env.INSTANCE_ID || 'site-primary-main';
+
+async function syncIntuitionSignals() {
   try {
-    console.log('📡 SYNCING INTUITION ANALYSIS AS TRADING SIGNALS');
-    console.log('=' .repeat(50));
-    
-    // Get recent IntuitionAnalysis records (these are the real trading signals)
-    const signals = await prisma.intuitionAnalysis.findMany({
+    console.log('🧠 TARGETED SENTIMENT SYNC - IntuitionAnalysis Data');
+    console.log('==================================================');
+    console.log('Instance ID:', instanceId);
+    console.log('Focus: Mathematical Intuition Engine results');
+    console.log('');
+
+    // 1. Sync IntuitionAnalysis data (the real sentiment system)
+    console.log('🔮 Syncing Mathematical Intuition Analysis data...');
+    const intuitionData = await prisma.intuitionAnalysis.findMany({
       where: {
         analysisTime: { gte: new Date(Date.now() - 2 * 60 * 60 * 1000) } // Last 2 hours
       },
-      take: 200,
+      take: 500, // Get more records since this is the primary AI system
       orderBy: { analysisTime: 'desc' },
       select: {
         id: true,
         symbol: true,
+        strategy: true,
         signalType: true,
         originalConfidence: true,
-        signalPrice: true,
+        overallIntuition: true,
+        expectancyScore: true,
         recommendation: true,
+        marketConditions: true,
         analysisTime: true,
-        expectancyScore: true
+        flowFieldResonance: true,
+        patternResonance: true,
+        temporalIntuition: true,
+        signalPrice: true
       }
     });
-    
-    console.log(`📊 Found ${signals.length} intuition trading signals to sync`);
-    
-    let synced = 0;
-    for (const signal of signals) {
+
+    console.log(`📊 Found ${intuitionData.length} IntuitionAnalysis records`);
+
+    let sentimentSynced = 0;
+    for (const analysis of intuitionData) {
       try {
+        // Sync as sentiment data (our working JSONB fix)
         await analyticsDb.$executeRaw`
-          INSERT INTO consolidated_trading_signals (
+          INSERT INTO consolidated_sentiment (
             instance_id,
-            original_signal_id,
             symbol,
-            signal_type,
-            current_price,
+            source,
+            sentiment_score,
             confidence,
-            signal_time,
-            data_hash,
-            last_updated
+            raw_data,
+            collected_at,
+            data_hash
           ) VALUES (
-            ${'site-primary-main'},
-            ${signal.id},
-            ${signal.symbol},
-            ${signal.recommendation || signal.signalType || 'ANALYZE'},
-            ${Number(signal.signalPrice) || 0},
-            ${Number(signal.originalConfidence) || 0},
-            ${signal.analysisTime},
-            ${'intuition-' + signal.id},
-            NOW()
-          ) ON CONFLICT (instance_id, original_signal_id) DO NOTHING
+            ${instanceId},
+            ${analysis.symbol},
+            ${'mathematical-intuition'},
+            ${analysis.overallIntuition || 0.5},
+            ${analysis.originalConfidence || 0.5},
+            ${JSON.stringify({
+              strategy: analysis.strategy,
+              signalType: analysis.signalType,
+              expectancyScore: analysis.expectancyScore,
+              recommendation: analysis.recommendation,
+              marketConditions: analysis.marketConditions,
+              flowFieldResonance: analysis.flowFieldResonance,
+              patternResonance: analysis.patternResonance,
+              temporalIntuition: analysis.temporalIntuition
+            })}::jsonb,
+            ${analysis.analysisTime},
+            ${analysis.id + '-' + analysis.symbol + '-intuition'}
+          )
+          ON CONFLICT (instance_id, data_hash)
+          DO UPDATE SET 
+            sentiment_score = EXCLUDED.sentiment_score,
+            confidence = EXCLUDED.confidence,
+            raw_data = EXCLUDED.raw_data
         `;
-        synced++;
+
+        // Also sync as trading signals (cleaner approach from remote)
+        if (analysis.recommendation || analysis.signalType) {
+          await analyticsDb.$executeRaw`
+            INSERT INTO consolidated_trading_signals (
+              instance_id,
+              original_signal_id,
+              symbol,
+              signal_type,
+              current_price,
+              confidence,
+              signal_time,
+              data_hash,
+              last_updated
+            ) VALUES (
+              ${instanceId},
+              ${analysis.id},
+              ${analysis.symbol},
+              ${analysis.recommendation || analysis.signalType || 'ANALYZE'},
+              ${Number(analysis.signalPrice) || 0},
+              ${Number(analysis.originalConfidence) || 0},
+              ${analysis.analysisTime},
+              ${'intuition-signal-' + analysis.id},
+              NOW()
+            ) ON CONFLICT (instance_id, original_signal_id) DO NOTHING
+          `;
+        }
+        
+        sentimentSynced++;
       } catch (error: any) {
-        if (synced < 5) {
-          console.log(`⚠️ Skip signal ${signal.symbol}:`, error.message.split('\n')[0]);
+        if (sentimentSynced < 5) {
+          console.log(`⚠️ Skip ${analysis.symbol}:`, error.message.split('\n')[0]);
         }
       }
     }
-    
-    // Get final count
-    const totalResult = await analyticsDb.$queryRaw<Array<{count: bigint}>>`
-      SELECT COUNT(*) as count FROM consolidated_trading_signals
-    `;
+
+    // Get final counts
+    const [sentimentCount, signalsCount] = await Promise.all([
+      analyticsDb.$queryRaw<Array<{count: bigint}>>`SELECT COUNT(*) as count FROM consolidated_sentiment WHERE instance_id = ${instanceId}`,
+      analyticsDb.$queryRaw<Array<{count: bigint}>>`SELECT COUNT(*) as count FROM consolidated_trading_signals WHERE instance_id = ${instanceId}`
+    ]);
     
     console.log('');
-    console.log('🎯 INTUITION SIGNALS SYNC COMPLETE:');
-    console.log(`✅ Synced: ${synced} new signals`);
-    console.log(`📊 Total: ${Number(totalResult[0].count)} trading signals available to AI`);
+    console.log('🎯 INTUITION SYNC COMPLETE:');
+    console.log(`✅ Synced: ${sentimentSynced} new records`);
+    console.log(`📊 Sentiment Total: ${Number(sentimentCount[0].count)} records`);
+    console.log(`📡 Signals Total: ${Number(signalsCount[0].count)} trading signals`);
     console.log('');
-    console.log('🧠 AI services now have access to real-time trading signals!');
+    console.log('🧠 AI services now have access to Mathematical Intuition data!');
     
   } catch (error: any) {
     console.error('❌ Sync error:', error.message);
@@ -90,4 +150,4 @@ async function syncIntuitionAsSignals() {
   await analyticsDb.$disconnect();
 }
 
-syncIntuitionAsSignals().then(() => process.exit(0));
+syncIntuitionSignals().then(() => process.exit(0));
