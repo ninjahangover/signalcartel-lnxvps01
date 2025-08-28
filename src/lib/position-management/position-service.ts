@@ -15,6 +15,7 @@ export class PositionService {
     this.prisma = new PrismaClient();
     this.positionManager = new PositionManager(this.prisma);
     this.initializeDefaultExitStrategies();
+    this.loadExitStrategiesFromDatabase();
   }
   
   /**
@@ -58,6 +59,33 @@ export class PositionService {
     });
     
     console.log('🎯 Default exit strategies initialized for all trading strategies');
+  }
+
+  /**
+   * Load exit strategies from database
+   */
+  private async loadExitStrategiesFromDatabase() {
+    try {
+      const exitStrategies = await this.prisma.exitStrategy.findMany();
+      
+      for (const strategy of exitStrategies) {
+        this.positionManager.registerExitStrategy({
+          strategy: strategy.strategy,
+          symbol: strategy.symbol || undefined,
+          takeProfitPercent: strategy.takeProfitPercent || undefined,
+          stopLossPercent: strategy.stopLossPercent || undefined,
+          trailingStopPercent: strategy.trailingStopPercent || undefined,
+          maxHoldMinutes: strategy.maxHoldMinutes || undefined,
+          reverseSignalExit: strategy.reverseSignalExit || false
+        });
+        
+        console.log(`📋 Loaded exit strategy from database: ${strategy.strategy}`);
+      }
+      
+      console.log(`✅ Loaded ${exitStrategies.length} exit strategies from database`);
+    } catch (error) {
+      console.error('❌ Error loading exit strategies from database:', error);
+    }
   }
   
   /**
