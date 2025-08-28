@@ -9,6 +9,7 @@ import { phaseManager, PhaseConfig } from './quantum-forge-phase-config';
 import { positionService } from './position-management/position-service';
 import { webhookClient } from './webhooks/webhook-client';
 import { quantumForgeLiveExecutor } from './live-trading/quantum-forge-live-executor';
+import { TradingTelemetry, TradingTracing } from './telemetry/trading-metrics';
 // import { telegramAlerts } from './telegram-alert-service';
 
 interface TechnicalIndicators {
@@ -358,6 +359,13 @@ class StrategyExecutionEngine {
     // 🎯 QUANTUM FORGE™ PHASE MANAGEMENT - Check current phase configuration
     const currentPhase = await phaseManager.getCurrentPhase();
     const phaseProgress = await phaseManager.getProgressToNextPhase();
+    
+    // Record current phase metrics
+    TradingTelemetry.recordPhaseTransition(
+      currentPhase.phase,
+      currentPhase.phase, // Same phase, just updating metrics
+      phaseProgress.currentTrades
+    );
     
     console.log(`📊 QUANTUM FORGE™ Phase ${currentPhase.phase}: ${currentPhase.name}`);
     console.log(`   Progress: ${phaseProgress.currentTrades}/${currentPhase.maxTrades} trades (${phaseProgress.progress}% to next phase)`);
@@ -1348,7 +1356,32 @@ class StrategyExecutionEngine {
           
           // Process signal through position management for proper entry→exit tracking
           console.log('📊 Processing signal through Position Management System...');
-          const result = await positionService.processSignal(tradingSignal);
+          const result = await TradingTracing.executeWithTracing(
+            'position.process_signal',
+            async (span) => {
+              span.setAttributes({
+                'trading.symbol': symbol,
+                'trading.action': action,
+                'trading.confidence': confidence,
+                'trading.price': currentPrice,
+                'trading.strategy': this.getStrategyName(strategyId)
+              });
+              return await positionService.processSignal(tradingSignal);
+            },
+            {
+              'trading.signal_type': action,
+              'quantum_forge.ai_systems': this.getAISystemsUsed(tradingSignal).join(',')
+            }
+          );
+          
+          // Record telemetry for trade execution
+          TradingTelemetry.recordTrade(
+            symbol,
+            this.getStrategyName(strategyId),
+            action,
+            confidence,
+            result.position?.unrealizedPnL
+          );
           
           if (result.action === 'opened' || result.action === 'closed' || result.action === 'updated') {
             console.log(`✅ QUANTUM FORGE™ POSITION MANAGED:`, {

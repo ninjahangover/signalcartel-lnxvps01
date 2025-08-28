@@ -4,10 +4,14 @@
  * Now integrated with Position Management System for real P&L tracking
  */
 
+// Initialize OpenTelemetry instrumentation first
+import './src/lib/telemetry/instrumentation';
+
 import StrategyExecutionEngine from './src/lib/strategy-execution-engine';
 import { StrategyService } from './src/lib/strategy-service';
 import { PineScriptParser } from './src/lib/pine-parser';
 import { positionService } from './src/lib/position-management/position-service';
+import { TradingTelemetry } from './src/lib/telemetry/trading-metrics';
 
 interface DatabaseStrategyConfig {
   id: string;
@@ -341,11 +345,30 @@ if (require.main === module) {
         console.log('\n✅ Database strategies loaded successfully!');
         console.log('🔄 System is now running with live market data...');
         
+        // Initialize position monitoring metrics
+        setInterval(async () => {
+          try {
+            const positions = await positionService.getActivePositions();
+            TradingTelemetry.updatePositionCount(positions.length, 'active');
+            
+            const totalPnL = positions.reduce((sum, pos) => sum + (pos.unrealizedPnL || 0), 0);
+            TradingTelemetry.updatePnL(totalPnL, totalPnL);
+          } catch (error) {
+            console.error('Error updating position metrics:', error);
+          }
+        }, 30000); // Update every 30 seconds
+
         // Keep process running to monitor trades
         console.log('\n📊 Monitoring for trade signals... (Press Ctrl+C to stop)');
-        process.on('SIGINT', () => {
+        console.log('📊 OpenTelemetry metrics being sent to SigNoz monitoring');
+        process.on('SIGINT', async () => {
           console.log('\n⏹️ Shutting down strategy execution engine...');
           StrategyExecutionEngine.getInstance().stopEngine();
+          
+          // Graceful telemetry shutdown
+          const { shutdownTelemetry } = await import('./src/lib/telemetry/opentelemetry-config');
+          await shutdownTelemetry();
+          
           process.exit(0);
         });
       } else {

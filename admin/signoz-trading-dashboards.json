@@ -1,0 +1,641 @@
+{
+  "dashboards": [
+    {
+      "title": "QUANTUM FORGE™ Executive Trading Dashboard",
+      "description": "High-level overview of trading performance and system status",
+      "tags": ["quantum-forge", "executive", "trading"],
+      "panels": [
+        {
+          "title": "Current Total P&L",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "quantum_forge_pnl_total",
+              "legendFormat": "Total P&L"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "red", "value": null},
+                  {"color": "yellow", "value": 0},
+                  {"color": "green", "value": 100}
+                ]
+              },
+              "unit": "currencyUSD"
+            }
+          },
+          "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0}
+        },
+        {
+          "title": "Active Positions",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "quantum_forge_position_count",
+              "legendFormat": "Active Positions"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "unit": "short"
+            }
+          },
+          "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0}
+        },
+        {
+          "title": "Current QUANTUM FORGE™ Phase",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "quantum_forge_phase_current",
+              "legendFormat": "Phase"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {"options": {"0": {"text": "Phase 0 - Data Collection"}}, "type": "value"},
+                {"options": {"1": {"text": "Phase 1 - Basic Sentiment"}}, "type": "value"},
+                {"options": {"2": {"text": "Phase 2 - Multi-Source"}}, "type": "value"},
+                {"options": {"3": {"text": "Phase 3 - Order Book AI"}}, "type": "value"},
+                {"options": {"4": {"text": "Phase 4 - Full QUANTUM FORGE™"}}, "type": "value"}
+              ],
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "steps": [
+                  {"color": "red", "value": null},
+                  {"color": "yellow", "value": 1},
+                  {"color": "blue", "value": 2},
+                  {"color": "purple", "value": 3},
+                  {"color": "green", "value": 4}
+                ]
+              }
+            }
+          },
+          "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0}
+        },
+        {
+          "title": "Trading Velocity (24h)",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "rate(quantum_forge_trades_per_minute[5m]) * 60",
+              "legendFormat": "Trades per hour"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "unit": "short"
+            }
+          },
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6}
+        },
+        {
+          "title": "AI Confidence Distribution",
+          "type": "histogram",
+          "targets": [
+            {
+              "expr": "quantum_forge_ai_confidence",
+              "legendFormat": "AI Confidence"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "continuous-GrYlRd"}
+            }
+          },
+          "gridPos": {"h": 8, "w": 6, "x": 12, "y": 6}
+        },
+        {
+          "title": "P&L Trend (24h)",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "quantum_forge_pnl_current",
+              "legendFormat": "Current P&L"
+            },
+            {
+              "expr": "quantum_forge_pnl_total",
+              "legendFormat": "Total P&L"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "unit": "currencyUSD"
+            }
+          },
+          "gridPos": {"h": 8, "w": 18, "x": 0, "y": 14}
+        }
+      ]
+    },
+    {
+      "title": "QUANTUM FORGE™ AI Systems Performance",
+      "description": "Detailed performance metrics for all AI systems",
+      "tags": ["quantum-forge", "ai", "performance"],
+      "panels": [
+        {
+          "title": "Mathematical Intuition Accuracy vs Traditional",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "mathematical_intuition_accuracy",
+              "legendFormat": "Mathematical Intuition"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "min": 0,
+              "max": 1,
+              "unit": "percentunit"
+            }
+          },
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+        },
+        {
+          "title": "Sentiment Source Availability",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "sentiment_source_availability",
+              "legendFormat": "Active Sources"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "steps": [
+                  {"color": "red", "value": null},
+                  {"color": "yellow", "value": 5},
+                  {"color": "green", "value": 8}
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}
+        },
+        {
+          "title": "AI Layer Processing Times",
+          "type": "heatmap",
+          "targets": [
+            {
+              "expr": "quantum_forge_ai_layer_duration",
+              "legendFormat": "{{layer}} - {{symbol}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "spectrum"},
+              "unit": "ms"
+            }
+          },
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+        },
+        {
+          "title": "Sentiment Analysis Performance",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "sentiment_analysis_duration",
+              "legendFormat": "Processing Time"
+            },
+            {
+              "expr": "sentiment_confidence_distribution",
+              "legendFormat": "Confidence Level"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"}
+            }
+          },
+          "gridPos": {"h": 8, "w": 6, "x": 12, "y": 8}
+        },
+        {
+          "title": "Order Book Analysis Duration",
+          "type": "histogram",
+          "targets": [
+            {
+              "expr": "order_book_analysis_duration",
+              "legendFormat": "Processing Time (ms)"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "continuous-BlPu"},
+              "unit": "ms"
+            }
+          },
+          "gridPos": {"h": 6, "w": 6, "x": 12, "y": 4}
+        },
+        {
+          "title": "Cross-Site Enhancement Impact",
+          "type": "gauge",
+          "targets": [
+            {
+              "expr": "cross_site_enhancement_boost",
+              "legendFormat": "Performance Boost"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "steps": [
+                  {"color": "red", "value": null},
+                  {"color": "yellow", "value": 5},
+                  {"color": "green", "value": 10}
+                ]
+              },
+              "unit": "percent",
+              "min": 0,
+              "max": 20
+            }
+          },
+          "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0}
+        }
+      ]
+    },
+    {
+      "title": "QUANTUM FORGE™ Infrastructure & System Health",
+      "description": "System performance, database, and infrastructure metrics",
+      "tags": ["quantum-forge", "infrastructure", "system"],
+      "panels": [
+        {
+          "title": "Database Connection Pool Usage",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "postgresql_connection_pool_usage",
+              "legendFormat": "Connection Pool Usage"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "unit": "percent",
+              "min": 0,
+              "max": 100
+            }
+          },
+          "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0}
+        },
+        {
+          "title": "Database Query Performance",
+          "type": "histogram",
+          "targets": [
+            {
+              "expr": "database_query_duration",
+              "legendFormat": "Query Duration (ms)"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "continuous-YlRd"},
+              "unit": "ms"
+            }
+          },
+          "gridPos": {"h": 8, "w": 8, "x": 8, "y": 0}
+        },
+        {
+          "title": "GPU Utilization",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "gpu_cuda_utilization",
+              "legendFormat": "GPU Usage"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 70},
+                  {"color": "red", "value": 90}
+                ]
+              },
+              "unit": "percent",
+              "min": 0,
+              "max": 100
+            }
+          },
+          "gridPos": {"h": 4, "w": 8, "x": 16, "y": 0}
+        },
+        {
+          "title": "GPU Memory Usage",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "gpu_memory_usage_bytes",
+              "legendFormat": "GPU Memory"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "unit": "bytes"
+            }
+          },
+          "gridPos": {"h": 4, "w": 8, "x": 16, "y": 4}
+        },
+        {
+          "title": "Cross-Site Data Sync Lag",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "data_sync_lag_seconds",
+              "legendFormat": "Sync Lag (seconds)"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "unit": "s"
+            }
+          },
+          "gridPos": {"h": 6, "w": 12, "x": 0, "y": 8}
+        },
+        {
+          "title": "Log File Sizes",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "log_file_size_bytes",
+              "legendFormat": "{{filename}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "unit": "bytes"
+            }
+          },
+          "gridPos": {"h": 6, "w": 12, "x": 12, "y": 8}
+        },
+        {
+          "title": "System Resource Overview",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "cpu_usage_percent",
+              "legendFormat": "CPU Usage"
+            },
+            {
+              "expr": "memory_usage_bytes / 1024 / 1024 / 1024",
+              "legendFormat": "Memory Usage (GB)"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"}
+            }
+          },
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 14}
+        }
+      ]
+    },
+    {
+      "title": "QUANTUM FORGE™ Trade Analysis & Positions",
+      "description": "Detailed trading activity and position analysis",
+      "tags": ["quantum-forge", "trading", "positions"],
+      "panels": [
+        {
+          "title": "Trades by Strategy",
+          "type": "piechart",
+          "targets": [
+            {
+              "expr": "sum by (strategy) (quantum_forge_trades_total)",
+              "legendFormat": "{{strategy}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"}
+            }
+          },
+          "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0}
+        },
+        {
+          "title": "Trades by Symbol",
+          "type": "piechart",
+          "targets": [
+            {
+              "expr": "sum by (symbol) (quantum_forge_trades_total)",
+              "legendFormat": "{{symbol}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"}
+            }
+          },
+          "gridPos": {"h": 8, "w": 8, "x": 8, "y": 0}
+        },
+        {
+          "title": "Trades by Confidence Range",
+          "type": "barchart",
+          "targets": [
+            {
+              "expr": "sum by (confidence_range) (quantum_forge_trades_total)",
+              "legendFormat": "{{confidence_range}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "continuous-GrYlRd"}
+            }
+          },
+          "gridPos": {"h": 8, "w": 8, "x": 16, "y": 0}
+        },
+        {
+          "title": "Active Positions by Symbol",
+          "type": "barchart",
+          "targets": [
+            {
+              "expr": "sum by (symbol) (quantum_forge_position_count{status=\"active\"})",
+              "legendFormat": "{{symbol}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"}
+            }
+          },
+          "gridPos": {"h": 6, "w": 12, "x": 0, "y": 8}
+        },
+        {
+          "title": "Phase Transitions Over Time",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "quantum_forge_phase_transitions_total",
+              "legendFormat": "From Phase {{from_phase}} to {{to_phase}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-spectrum"}
+            }
+          },
+          "gridPos": {"h": 6, "w": 12, "x": 12, "y": 8}
+        },
+        {
+          "title": "Trade Volume by Signal Type",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "sum by (signal_type) (rate(quantum_forge_trades_per_minute[5m]))",
+              "legendFormat": "{{signal_type}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"}
+            }
+          },
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 14}
+        }
+      ]
+    }
+  ],
+  "alertRules": [
+    {
+      "alert": "TradingEngineStopped",
+      "expr": "rate(quantum_forge_trades_per_minute[15m]) == 0",
+      "for": "15m",
+      "labels": {
+        "severity": "critical",
+        "system": "quantum-forge"
+      },
+      "annotations": {
+        "summary": "QUANTUM FORGE™ Trading Engine has stopped generating trades",
+        "description": "No trades have been executed in the last 15 minutes"
+      }
+    },
+    {
+      "alert": "NegativePnLThreshold",
+      "expr": "quantum_forge_pnl_total < -1000",
+      "for": "1m",
+      "labels": {
+        "severity": "critical",
+        "system": "quantum-forge"
+      },
+      "annotations": {
+        "summary": "QUANTUM FORGE™ P&L has dropped below -$1000 threshold",
+        "description": "Total P&L: ${{$value}}"
+      }
+    },
+    {
+      "alert": "DatabaseConnectionFailure",
+      "expr": "postgresql_connection_pool_usage == 0",
+      "for": "5m",
+      "labels": {
+        "severity": "critical",
+        "system": "infrastructure"
+      },
+      "annotations": {
+        "summary": "PostgreSQL database connection failure",
+        "description": "Database connection pool usage is 0%"
+      }
+    },
+    {
+      "alert": "PhaseRegression",
+      "expr": "quantum_forge_phase_current < quantum_forge_phase_current offset 1h",
+      "for": "1m",
+      "labels": {
+        "severity": "high",
+        "system": "quantum-forge"
+      },
+      "annotations": {
+        "summary": "QUANTUM FORGE™ phase has regressed",
+        "description": "Current phase {{$value}} is lower than previous phase"
+      }
+    },
+    {
+      "alert": "LowTradingVelocity",
+      "expr": "rate(quantum_forge_trades_per_minute[30m]) < 10",
+      "for": "30m",
+      "labels": {
+        "severity": "warning",
+        "system": "quantum-forge"
+      },
+      "annotations": {
+        "summary": "Low trading velocity detected",
+        "description": "Trading rate: {{$value}} trades per minute"
+      }
+    },
+    {
+      "alert": "AISystemDegradation",
+      "expr": "mathematical_intuition_accuracy < 0.6",
+      "for": "1h",
+      "labels": {
+        "severity": "warning",
+        "system": "ai"
+      },
+      "annotations": {
+        "summary": "AI system performance degradation",
+        "description": "Mathematical Intuition accuracy: {{$value}}"
+      }
+    },
+    {
+      "alert": "SentimentSourceOutages",
+      "expr": "sentiment_source_availability < 5",
+      "for": "10m",
+      "labels": {
+        "severity": "warning",
+        "system": "ai"
+      },
+      "annotations": {
+        "summary": "Multiple sentiment sources unavailable",
+        "description": "Only {{$value}} sentiment sources available"
+      }
+    },
+    {
+      "alert": "HighGPUTemperature",
+      "expr": "gpu_temperature_celsius > 80",
+      "for": "5m",
+      "labels": {
+        "severity": "warning",
+        "system": "infrastructure"
+      },
+      "annotations": {
+        "summary": "High GPU temperature detected",
+        "description": "GPU temperature: {{$value}}°C"
+      }
+    },
+    {
+      "alert": "DataSyncLagHigh",
+      "expr": "data_sync_lag_seconds > 300",
+      "for": "5m",
+      "labels": {
+        "severity": "warning",
+        "system": "infrastructure"
+      },
+      "annotations": {
+        "summary": "High cross-site data synchronization lag",
+        "description": "Sync lag: {{$value}} seconds"
+      }
+    }
+  ]
+}
