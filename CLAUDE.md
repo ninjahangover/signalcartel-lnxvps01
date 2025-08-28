@@ -333,12 +333,24 @@ tail -f /tmp/signalcartel-enhanced-logs/enhanced-trading-*.log | grep -i 'cross-
 #   • Trading Signals: varies (AI-generated trading recommendations)
 
 # ═══════════════════════════════════════════════════════════════════════════════════
-# 🧠 SMART DATA SYNC PROCEDURES 
+# 🧠 RELIABLE DATA SYNC PROCEDURES (UPDATED - August 28, 2025)
 # ═══════════════════════════════════════════════════════════════════════════════════
 
-# Problem: Schema errors preventing data sync
-# Solution: Smart sync with essential fields only
+# 🚀 RECOMMENDED: Use new reliable sync script (replaces problematic automated service)
+./admin/reliable-data-sync.sh sync     # Complete sync with error handling
+./admin/reliable-data-sync.sh status   # Check current data status
+./admin/reliable-data-sync.sh verify   # Verify sync results
+./admin/reliable-data-sync.sh help     # Show usage options
 
+# ✅ BENEFITS of reliable-data-sync.sh:
+# - Avoids Prisma schema mapping errors
+# - Comprehensive error handling and logging
+# - Database connectivity checks
+# - Detailed verification and status reporting
+# - Colored output for better readability
+# - Automatic logging to /tmp/signalcartel-logs/
+
+# 🔧 FALLBACK: Manual sync commands (if script fails)
 # 1. SMART SYNC - Essential data for AI services
 ANALYTICS_DB_URL="postgresql://warehouse_user:quantum_forge_warehouse_2024@localhost:5433/signalcartel_analytics?schema=public" \
 DATABASE_URL="postgresql://warehouse_user:quantum_forge_warehouse_2024@localhost:5433/signalcartel?schema=public" \
@@ -348,11 +360,6 @@ npx tsx -r dotenv/config smart-sync.ts
 ANALYTICS_DB_URL="postgresql://warehouse_user:quantum_forge_warehouse_2024@localhost:5433/signalcartel_analytics?schema=public" \
 DATABASE_URL="postgresql://warehouse_user:quantum_forge_warehouse_2024@localhost:5433/signalcartel?schema=public" \
 npx tsx -r dotenv/config sync-intuition-signals.ts
-
-# 3. QUICK COLLECTION SYNC - Data collection metadata
-ANALYTICS_DB_URL="postgresql://warehouse_user:quantum_forge_warehouse_2024@localhost:5433/signalcartel_analytics?schema=public" \
-DATABASE_URL="postgresql://warehouse_user:quantum_forge_warehouse_2024@localhost:5433/signalcartel?schema=public" \
-npx tsx -r dotenv/config quick-sync-test.ts
 
 # 4. MANUAL DATABASE VERIFICATION
 echo "=== CONSOLIDATED DATA STATUS ==="
@@ -396,8 +403,8 @@ npx tsx -r dotenv/config smart-sync.ts
 # 1. Daily monitoring routine
 ./admin/terminal-dashboard.sh 10    # Check overall system health
 
-# 2. Weekly sync verification  
-npx tsx -r dotenv/config smart-sync.ts    # Push any missing data
+# 2. Weekly sync verification (RECOMMENDED - replaces problematic automated service)
+./admin/reliable-data-sync.sh sync    # New reliable sync script (avoids Prisma errors)
 
 # 3. Monthly consolidation check
 docker exec signalcartel-warehouse psql -U warehouse_user -d signalcartel_analytics -c "

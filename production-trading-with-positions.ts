@@ -111,7 +111,9 @@ class ProductionTradingEngine {
         price: marketData.price,
         confidence: Math.random() * 0.6 + 0.2, // Base 20-80% confidence
         timestamp: marketData.timestamp,
-        source: 'technical-analysis'
+        source: 'technical-analysis',
+        strategy: 'phase-' + phase.phase + '-ai-technical-analysis',
+        reason: 'Technical analysis signal based on market data'
       };
 
       // 🔥 PHASE 0: Raw signals only (ultra-low barriers)
@@ -199,8 +201,12 @@ class ProductionTradingEngine {
           // Order Book Intelligence
           if (phase.features.orderBookEnabled) {
             const { quantumForgeOrderBookAI } = await import('./src/lib/quantum-forge-orderbook-ai');
-            const orderBookSignal = await quantumForgeOrderBookAI.analyzeOrderBookIntelligence(workingSignal);
-            workingSignal = orderBookSignal;
+            const orderBookAnalysis = await quantumForgeOrderBookAI.enhanceSignalWithOrderBookAI(workingSignal);
+            workingSignal = {
+              ...workingSignal,
+              confidence: orderBookAnalysis.enhancedConfidence,
+              aiBoost: (workingSignal.aiBoost || 0) + orderBookAnalysis.aiConfidenceBoost
+            };
             aiSystemsUsed.push('order-book-intelligence');
           }
 
@@ -240,7 +246,7 @@ class ProductionTradingEngine {
             skipOnConflict: phase.features.requireMultiLayerConsensus
           });
           
-          confidence = multiLayerResult.confidence;
+          confidence = multiLayerResult.finalDecision?.confidence || multiLayerResult.confidence || baseSignal.confidence;
           enhancedSignal = multiLayerResult;
           aiSystemsUsed = ['quantum-forge-multi-layer-ai', 'consensus-validation'];
           log(`🚀 Phase 4: QUANTUM FORGE™ consensus confidence ${(confidence * 100).toFixed(1)}%`);

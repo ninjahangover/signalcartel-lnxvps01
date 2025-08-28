@@ -145,16 +145,28 @@ export class QuantumForgeMultiLayerAI {
       
       console.log(`   Layer 2 ✅ Sentiment: ${sentimentSignal.sentimentScore.toFixed(3)} score, ${(sentimentSignal.confidenceModifier * 100).toFixed(1)}% boost`);
       
+      // LAYER 2.5: Mathematical Intuition Engine
+      console.log(`   Layer 2.5 🧠 Processing Mathematical Intuition Engine...`);
+      const { mathIntuitionEngine } = await import('./mathematical-intuition-engine');
+      const mathematicalResult = await mathIntuitionEngine.runParallelAnalysis(sentimentSignal, signal);
+      
+      // Fixed property mappings based on ParallelTradeComparison interface
+      console.log(`INTUITIVE RESULT: ${mathematicalResult.intuitive?.decision || 'UNKNOWN'} (feeling: ${parseFloat(mathematicalResult.intuitive?.overallFeeling || 0).toFixed(3)})`);
+      console.log(`💾 Stored parallel analysis: ${mathematicalResult.id || 'unknown'}`);
+      console.log(`🔄 PARALLEL RESULT: Calculated=${mathematicalResult.calculated?.decision || 'UNKNOWN'}, Intuitive=${mathematicalResult.intuitive?.decision || 'UNKNOWN'}, Final=${mathematicalResult.execution?.finalDecision || 'UNKNOWN'}`);
+      // Temporarily simplified for debugging
+      console.log(`🧠 INTUITION vs TRADITIONAL ANALYSIS: Analysis complete`);
+      
       // LAYER 3: Order Book AI
       console.log(`   Layer 3 🔬 Processing Order Book AI...`);
       const orderBookSignal = await quantumForgeOrderBookAI.enhanceSignalWithOrderBookAI(signal);
       
-      console.log(`   Layer 3 ✅ Order Book: ${orderBookSignal.microstructureScore.toFixed(1)} microstructure, ${orderBookSignal.liquidityQuality} liquidity`);
+      console.log(`   Layer 3 ✅ Order Book: ${(orderBookSignal.microstructureScore || 0).toFixed(1)} microstructure, ${orderBookSignal.liquidityQuality || 'unknown'} liquidity`);
       
       // CROSS-SITE DATA ENHANCEMENT: Multi-Instance Intelligence
       console.log(`   🌐 CROSS-SITE ENHANCEMENT: Leveraging multi-instance data...`);
       const crossSiteEnhancement = await this.enhanceWithCrossSiteData(signal);
-      console.log(`   🌐 Cross-Site ✅ AI Performance: ${crossSiteEnhancement.aiPerformanceBoost.toFixed(1)}x, Strategy Win Rate: ${(crossSiteEnhancement.strategyWinRate * 100).toFixed(1)}%`);
+      console.log(`   🌐 Cross-Site ✅ AI Performance: ${(crossSiteEnhancement.aiPerformanceBoost || 1).toFixed(1)}x, Strategy Win Rate: ${((crossSiteEnhancement.strategyWinRate || 0.5) * 100).toFixed(1)}%`);
       
       // LAYER 4: Final Fusion Engine
       console.log(`   Layer 4 ⚡ Running Final Fusion Engine with Cross-Site Intelligence...`);

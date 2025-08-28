@@ -485,13 +485,48 @@ show_system_health() {
         echo -e "  ${WHITE}Overall Health:${NC}     ${health_color}${system_health^^}${NC}"
         echo -e "  ${WHITE}AI Analyses:${NC}        ${PURPLE}$(format_number $intuition_analyses)${NC}"
         
-        # Check if trading system is running (multiple possible processes)
+        # Trading engine status with real problem detection
+        TRADING_STATUS="UNKNOWN"
+        TRADING_ISSUES=""
+        
         if pgrep -f "production-trading-with-positions.ts" > /dev/null || \
            pgrep -f "load-database-strategies.ts" > /dev/null || \
            pgrep -f "strategy-execution-engine.ts" > /dev/null; then
-            echo -e "  ${WHITE}Trading Engine:${NC}     ${GREEN}RUNNING${NC}"
+            
+            # Process is running, but check if it's actually trading
+            RECENT_TRADES=$(docker exec signalcartel-warehouse psql -U warehouse_user -d signalcartel -t -c "
+                SELECT COUNT(*) 
+                FROM \"ManagedTrade\" 
+                WHERE \"executedAt\" > NOW() - INTERVAL '1 hour'
+            " 2>/dev/null | tr -d ' ' || echo "0")
+            
+            if [[ "$RECENT_TRADES" -eq 0 ]]; then
+                TRADING_STATUS="${YELLOW}IDLE${NC}"
+                TRADING_ISSUES="No trades in last hour (may be waiting for signals)"
+            else
+                # Check for errors in recent log activity
+                if [[ -f "/tmp/signalcartel-logs/production-trading.log" ]]; then
+                    ERROR_COUNT=$(tail -100 /tmp/signalcartel-logs/production-trading.log 2>/dev/null | grep -i "error\|failed\|exception" | wc -l || echo "0")
+                    if [[ "$ERROR_COUNT" -gt 5 ]]; then
+                        TRADING_STATUS="${RED}ERRORS${NC}"
+                        TRADING_ISSUES="$ERROR_COUNT errors in recent logs"
+                    else
+                        TRADING_STATUS="${GREEN}ACTIVE${NC}"
+                    fi
+                else
+                    TRADING_STATUS="${GREEN}RUNNING${NC}"
+                fi
+            fi
         else
-            echo -e "  ${WHITE}Trading Engine:${NC}     ${RED}STOPPED${NC}"
+            TRADING_STATUS="${RED}STOPPED${NC}"
+            TRADING_ISSUES="No trading process detected"
+        fi
+        
+        if [[ -n "$TRADING_ISSUES" ]]; then
+            echo -e "  ${WHITE}Trading Engine:${NC}     $TRADING_STATUS"
+            echo -e "  ${WHITE}└─ Issue:${NC}          ${RED}$TRADING_ISSUES${NC}"
+        else
+            echo -e "  ${WHITE}Trading Engine:${NC}     $TRADING_STATUS"
         fi
         
         # Check database connection
@@ -651,11 +686,82 @@ show_analytics_status() {
         echo -e "  ${WHITE}Enhanced Signals:${NC}        ${CYAN}$(format_number $FALLBACK_ENHANCED_SIGNALS)${NC}"
         echo -e "  ${WHITE}Learning Insights:${NC}       ${PURPLE}$(format_number $FALLBACK_LEARNING_INSIGHTS)${NC}"
         
-        # Multi-instance sync service status
+        # Multi-instance sync service status with real problem detection
+        SYNC_STATUS="UNKNOWN"
+        SYNC_ISSUES=""
+        
+        # Check if any sync process is running
         if pgrep -f "automated-data-sync-service.ts" > /dev/null; then
-            echo -e "  ${WHITE}Data Sync Service:${NC}    ${GREEN}RUNNING${NC}"
+            SYNC_PROCESS="automated"
+            SYNC_STATUS="${YELLOW}DEPRECATED${NC}"
+            SYNC_ISSUES="Replace with reliable-data-sync.sh"
+        elif pgrep -f "simple-sync-daemon.sh" > /dev/null; then
+            SYNC_PROCESS="simple"
+            SYNC_STATUS="${YELLOW}DEPRECATED${NC}"
+            SYNC_ISSUES="Replace with reliable-data-sync.sh"
+        elif pgrep -f "stable-data-sync-service.ts" > /dev/null; then
+            SYNC_PROCESS="stable"
+            SYNC_STATUS="${YELLOW}DEPRECATED${NC}"
+            SYNC_ISSUES="Replace with reliable-data-sync.sh"
         else
-            echo -e "  ${WHITE}Data Sync Service:${NC}    ${RED}STOPPED${NC}"
+            SYNC_STATUS="${BLUE}MANUAL${NC}"
+            SYNC_ISSUES="Use ./admin/reliable-data-sync.sh sync"
+        fi
+        
+        # If a process is running, check if it's actually working
+        if [[ -n "$SYNC_PROCESS" ]]; then
+            # Check sync heartbeat table for accurate sync status
+            LAST_PING=$(docker exec signalcartel-warehouse psql -U warehouse_user -d signalcartel_analytics -t -c "
+                SELECT EXTRACT(EPOCH FROM (NOW() - last_ping)) 
+                FROM sync_heartbeat 
+                WHERE service_name = 'data-sync-service'
+            " 2>/dev/null | tr -d ' ' || echo "3600")
+            
+            # Get ping count for additional status info
+            PING_COUNT=$(docker exec signalcartel-warehouse psql -U warehouse_user -d signalcartel_analytics -t -c "
+                SELECT ping_count 
+                FROM sync_heartbeat 
+                WHERE service_name = 'data-sync-service'
+            " 2>/dev/null | tr -d ' ' || echo "0")
+            
+            # Convert to integer, default to old if query fails
+            LAST_PING=${LAST_PING:-3600}
+            LAST_PING=${LAST_PING%.*}  # Remove decimal part if present
+            PING_COUNT=${PING_COUNT:-0}
+            
+            if [[ "$LAST_PING" -gt 1800 ]]; then  # More than 30 minutes
+                SYNC_STATUS="${RED}STALE${NC}"
+                SYNC_ISSUES="Last ping: $((LAST_PING/60))min ago (process running but not pinging)"
+            elif [[ "$LAST_PING" -gt 900 ]]; then  # More than 15 minutes  
+                SYNC_STATUS="${YELLOW}WARNING${NC}"
+                SYNC_ISSUES="Last ping: $((LAST_PING/60))min ago (may be stuck)"
+            else
+                # Check if we're actually syncing new data regularly
+                RECENT_SENTIMENT=$(docker exec signalcartel-warehouse psql -U warehouse_user -d signalcartel_analytics -t -c "
+                    SELECT COUNT(*) 
+                    FROM consolidated_sentiment 
+                    WHERE instance_id = 'site-primary-main' 
+                    AND collected_at > NOW() - INTERVAL '2 hours'
+                " 2>/dev/null | tr -d ' ' || echo "0")
+                
+                if [[ "$RECENT_SENTIMENT" -eq 0 ]]; then
+                    SYNC_STATUS="${YELLOW}NO DATA${NC}"
+                    SYNC_ISSUES="Process running but no recent data synced (ping #$PING_COUNT)"
+                else
+                    SYNC_STATUS="${GREEN}ACTIVE${NC}"
+                    SYNC_ISSUES="Heartbeat ping #$PING_COUNT (${LAST_PING}s ago)"
+                fi
+            fi
+        fi
+        
+        if [[ "$SYNC_STATUS" == *"ACTIVE"* ]]; then
+            echo -e "  ${WHITE}Data Sync Service:${NC}    $SYNC_STATUS"
+            echo -e "  ${WHITE}└─ Status:${NC}           ${GREEN}$SYNC_ISSUES${NC}"
+        elif [[ -n "$SYNC_ISSUES" ]]; then
+            echo -e "  ${WHITE}Data Sync Service:${NC}    $SYNC_STATUS"
+            echo -e "  ${WHITE}└─ Issue:${NC}            ${RED}$SYNC_ISSUES${NC}"
+        else
+            echo -e "  ${WHITE}Data Sync Service:${NC}    $SYNC_STATUS"
         fi
     fi
     echo ""
