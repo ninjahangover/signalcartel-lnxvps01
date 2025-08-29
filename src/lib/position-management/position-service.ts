@@ -58,6 +58,24 @@ export class PositionService {
       reverseSignalExit: true
     });
     
+    // Phase-0 AI Strategy - Very aggressive for data collection
+    this.positionManager.registerExitStrategy({
+      strategy: 'phase-0-ai-basic-technical',
+      takeProfitPercent: 0.01, // 1% profit target (quick wins)
+      stopLossPercent: 0.005,  // 0.5% stop loss (tight risk control)
+      maxHoldMinutes: 5,       // Exit after 5 minutes max (very quick)
+      reverseSignalExit: false
+    });
+    
+    // Phase-1 AI Strategy - Conservative
+    this.positionManager.registerExitStrategy({
+      strategy: 'phase-1-ai-basic-technical',
+      takeProfitPercent: 0.015, // 1.5% profit target
+      stopLossPercent: 0.01,   // 1% stop loss
+      maxHoldMinutes: 15,      // Exit after 15 minutes max
+      reverseSignalExit: false
+    });
+    
     console.log('🎯 Default exit strategies initialized for all trading strategies');
   }
 

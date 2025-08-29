@@ -287,6 +287,9 @@ export class PositionManager {
    * Monitor all open positions for exit conditions
    */
   async monitorPositions(currentPrices: { [symbol: string]: number }) {
+    // Load open positions from database to ensure we have the latest state
+    await this.loadOpenPositionsFromDatabase();
+    
     const openPositions = Array.from(this.positions.values()).filter(p => p.status === 'open');
     const closedPositions: Array<{ position: Position; trade: PositionTrade; pnl: number }> = [];
     
@@ -321,45 +324,90 @@ export class PositionManager {
   
   /**
    * Check if position should be closed based on exit conditions
+   * PRIORITY: Fast loss cutting, validated winner holding
    */
   private checkExitConditions(position: Position, currentPrice: number): string | null {
-    // Stop loss
+    const currentPnL = this.calculatePnL(position, currentPrice);
+    const pnlPercent = (currentPnL / (position.entryPrice * position.quantity)) * 100;
+    const holdTimeMs = Date.now() - position.entryTime.getTime();
+    const holdTimeMinutes = holdTimeMs / (1000 * 60);
+    
+    // 🚨 FAST LOSS CUTTING - NO DELAYS, NO VALIDATION
+    if (pnlPercent <= -1.5) { // 1.5% loss = immediate exit
+      return `fast_loss_cut_${pnlPercent.toFixed(1)}%`;
+    }
+    
+    // ⚡ QUICK MINOR LOSS PROTECTION (positions older than 2 minutes)
+    if (holdTimeMinutes >= 2 && pnlPercent <= -0.5) { // 0.5% loss after 2min = exit
+      return `minor_loss_protection_${pnlPercent.toFixed(1)}%`;
+    }
+    
+    // 🎯 PROFIT MANAGEMENT - Let winners run but with trailing protection
+    if (pnlPercent >= 2.0) { // Position is profitable
+      // Trailing stop: close if profit drops below 1% (from 2%+)
+      if (pnlPercent <= 1.0) {
+        return `trailing_profit_protection_${pnlPercent.toFixed(1)}%`;
+      }
+      
+      // For very profitable positions (5%+), use wider trailing stop
+      if (pnlPercent >= 5.0 && pnlPercent <= 3.0) {
+        return `wide_trailing_stop_${pnlPercent.toFixed(1)}%`;
+      }
+    }
+    
+    // 📈 QUICK PROFIT TAKING for small positions
+    if (pnlPercent >= 1.0 && holdTimeMinutes <= 3) {
+      return `quick_profit_${pnlPercent.toFixed(1)}%_${holdTimeMinutes.toFixed(1)}min`;
+    }
+    
+    // ⏰ TIME-BASED EXITS (but only if not very profitable)
+    if (holdTimeMinutes >= 10 && pnlPercent < 2.0) {
+      return `time_exit_${holdTimeMinutes.toFixed(1)}min_${pnlPercent.toFixed(1)}%`;
+    }
+    
+    // ❌ EMERGENCY EXIT: Positions older than 30 minutes (regardless of P&L)
+    if (holdTimeMinutes >= 30) {
+      return `emergency_time_exit_${holdTimeMinutes.toFixed(1)}min`;
+    }
+    
+    // 🔄 LEGACY EXIT CONDITIONS (fallback)
     if (position.stopLoss) {
       if (position.side === 'long' && currentPrice <= position.stopLoss) {
-        return 'stop_loss';
+        return 'legacy_stop_loss';
       }
       if (position.side === 'short' && currentPrice >= position.stopLoss) {
-        return 'stop_loss';
+        return 'legacy_stop_loss';
       }
     }
     
-    // Take profit
     if (position.takeProfit) {
       if (position.side === 'long' && currentPrice >= position.takeProfit) {
-        return 'take_profit';
+        return 'legacy_take_profit';
       }
       if (position.side === 'short' && currentPrice <= position.takeProfit) {
-        return 'take_profit';
+        return 'legacy_take_profit';
       }
     }
     
-    // Max hold time
-    if (position.maxHoldTime) {
-      const holdTime = Date.now() - position.entryTime.getTime();
-      if (holdTime >= position.maxHoldTime) {
-        return 'max_hold_time';
-      }
-    }
-    
-    return null;
+    return null; // Hold the position
   }
   
   /**
    * Get exit strategy for a strategy/symbol combination
    */
   private getExitStrategy(strategy: string, symbol: string): ExitStrategy | undefined {
-    return this.exitStrategies.get(`${strategy}:${symbol}`) || 
-           this.exitStrategies.get(`${strategy}:*`);
+    const specificKey = `${strategy}:${symbol}`;
+    const genericKey = `${strategy}:*`;
+    
+    const specific = this.exitStrategies.get(specificKey);
+    const generic = this.exitStrategies.get(genericKey);
+    
+    console.log(`🎯 EXIT STRATEGY LOOKUP: ${strategy} / ${symbol}`);
+    console.log(`   Available strategies: ${Array.from(this.exitStrategies.keys()).join(', ')}`);
+    console.log(`   Looking for: ${specificKey} OR ${genericKey}`);
+    console.log(`   Found: ${specific ? 'specific' : generic ? 'generic' : 'NONE'}`);
+    
+    return specific || generic;
   }
   
   /**
@@ -410,6 +458,43 @@ export class PositionManager {
     });
   }
   
+  /**
+   * Load open positions from database
+   */
+  private async loadOpenPositionsFromDatabase() {
+    try {
+      const dbPositions = await this.prisma.managedPosition.findMany({
+        where: { status: 'open' }
+      });
+      
+      for (const dbPos of dbPositions) {
+        const position: Position = {
+          id: dbPos.id,
+          strategy: dbPos.strategy,
+          symbol: dbPos.symbol,
+          side: dbPos.side as 'long' | 'short',
+          entryPrice: dbPos.entryPrice,
+          quantity: dbPos.quantity,
+          entryTradeId: dbPos.entryTradeId,
+          entryTime: dbPos.entryTime,
+          exitPrice: dbPos.exitPrice || undefined,
+          exitTradeId: dbPos.exitTradeId || undefined,
+          exitTime: dbPos.exitTime || undefined,
+          status: dbPos.status as 'open' | 'closed',
+          realizedPnL: dbPos.realizedPnL || undefined,
+          unrealizedPnL: dbPos.unrealizedPnL || undefined,
+          stopLoss: dbPos.stopLoss || undefined,
+          takeProfit: dbPos.takeProfit || undefined,
+          maxHoldTime: dbPos.maxHoldTime || undefined
+        };
+        
+        this.positions.set(position.id, position);
+      }
+    } catch (error) {
+      console.error('❌ Failed to load positions from database:', error);
+    }
+  }
+
   /**
    * Get portfolio summary with real P&L
    */

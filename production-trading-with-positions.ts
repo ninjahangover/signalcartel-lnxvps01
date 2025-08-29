@@ -315,7 +315,33 @@ class ProductionTradingEngine {
       
       const marketData = await Promise.race([marketDataPromise, timeoutPromise]) as any[];
       
-      // Process each market with QUANTUM FORGE™ AI analysis
+      // Build current prices map for ALL symbols
+      const currentPrices: { [symbol: string]: number } = {};
+      for (const data of marketData) {
+        currentPrices[data.symbol] = data.price;
+      }
+      
+      // 🚀 PRIORITY #1: FAST POSITION MANAGEMENT (NO AI DELAYS)
+      log(`⚡ FAST POSITION CHECK: Monitoring ${Object.keys(currentPrices).length} symbols for exits...`);
+      try {
+        const startTime = Date.now();
+        const closedPositions = await this.positionManager.monitorPositions(currentPrices);
+        const monitorTime = Date.now() - startTime;
+        
+        for (const closed of closedPositions) {
+          log(`💰 POSITION CLOSED: ${closed.position.id} | P&L: $${closed.pnl.toFixed(2)} | ${closed.pnl > 0 ? '🟢 WIN' : '🔴 LOSS'}`);
+        }
+        
+        if (closedPositions.length > 0) {
+          log(`⚡ FAST CLOSE: ${closedPositions.length} positions closed in ${monitorTime}ms`);
+        } else {
+          log(`⚡ FAST CHECK: No positions to close (${monitorTime}ms)`);
+        }
+      } catch (monitorError) {
+        log(`❌ Position monitoring failed: ${monitorError.message}`);
+      }
+
+      // SECOND: Process each market for new position openings
       for (const data of marketData) {
         const aiAnalysis = await this.shouldTrade(data, currentPhase);
         
@@ -345,23 +371,6 @@ class ProductionTradingEngine {
             });
             
             log(`✅ POSITION OPENED: ${result.position.id} | ${side.toUpperCase()} ${quantity.toFixed(6)} ${data.symbol} @ $${data.price}`);
-            
-            // Simulate some positions closing (for demo purposes)
-            if (Math.random() < 0.3) { // 30% chance to close existing position
-              const openPositions = this.positionManager.getOpenPositionsBySymbol(data.symbol);
-              if (openPositions.length > 0) {
-                const positionToClose = openPositions[0];
-                const exitPrice = data.price * (Math.random() * 0.02 + 0.99); // ±1-2% exit
-                
-                const closedPosition = await this.positionManager.closePosition(
-                  positionToClose.id,
-                  exitPrice,
-                  'manual_close'
-                );
-                
-                log(`💰 POSITION CLOSED: ${closedPosition.position.id} | P&L: $${closedPosition.pnl.toFixed(2)} | ${closedPosition.pnl > 0 ? '🟢 WIN' : '🔴 LOSS'}`);
-              }
-            }
             
           } catch (positionError) {
             log(`❌ Position error: ${positionError.message}`);

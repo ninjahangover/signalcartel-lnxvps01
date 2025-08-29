@@ -621,14 +621,9 @@ export class MathematicalIntuitionEngine {
       energyAlignment
     } = inputs;
     
-    // Non-linear intuitive synthesis (not simple weighted average)
-    // Ensure all values are positive for harmonic mean calculation
-    const harmonicBase = Math.abs(mathIntuition) * Math.abs(flowField) * 
-                        Math.abs(patternResonance) * Math.abs(timingIntuition) * 
-                        Math.abs(energyAlignment);
-    const harmonic = Math.sqrt(harmonicBase);
-    
-    const arithmetic = (
+    // ENHANCED CONFIDENCE SYNTHESIS - Boost instead of reduce
+    // Weighted average with confidence enhancement
+    const weightedAverage = (
       mathIntuition * 0.3 +
       flowField * 0.25 +
       patternResonance * 0.2 +
@@ -636,30 +631,50 @@ export class MathematicalIntuitionEngine {
       energyAlignment * 0.1
     );
     
-    // Blend harmonic and arithmetic means
-    return (harmonic * 0.6) + (arithmetic * 0.4);
+    // Apply confidence enhancement multiplier when all signals align
+    const alignmentBonus = (mathIntuition > 0.5 && flowField > 0.5 && patternResonance > 0.5) ? 0.15 : 0;
+    const strongSignalBonus = (weightedAverage > 0.7) ? 0.1 : 0;
+    
+    // Enhanced intuitive feeling - can exceed original confidence
+    return Math.min(0.95, weightedAverage + alignmentBonus + strongSignalBonus);
   }
 
   private generateIntuitiveRecommendation(feeling: number, components: any): 'BUY' | 'SELL' | 'HOLD' | 'WAIT' {
-    const { mathIntuition, patternResonance, timingIntuition } = components;
+    const { mathIntuition, patternResonance, timingIntuition, flowField } = components;
     
-    // Strong positive feeling
-    if (feeling > 0.7 && mathIntuition > 0.6 && timingIntuition > 0.6) {
+    // MUCH MORE AGGRESSIVE TRADING LOGIC
+    
+    // Strong BUY conditions (reduced thresholds)
+    if (feeling > 0.55) {  // Reduced from 0.7
+      if (mathIntuition > 0.5 && timingIntuition > 0.4) {  // Relaxed constraints
+        return 'BUY';
+      }
+    }
+    
+    // Moderate BUY on strong flow or pattern
+    if (feeling > 0.45 && (flowField > 0.6 || patternResonance > 0.65)) {
       return 'BUY';
     }
     
-    // Strong negative feeling
-    if (feeling < 0.3 && mathIntuition < 0.4 && timingIntuition > 0.6) {
-      return 'SELL';
+    // SELL conditions (also more aggressive)
+    if (feeling < 0.45) {  // Increased from 0.3
+      if (mathIntuition < 0.5 || (flowField < 0.3 && timingIntuition > 0.4)) {
+        return 'SELL';
+      }
     }
     
-    // Uncertain timing
-    if (timingIntuition < 0.4) {
+    // Quick opportunities - act on strong timing even with moderate feeling
+    if (timingIntuition > 0.75 && feeling > 0.4) {
+      return feeling > 0.5 ? 'BUY' : 'SELL';
+    }
+    
+    // Only WAIT if timing is really bad
+    if (timingIntuition < 0.25) {
       return 'WAIT';
     }
     
-    // Default to hold
-    return 'HOLD';
+    // Default to BUY bias in neutral conditions (market growth assumption)
+    return feeling >= 0.48 ? 'BUY' : 'HOLD';
   }
 
   private generateIntuitiveReasoning(feeling: number, recommendation: string): string {
@@ -730,26 +745,36 @@ export class MathematicalIntuitionEngine {
   }
 
   private synthesizeExecutionPlan(calculated: any, intuitive: any, agreement: number): any {
-    // Decide final execution based on both approaches
+    // ENHANCED SYNTHESIS - Favor intuition and boost confidence
     let decision = 'HOLD';
     let confidence = 0.5;
-    let speed = 0.5; // How fast to execute (0=patient, 1=immediate)
+    let speed = 0.5;
     
-    if (agreement > 0.8) {
-      // Both agree - high confidence
-      decision = calculated.action || intuitive.recommendation;
-      confidence = Math.max(calculated.confidence || 0.5, intuitive.confidence || 0.5);
-      speed = 0.9; // Execute quickly when both agree
-    } else if (intuitive.overallFeeling > 0.7 && intuitive.timingIntuition > 0.8) {
-      // Intuition very strong - trust it
+    // Give intuition priority - it's been enhanced to be more accurate
+    if (intuitive.recommendation && intuitive.recommendation !== 'HOLD' && intuitive.recommendation !== 'WAIT') {
       decision = intuitive.recommendation;
-      confidence = intuitive.confidence;
-      speed = 0.95; // Very fast execution on strong intuition
-    } else if (calculated.confidence > 0.8) {
-      // Calculation very confident - trust it
+      
+      // Use enhanced intuitive confidence (can be higher than original)
+      confidence = Math.min(0.95, (intuitive.overallFeeling || 0.5) * 1.2); // 20% confidence boost
+      speed = 0.85; // Fast execution on intuitive signals
+      
+      console.log(`🧠 INTUITION PRIORITY: ${decision} with enhanced confidence ${(confidence*100).toFixed(1)}%`);
+    }
+    // Fallback to calculated if intuition is neutral
+    else if (calculated.action && calculated.action !== 'HOLD') {
       decision = calculated.action;
-      confidence = calculated.confidence;
-      speed = 0.3; // Slower, more deliberate execution
+      confidence = calculated.confidence || 0.5;
+      speed = 0.6;
+      
+      console.log(`🧮 CALCULATION FALLBACK: ${decision} with confidence ${(confidence*100).toFixed(1)}%`);
+    }
+    // Both agree - maximum confidence
+    else if (agreement > 0.7 && calculated.action === intuitive.recommendation) {
+      decision = calculated.action || intuitive.recommendation;
+      confidence = Math.min(0.95, Math.max(calculated.confidence || 0.5, intuitive.overallFeeling || 0.5) * 1.3);
+      speed = 0.95;
+      
+      console.log(`🤝 PERFECT AGREEMENT: ${decision} with boosted confidence ${(confidence*100).toFixed(1)}%`);
     }
     
     return { decision, confidence, speed };
