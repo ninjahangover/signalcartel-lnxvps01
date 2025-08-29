@@ -441,42 +441,201 @@ export class MathematicalIntuitionEngine {
   }
 
   private synthesizeFlowStrength(momentum: number, volumeFlow: number, volatility: number): number {
-    // Feel the combined flow strength (intuitive synthesis)
-    const rawStrength = Math.abs(momentum) * 0.5 + volumeFlow * 0.3 + volatility * 0.2;
-    return Math.tanh(rawStrength); // Normalize to 0-1
+    // Use vector field mathematics to calculate flow strength
+    // Model as a 3D vector field where each component contributes to total flow
+    
+    // Normalize components
+    const normalizedMomentum = Math.tanh(momentum * 2); // More sensitive to momentum
+    const normalizedVolume = Math.tanh(volumeFlow);
+    const normalizedVolatility = Math.tanh(volatility * 10); // Scale volatility appropriately
+    
+    // Calculate vector magnitude in flow space
+    const vectorMagnitude = Math.sqrt(
+      Math.pow(normalizedMomentum * 0.5, 2) +
+      Math.pow(normalizedVolume * 0.3, 2) +
+      Math.pow(normalizedVolatility * 0.2, 2)
+    );
+    
+    // Apply sigmoid transformation for smooth 0-1 output
+    return 1 / (1 + Math.exp(-4 * (vectorMagnitude - 0.5)));
   }
 
   private feelResistancePoints(prices: number[]): number[] {
-    // Intuitive resistance detection - where does flow slow down?
+    // Use pivot point analysis and volume profile for resistance detection
     const resistances: number[] = [];
-    for (let i = 5; i < prices.length - 5; i++) {
-      const localMax = Math.max(...prices.slice(i-2, i+3));
-      if (prices[i] === localMax) {
-        resistances.push(prices[i]);
+    const priceFrequency = new Map<number, number>();
+    
+    // Build price frequency map (volume profile proxy)
+    const bucketSize = this.calculateOptimalBucketSize(prices);
+    prices.forEach(price => {
+      const bucket = Math.round(price / bucketSize) * bucketSize;
+      priceFrequency.set(bucket, (priceFrequency.get(bucket) || 0) + 1);
+    });
+    
+    // Find high-frequency price levels (areas of resistance)
+    const avgFrequency = Array.from(priceFrequency.values()).reduce((a, b) => a + b, 0) / priceFrequency.size;
+    priceFrequency.forEach((freq, price) => {
+      if (freq > avgFrequency * 1.5) {
+        resistances.push(price);
       }
+    });
+    
+    // Add pivot points
+    if (prices.length >= 3) {
+      const high = Math.max(...prices.slice(-20));
+      const low = Math.min(...prices.slice(-20));
+      const close = prices[prices.length - 1];
+      
+      const pivot = (high + low + close) / 3;
+      const r1 = 2 * pivot - low;
+      const r2 = pivot + (high - low);
+      const s1 = 2 * pivot - high;
+      const s2 = pivot - (high - low);
+      
+      resistances.push(r1, r2);
+      if (close < pivot) resistances.push(pivot);
     }
-    return resistances;
+    
+    // Remove duplicates and sort
+    return [...new Set(resistances.map(r => Math.round(r * 100) / 100))].sort((a, b) => a - b);
+  }
+
+  private calculateOptimalBucketSize(prices: number[]): number {
+    if (prices.length === 0) return 1;
+    const range = Math.max(...prices) - Math.min(...prices);
+    // Use Sturges' rule for optimal bin count
+    const binCount = Math.ceil(Math.log2(prices.length) + 1);
+    return range / binCount;
   }
 
   private findAccelerationZones(prices: number[], volume: number): number[] {
-    // Feel where market flow accelerates
+    // Use physics-based acceleration detection (second derivative of price)
+    if (prices.length < 5) return [];
+    
     const zones: number[] = [];
-    for (let i = 1; i < prices.length; i++) {
-      const priceChange = Math.abs(prices[i] - prices[i-1]) / prices[i-1];
-      if (priceChange > 0.01 && volume > 1000) { // Arbitrary thresholds for feeling
-        zones.push(prices[i]);
-      }
+    const accelerations: Array<{index: number, value: number, price: number}> = [];
+    
+    // Calculate price acceleration (second derivative)
+    for (let i = 2; i < prices.length - 2; i++) {
+      // Use 5-point stencil for accurate second derivative
+      const d2p = (-prices[i-2] + 16*prices[i-1] - 30*prices[i] + 16*prices[i+1] - prices[i+2]) / 12;
+      const normalizedAccel = d2p / prices[i]; // Normalize by price level
+      
+      accelerations.push({
+        index: i,
+        value: Math.abs(normalizedAccel),
+        price: prices[i]
+      });
     }
+    
+    // Find statistical outliers (acceleration zones)
+    const accelValues = accelerations.map(a => a.value);
+    const mean = accelValues.reduce((a, b) => a + b, 0) / accelValues.length;
+    const stdDev = Math.sqrt(accelValues.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / accelValues.length);
+    
+    // Zones are where acceleration exceeds 1.5 standard deviations
+    const threshold = mean + 1.5 * stdDev;
+    
+    accelerations.forEach(accel => {
+      if (accel.value > threshold) {
+        // Also check volume confirmation
+        const volumeMultiplier = Math.log1p(volume / 10000);
+        if (volumeMultiplier > 0.5) {
+          zones.push(accel.price);
+        }
+      }
+    });
+    
     return zones;
   }
 
   private measureHarmonicResonance(prices: number[]): number {
-    // Feel if market is in harmonic rhythm
+    // Use Fourier analysis to detect harmonic patterns
     if (prices.length < 20) return 0.5;
     
-    const cycles = this.detectCycles(prices);
-    const rhythmConsistency = cycles.length > 0 ? 1 / cycles.length : 0.5;
-    return Math.max(0, Math.min(1, rhythmConsistency));
+    // Detrend the data first
+    const detrended = this.detrendData(prices);
+    
+    // Perform simplified DFT to find dominant frequencies
+    const frequencies = this.performDFT(detrended);
+    
+    // Find peaks in frequency spectrum
+    const peaks = this.findFrequencyPeaks(frequencies);
+    
+    // Check for harmonic relationships (multiples of fundamental frequency)
+    if (peaks.length < 2) return 0.3;
+    
+    const fundamental = peaks[0].frequency;
+    let harmonicScore = 0;
+    
+    for (let i = 1; i < Math.min(peaks.length, 5); i++) {
+      const ratio = peaks[i].frequency / fundamental;
+      // Check if it's close to a harmonic (2x, 3x, 4x, etc.)
+      const nearestHarmonic = Math.round(ratio);
+      const harmonicError = Math.abs(ratio - nearestHarmonic);
+      
+      if (harmonicError < 0.1) {
+        harmonicScore += (1 - harmonicError * 10) * peaks[i].amplitude;
+      }
+    }
+    
+    // Normalize to 0-1 range
+    return Math.max(0, Math.min(1, harmonicScore / 2));
+  }
+
+  private detrendData(prices: number[]): number[] {
+    const n = prices.length;
+    if (n < 2) return prices;
+    
+    // Calculate linear trend
+    const indices = Array.from({length: n}, (_, i) => i);
+    const sumX = indices.reduce((a, b) => a + b, 0);
+    const sumY = prices.reduce((a, b) => a + b, 0);
+    const sumXY = indices.reduce((sum, i) => sum + i * prices[i], 0);
+    const sumX2 = indices.reduce((sum, i) => sum + i * i, 0);
+    
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+    
+    // Remove trend
+    return prices.map((price, i) => price - (slope * i + intercept));
+  }
+
+  private performDFT(data: number[]): Array<{frequency: number, amplitude: number}> {
+    const n = data.length;
+    const frequencies: Array<{frequency: number, amplitude: number}> = [];
+    
+    // Calculate DFT for first n/2 frequencies (Nyquist limit)
+    for (let k = 1; k < Math.min(n / 2, 20); k++) {
+      let real = 0;
+      let imag = 0;
+      
+      for (let t = 0; t < n; t++) {
+        const angle = -2 * Math.PI * k * t / n;
+        real += data[t] * Math.cos(angle);
+        imag += data[t] * Math.sin(angle);
+      }
+      
+      const amplitude = Math.sqrt(real * real + imag * imag) / n;
+      frequencies.push({ frequency: k, amplitude });
+    }
+    
+    return frequencies;
+  }
+
+  private findFrequencyPeaks(frequencies: Array<{frequency: number, amplitude: number}>): Array<{frequency: number, amplitude: number}> {
+    const peaks: Array<{frequency: number, amplitude: number}> = [];
+    
+    for (let i = 1; i < frequencies.length - 1; i++) {
+      if (frequencies[i].amplitude > frequencies[i-1].amplitude &&
+          frequencies[i].amplitude > frequencies[i+1].amplitude &&
+          frequencies[i].amplitude > 0.1) { // Threshold for significance
+        peaks.push(frequencies[i]);
+      }
+    }
+    
+    // Sort by amplitude
+    return peaks.sort((a, b) => b.amplitude - a.amplitude).slice(0, 5);
   }
 
   private detectCycles(prices: number[]): number[] {
@@ -504,15 +663,94 @@ export class MathematicalIntuitionEngine {
   }
 
   private feelTimeframeHarmony(marketData: any): number {
-    // Feel if different timeframes are in harmony
-    return 0.7 + (Math.random() - 0.5) * 0.6; // Placeholder - feel-based
+    // Calculate cross-timeframe correlation using real analysis
+    const prices = marketData.priceHistory || [];
+    if (prices.length < 60) return 0.5;
+    
+    // Calculate short (5-period), medium (20-period), and long (60-period) EMAs
+    const shortEMA = this.calculateEMA(prices.slice(-20), 5);
+    const mediumEMA = this.calculateEMA(prices.slice(-40), 20);
+    const longEMA = this.calculateEMA(prices, 60);
+    
+    // Check alignment: all EMAs should be in order for strong harmony
+    const currentPrice = prices[prices.length - 1];
+    const bullishAlignment = currentPrice > shortEMA && shortEMA > mediumEMA && mediumEMA > longEMA;
+    const bearishAlignment = currentPrice < shortEMA && shortEMA < mediumEMA && mediumEMA < longEMA;
+    
+    if (bullishAlignment || bearishAlignment) {
+      return 0.9; // Strong harmony across timeframes
+    }
+    
+    // Calculate correlation coefficient between timeframes
+    const shortTrend = prices.slice(-5).map((p, i) => i === 0 ? 0 : p - prices[prices.length - 6 + i]);
+    const mediumTrend = prices.slice(-20, -10).map((p, i) => i === 0 ? 0 : p - prices[prices.length - 30 + i]);
+    
+    const correlation = this.calculateCorrelation(shortTrend, mediumTrend.slice(0, shortTrend.length));
+    return Math.max(0.2, Math.min(0.9, 0.5 + correlation * 0.4));
+  }
+
+  private calculateEMA(prices: number[], period: number): number {
+    if (prices.length === 0) return 0;
+    if (prices.length < period) return prices.reduce((a, b) => a + b, 0) / prices.length;
+    
+    const multiplier = 2 / (period + 1);
+    let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
+    
+    for (let i = period; i < prices.length; i++) {
+      ema = (prices[i] - ema) * multiplier + ema;
+    }
+    
+    return ema;
+  }
+
+  private calculateCorrelation(x: number[], y: number[]): number {
+    const n = Math.min(x.length, y.length);
+    if (n < 2) return 0;
+    
+    const sumX = x.slice(0, n).reduce((a, b) => a + b, 0);
+    const sumY = y.slice(0, n).reduce((a, b) => a + b, 0);
+    const sumXY = x.slice(0, n).reduce((sum, xi, i) => sum + xi * y[i], 0);
+    const sumX2 = x.slice(0, n).reduce((sum, xi) => sum + xi * xi, 0);
+    const sumY2 = y.slice(0, n).reduce((sum, yi) => sum + yi * yi, 0);
+    
+    const numerator = n * sumXY - sumX * sumY;
+    const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+    
+    return denominator === 0 ? 0 : numerator / denominator;
   }
 
   private synthesizePatternFeeling(components: number[]): number {
-    // Non-linear intuitive synthesis
-    const sum = components.reduce((a, b) => a + b, 0);
-    const harmony = components.reduce((prod, comp) => prod * (comp + 0.1), 1);
-    return (sum * 0.7) + (Math.pow(harmony, 0.2) * 0.3);
+    // Use geometric and harmonic means for non-linear synthesis
+    if (components.length === 0) return 0.5;
+    
+    // Filter out zero/negative values for geometric calculations
+    const positiveComponents = components.map(c => Math.max(0.01, c));
+    
+    // Arithmetic mean
+    const arithmeticMean = positiveComponents.reduce((a, b) => a + b, 0) / positiveComponents.length;
+    
+    // Geometric mean (better for multiplicative relationships)
+    const geometricMean = Math.pow(
+      positiveComponents.reduce((prod, val) => prod * val, 1),
+      1 / positiveComponents.length
+    );
+    
+    // Harmonic mean (sensitive to small values)
+    const harmonicMean = positiveComponents.length / 
+      positiveComponents.reduce((sum, val) => sum + 1/val, 0);
+    
+    // Root mean square (emphasizes larger values)
+    const rms = Math.sqrt(
+      positiveComponents.reduce((sum, val) => sum + val * val, 0) / positiveComponents.length
+    );
+    
+    // Weighted synthesis favoring geometric relationships
+    const synthesis = arithmeticMean * 0.25 + 
+                     geometricMean * 0.35 + 
+                     harmonicMean * 0.2 + 
+                     rms * 0.2;
+    
+    return Math.max(0, Math.min(1, synthesis));
   }
 
   private feelTimeEnergyLevel(hour: number, minute: number): number {
@@ -530,18 +768,56 @@ export class MathematicalIntuitionEngine {
   }
 
   private senseUrgencyLevel(signal: any): number {
-    // Feel how urgent this signal is
+    // Calculate urgency using time decay and opportunity cost models
     const confidence = signal.confidence || 0.5;
     const strength = signal.strength || 0.5;
-    return Math.min(1, confidence * strength * 1.5);
+    const timestamp = signal.timestamp || new Date();
+    
+    // Time decay factor (signals become less urgent over time)
+    const ageInMinutes = (Date.now() - new Date(timestamp).getTime()) / 60000;
+    const timeDecay = Math.exp(-ageInMinutes / 30); // Half-life of 30 minutes
+    
+    // Opportunity cost (higher confidence = higher urgency)
+    const opportunityCost = Math.pow(confidence, 2);
+    
+    // Signal strength factor
+    const strengthFactor = Math.tanh(strength * 2);
+    
+    // Combine factors
+    const urgency = timeDecay * 0.3 + opportunityCost * 0.4 + strengthFactor * 0.3;
+    
+    return Math.max(0, Math.min(1, urgency));
   }
 
   private feelMarketBreathingRhythm(): number {
-    // Feel the market's breathing pattern
+    // Model market rhythm using circadian and ultradian cycles
     const now = new Date();
     const secondsInDay = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-    const breathingCycle = Math.sin(secondsInDay / 3600 * Math.PI / 12); // ~12 hour cycle
-    return (breathingCycle + 1) / 2; // Normalize to 0-1
+    
+    // Multiple market cycles superimposed
+    // 1. Daily cycle (24 hours)
+    const dailyCycle = Math.sin(2 * Math.PI * secondsInDay / 86400);
+    
+    // 2. Trading session cycle (6.5 hours for US markets)
+    const sessionSeconds = secondsInDay - 9.5 * 3600; // Market opens at 9:30
+    const sessionCycle = sessionSeconds >= 0 && sessionSeconds <= 6.5 * 3600 
+      ? Math.sin(Math.PI * sessionSeconds / (6.5 * 3600))
+      : 0;
+    
+    // 3. Ultradian rhythm (90-minute cycles)
+    const ultradianCycle = Math.sin(2 * Math.PI * secondsInDay / 5400);
+    
+    // 4. Weekly pattern (lower on Monday, higher mid-week)
+    const dayOfWeek = now.getDay();
+    const weeklyFactor = 0.8 + 0.2 * Math.sin(Math.PI * (dayOfWeek - 1) / 4);
+    
+    // Combine all cycles with weights
+    const rhythm = (dailyCycle * 0.3 + 
+                   sessionCycle * 0.4 + 
+                   ultradianCycle * 0.2) * weeklyFactor;
+    
+    // Normalize to 0-1
+    return (rhythm + 1) / 2;
   }
 
   private measureEnergeticResonance(signal: any, marketData: any): number {
@@ -555,61 +831,337 @@ export class MathematicalIntuitionEngine {
   }
 
   private feelMarketEnergy(marketData: any): number {
-    // Feel the overall energy level of the market
+    // Calculate market energy using thermodynamic principles
     const volume = marketData.volume || 0;
-    const volatility = marketData.volatility || 0;
-    const momentum = marketData.momentum || 0;
+    const prices = marketData.priceHistory || [];
     
-    return Math.tanh((volume / 10000) + volatility * 10 + Math.abs(momentum));
+    if (prices.length < 2) return 0.5;
+    
+    // Calculate kinetic energy (momentum-based)
+    const momentum = this.calculateMomentum(prices);
+    const kineticEnergy = 0.5 * Math.pow(momentum, 2) * Math.log1p(volume / 1000);
+    
+    // Calculate potential energy (volatility-based)
+    const volatility = this.calculateVolatility(prices);
+    const potentialEnergy = volatility * Math.log1p(Math.abs(prices[prices.length - 1] - prices[0]));
+    
+    // Calculate thermal energy (trading activity)
+    const returns = prices.slice(1).map((p, i) => Math.abs(p - prices[i]) / prices[i]);
+    const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
+    const thermalEnergy = avgReturn * Math.sqrt(volume / 1000);
+    
+    // Total energy (normalized)
+    const totalEnergy = kineticEnergy + potentialEnergy + thermalEnergy;
+    return Math.tanh(totalEnergy);
   }
 
   private accessMathematicalInstinct(signal: any, marketData: any): number {
-    // CORE BREAKTHROUGH: Pure mathematical intuition
+    // CORE BREAKTHROUGH: Pure mathematical intuition using quantum probability
     const patternComplexity = this.feelPatternComplexity(marketData);
     const mathematicalBeauty = this.feelMathematicalBeauty(signal);
     const probabilityElegance = this.feelProbabilityElegance(signal, marketData);
     
-    // Synthesize mathematical instinct
-    const instinct = (patternComplexity * 0.4) + 
-                    (mathematicalBeauty * 0.35) + 
-                    (probabilityElegance * 0.25);
+    // Add quantum probability wave function collapse simulation
+    const quantumProbability = this.calculateQuantumProbability(signal, marketData);
     
-    return Math.max(0, Math.min(1, instinct));
+    // Synthesize mathematical instinct with quantum effects
+    const classicalInstinct = (patternComplexity * 0.35) + 
+                             (mathematicalBeauty * 0.3) + 
+                             (probabilityElegance * 0.2);
+    
+    // Quantum superposition of states
+    const quantumInstinct = this.applyQuantumSuperposition(classicalInstinct, quantumProbability);
+    
+    return Math.max(0, Math.min(1, quantumInstinct));
+  }
+
+  private calculateQuantumProbability(signal: any, marketData: any): number {
+    // Simulate quantum probability using wave function mathematics
+    const prices = marketData.priceHistory || [];
+    if (prices.length < 10) return 0.5;
+    
+    // Create a probability wave function based on price momentum
+    const momentum = this.calculateMomentum(prices);
+    const volatility = this.calculateVolatility(prices);
+    
+    // Wave function parameters
+    const wavelength = 2 * Math.PI / (1 + Math.abs(momentum));
+    const amplitude = Math.sqrt(volatility);
+    const phase = signal.confidence * Math.PI;
+    
+    // Calculate probability amplitude (|ψ|²)
+    const waveFunction = amplitude * Math.cos(wavelength * prices.length + phase);
+    const probabilityAmplitude = Math.pow(waveFunction, 2);
+    
+    // Normalize to 0-1
+    return 1 / (1 + Math.exp(-probabilityAmplitude));
+  }
+
+  private applyQuantumSuperposition(classical: number, quantum: number): number {
+    // Combine classical and quantum states using superposition principle
+    const alpha = Math.sqrt(classical); // Classical amplitude
+    const beta = Math.sqrt(1 - classical); // Quantum amplitude
+    
+    // Superposition state: |ψ⟩ = α|classical⟩ + β|quantum⟩
+    const superposition = Math.pow(alpha, 2) * classical + Math.pow(beta, 2) * quantum;
+    
+    // Add quantum interference term
+    const interference = 2 * alpha * beta * Math.cos(Math.PI * (classical - quantum));
+    
+    return Math.max(0, Math.min(1, superposition + interference * 0.1));
   }
 
   private feelPatternComplexity(marketData: any): number {
-    // Feel how complex/simple the pattern is (simple often wins)
+    // Use entropy and fractal dimension to measure pattern complexity
     const priceHistory = marketData.priceHistory || [];
     if (priceHistory.length < 10) return 0.5;
     
-    const changes = priceHistory.slice(1).map((p, i) => p - priceHistory[i]);
-    const complexity = changes.reduce((sum, change, i) => {
-      if (i === 0) return 0;
-      return sum + Math.abs(change - changes[i-1]);
-    }, 0);
+    // Calculate returns
+    const returns = priceHistory.slice(1).map((p, i) => (p - priceHistory[i]) / priceHistory[i]);
     
-    // Inverse complexity - simpler patterns feel better
-    return 1 / (1 + complexity / 1000);
+    // 1. Shannon entropy of returns
+    const entropy = this.calculateShannonEntropy(returns);
+    
+    // 2. Hurst exponent (fractal dimension indicator)
+    const hurstExponent = this.calculateHurstExponent(priceHistory);
+    
+    // 3. Approximate entropy (ApEn) for regularity
+    const apen = this.calculateApproximateEntropy(returns, 2, 0.2);
+    
+    // Combine metrics: lower entropy and higher Hurst = simpler pattern
+    // Hurst > 0.5 indicates trending (simpler), < 0.5 indicates mean-reverting (complex)
+    const simplicityScore = (1 - entropy) * 0.4 + 
+                           hurstExponent * 0.4 + 
+                           (1 - apen) * 0.2;
+    
+    return Math.max(0, Math.min(1, simplicityScore));
+  }
+
+  private calculateShannonEntropy(returns: number[]): number {
+    if (returns.length === 0) return 0;
+    
+    // Discretize returns into bins
+    const bins = 10;
+    const min = Math.min(...returns);
+    const max = Math.max(...returns);
+    const range = max - min;
+    
+    if (range === 0) return 0;
+    
+    const counts = new Array(bins).fill(0);
+    returns.forEach(r => {
+      const bin = Math.min(bins - 1, Math.floor((r - min) / range * bins));
+      counts[bin]++;
+    });
+    
+    // Calculate entropy
+    let entropy = 0;
+    const total = returns.length;
+    counts.forEach(count => {
+      if (count > 0) {
+        const p = count / total;
+        entropy -= p * Math.log2(p);
+      }
+    });
+    
+    // Normalize to 0-1
+    return entropy / Math.log2(bins);
+  }
+
+  private calculateHurstExponent(prices: number[]): number {
+    const n = prices.length;
+    if (n < 20) return 0.5;
+    
+    const returns = prices.slice(1).map((p, i) => Math.log(p / prices[i]));
+    const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+    
+    // Calculate cumulative deviations
+    const cumulativeDeviations = [];
+    let cumSum = 0;
+    for (const r of returns) {
+      cumSum += (r - mean);
+      cumulativeDeviations.push(cumSum);
+    }
+    
+    // Calculate range and standard deviation
+    const R = Math.max(...cumulativeDeviations) - Math.min(...cumulativeDeviations);
+    const S = Math.sqrt(returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length);
+    
+    // Hurst exponent approximation
+    if (S === 0) return 0.5;
+    const RS = R / S;
+    const H = Math.log(RS) / Math.log(n);
+    
+    return Math.max(0, Math.min(1, H));
+  }
+
+  private calculateApproximateEntropy(data: number[], m: number, r: number): number {
+    const n = data.length;
+    if (n < m + 1) return 0;
+    
+    const phi = (m: number) => {
+      const patterns = new Map<string, number>();
+      
+      for (let i = 0; i <= n - m; i++) {
+        const pattern = data.slice(i, i + m).map(v => Math.round(v / r)).join(',');
+        patterns.set(pattern, (patterns.get(pattern) || 0) + 1);
+      }
+      
+      let sum = 0;
+      patterns.forEach(count => {
+        const p = count / (n - m + 1);
+        sum += p * Math.log(p);
+      });
+      
+      return sum;
+    };
+    
+    const apen = phi(m) - phi(m + 1);
+    return Math.max(0, Math.min(1, Math.abs(apen)));
   }
 
   private feelMathematicalBeauty(signal: any): number {
-    // Feel the mathematical beauty of the signal (golden ratio, etc.)
+    // Evaluate signal using mathematical constants and aesthetic ratios
     const confidence = signal.confidence || 0.5;
-    const goldenRatio = 1.618;
+    const strength = signal.strength || 0.5;
     
-    // Signals near golden ratio feel more beautiful
-    const beautyScore = 1 - Math.abs(confidence - (1/goldenRatio));
+    // Mathematical constants that appear in nature and markets
+    const phi = 1.618033988749895; // Golden ratio
+    const e = Math.E; // Euler's number
+    const pi = Math.PI;
+    const sqrt2 = Math.sqrt(2); // Silver ratio
+    
+    // Check proximity to beautiful ratios
+    const ratios = [
+      { value: 1/phi, weight: 0.3 },      // 0.618 - Major Fibonacci retracement
+      { value: 1/sqrt2, weight: 0.2 },    // 0.707 - Harmonic mean ratio
+      { value: phi - 1, weight: 0.25 },   // 0.618 - Minor golden ratio
+      { value: 2/3, weight: 0.15 },       // 0.667 - Musical fifth
+      { value: 3/4, weight: 0.1 }         // 0.75 - Musical fourth
+    ];
+    
+    let beautyScore = 0;
+    
+    // Evaluate confidence against beautiful ratios
+    ratios.forEach(ratio => {
+      const distance = Math.abs(confidence - ratio.value);
+      const contribution = Math.exp(-distance * 10) * ratio.weight; // Gaussian-like scoring
+      beautyScore += contribution;
+    });
+    
+    // Check if signal parameters form Fibonacci-like relationships
+    if (signal.technicalScore && signal.sentimentScore) {
+      const ratio = signal.technicalScore / signal.sentimentScore;
+      const fibDistance = Math.min(
+        Math.abs(ratio - phi),
+        Math.abs(ratio - 1/phi),
+        Math.abs(ratio - 2/3)
+      );
+      beautyScore += Math.exp(-fibDistance * 5) * 0.3;
+    }
+    
     return Math.max(0, Math.min(1, beautyScore));
   }
 
   private feelProbabilityElegance(signal: any, marketData: any): number {
-    // Feel how elegant the probability distribution is
+    // Evaluate probability distribution using information theory and statistical elegance
     const expectancy = signal.expectancy || 0;
     const confidence = signal.confidence || 0.5;
+    const prices = marketData.priceHistory || [];
     
-    // Elegant probability has high expectancy with reasonable confidence
-    const elegance = expectancy * Math.sqrt(confidence);
-    return Math.max(0, Math.min(1, elegance + 0.5));
+    if (prices.length < 20) {
+      // Fallback for insufficient data
+      return Math.max(0, Math.min(1, expectancy * Math.sqrt(confidence) + 0.5));
+    }
+    
+    // Calculate return distribution
+    const returns = prices.slice(1).map((p, i) => (p - prices[i]) / prices[i]);
+    
+    // 1. Skewness - asymmetry of distribution (prefer positive skew for longs)
+    const skewness = this.calculateSkewness(returns);
+    
+    // 2. Kurtosis - tail heaviness (moderate kurtosis is elegant)
+    const kurtosis = this.calculateKurtosis(returns);
+    
+    // 3. Kelly Criterion - optimal bet sizing
+    const kellyFraction = this.calculateKellyCriterion(confidence, expectancy);
+    
+    // 4. Information ratio - risk-adjusted returns
+    const sharpeRatio = this.calculateSharpeRatio(returns);
+    
+    // Elegant distributions have:
+    // - Positive skew (asymmetric upside)
+    // - Moderate kurtosis (not too fat-tailed)
+    // - Reasonable Kelly fraction (not over-leveraged)
+    // - Good Sharpe ratio
+    
+    const skewScore = Math.tanh(skewness); // Positive skew is good
+    const kurtosisScore = Math.exp(-Math.abs(kurtosis - 3) / 3); // Normal kurtosis = 3
+    const kellyScore = Math.min(1, kellyFraction * 4); // Cap at 25% Kelly
+    const sharpeScore = Math.tanh(sharpeRatio / 2);
+    
+    const elegance = skewScore * 0.25 + 
+                    kurtosisScore * 0.25 + 
+                    kellyScore * 0.3 + 
+                    sharpeScore * 0.2;
+    
+    return Math.max(0, Math.min(1, elegance));
+  }
+
+  private calculateSkewness(returns: number[]): number {
+    const n = returns.length;
+    if (n < 3) return 0;
+    
+    const mean = returns.reduce((a, b) => a + b, 0) / n;
+    const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / n;
+    const stdDev = Math.sqrt(variance);
+    
+    if (stdDev === 0) return 0;
+    
+    const skew = returns.reduce((sum, r) => sum + Math.pow((r - mean) / stdDev, 3), 0) / n;
+    return skew;
+  }
+
+  private calculateKurtosis(returns: number[]): number {
+    const n = returns.length;
+    if (n < 4) return 3; // Normal distribution kurtosis
+    
+    const mean = returns.reduce((a, b) => a + b, 0) / n;
+    const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / n;
+    const stdDev = Math.sqrt(variance);
+    
+    if (stdDev === 0) return 3;
+    
+    const kurt = returns.reduce((sum, r) => sum + Math.pow((r - mean) / stdDev, 4), 0) / n;
+    return kurt;
+  }
+
+  private calculateKellyCriterion(winProb: number, avgWinLoss: number): number {
+    if (avgWinLoss <= 0) return 0;
+    
+    // Kelly formula: f = (p * b - q) / b
+    // where p = win probability, q = loss probability, b = win/loss ratio
+    const q = 1 - winProb;
+    const b = Math.abs(avgWinLoss) + 1; // Convert expectancy to win/loss ratio
+    
+    const kelly = (winProb * b - q) / b;
+    return Math.max(0, Math.min(0.25, kelly)); // Cap at 25% for safety
+  }
+
+  private calculateSharpeRatio(returns: number[]): number {
+    if (returns.length === 0) return 0;
+    
+    const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+    const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
+    const stdDev = Math.sqrt(variance);
+    
+    if (stdDev === 0) return 0;
+    
+    // Annualized Sharpe ratio (assuming daily returns)
+    const annualizedMean = mean * 252;
+    const annualizedStdDev = stdDev * Math.sqrt(252);
+    
+    return annualizedMean / annualizedStdDev;
   }
 
   private synthesizeIntuitiveFeeling(inputs: any): number {
@@ -621,23 +1173,31 @@ export class MathematicalIntuitionEngine {
       energyAlignment
     } = inputs;
     
-    // Non-linear intuitive synthesis (not simple weighted average)
-    // Ensure all values are positive for harmonic mean calculation
-    const harmonicBase = Math.abs(mathIntuition) * Math.abs(flowField) * 
-                        Math.abs(patternResonance) * Math.abs(timingIntuition) * 
-                        Math.abs(energyAlignment);
-    const harmonic = Math.sqrt(harmonicBase);
+    // Use neural network-inspired activation for synthesis
+    const components = [
+      { value: mathIntuition, weight: 0.3 },
+      { value: flowField, weight: 0.25 },
+      { value: patternResonance, weight: 0.2 },
+      { value: timingIntuition, weight: 0.15 },
+      { value: energyAlignment, weight: 0.1 }
+    ];
     
-    const arithmetic = (
-      mathIntuition * 0.3 +
-      flowField * 0.25 +
-      patternResonance * 0.2 +
-      timingIntuition * 0.15 +
-      energyAlignment * 0.1
-    );
+    // Linear combination
+    const linear = components.reduce((sum, c) => sum + c.value * c.weight, 0);
     
-    // Blend harmonic and arithmetic means
-    return (harmonic * 0.6) + (arithmetic * 0.4);
+    // Non-linear activation (swish function: x * sigmoid(x))
+    const swish = linear * (1 / (1 + Math.exp(-linear)));
+    
+    // Add multiplicative interactions (captures synergies)
+    const interactions = 
+      Math.sqrt(mathIntuition * flowField) * 0.1 +
+      Math.sqrt(patternResonance * timingIntuition) * 0.1 +
+      Math.sqrt(flowField * energyAlignment) * 0.05;
+    
+    // Final synthesis with bounded output
+    const synthesis = swish * 0.75 + interactions;
+    
+    return Math.max(0, Math.min(1, synthesis));
   }
 
   private generateIntuitiveRecommendation(feeling: number, components: any): 'BUY' | 'SELL' | 'HOLD' | 'WAIT' {
