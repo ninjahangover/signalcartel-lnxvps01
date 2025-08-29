@@ -5,6 +5,7 @@
  */
 
 import consolidatedDataService from '../consolidated-ai-data-service.js';
+import { TradingTelemetry, TradingTracing } from '../telemetry/trading-metrics';
 
 export interface SimpleSentimentScore {
   symbol: string;

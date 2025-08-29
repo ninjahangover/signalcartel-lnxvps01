@@ -1,0 +1,30 @@
+{
+  "name": "signalcartel-telemetry",
+  "version": "1.0.0",
+  "description": "OpenTelemetry configuration example for QUANTUM FORGE™",
+  "scripts": {
+    "start-with-telemetry": "node --require ./src/lib/telemetry/instrumentation.js load-database-strategies.ts",
+    "test-telemetry": "OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 npm run start-with-telemetry"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.7.0",
+    "@opentelemetry/sdk-node": "^0.45.1",
+    "@opentelemetry/auto-instrumentations-node": "^0.40.3",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.45.1",
+    "@opentelemetry/exporter-metrics-otlp-http": "^0.45.1",
+    "@opentelemetry/sdk-metrics": "^1.18.2",
+    "@opentelemetry/resources": "^1.18.2",
+    "@opentelemetry/semantic-conventions": "^1.18.2"
+  },
+  "opentelemetry": {
+    "service": {
+      "name": "quantum-forge-trading",
+      "version": "4.0.0"
+    },
+    "exporters": {
+      "otlp": {
+        "endpoint": "http://localhost:4318/v1/traces"
+      }
+    }
+  }
+}

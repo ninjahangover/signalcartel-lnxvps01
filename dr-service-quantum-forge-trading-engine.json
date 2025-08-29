@@ -1,0 +1,26 @@
+{
+  "service_name": "quantum-forge-trading-engine",
+  "service_version": "4.0.0",
+  "environment": "production",
+  "deployment_type": "dev-site",
+  "telemetry_endpoint": "https://monitor.pixelraidersystems.com:4318",
+  "grpc_endpoint": "https://monitor.pixelraidersystems.com:4317",
+  "service_type": "trading-core",
+  "port": 3001,
+  "description": "Main QUANTUM FORGE trading execution engine",
+  "resource_attributes": {
+    "service.name": "quantum-forge-trading-engine",
+    "service.version": "4.0.0", 
+    "service.namespace": "quantum-forge",
+    "deployment.environment": "production",
+    "service.instance.id": "dev-primary-001",
+    "business.criticality": "high",
+    "monitoring.site": "dr"
+  },
+  "instrumentation": {
+    "auto_instrumentation": true,
+    "custom_metrics": true,
+    "distributed_tracing": true,
+    "log_correlation": true
+  }
+}
