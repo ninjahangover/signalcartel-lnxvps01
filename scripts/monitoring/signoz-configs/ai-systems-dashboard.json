@@ -1,0 +1,40 @@
+{
+  "title": "AI Systems Performance",
+  "description": "SignalCartel AI monitoring dashboard",
+  "tags": ["signalcartel", "ai", "intelligence"],
+  "panels": [
+    {
+      "id": 1,
+      "title": "AI Response Times (P95)",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, ai_response_time_ms) by (ai_system)",
+          "legendFormat": "{{ai_system}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "AI Confidence Levels",
+      "type": "gauge",
+      "targets": [
+        {
+          "expr": "avg(ai_confidence_level) by (ai_system)",
+          "legendFormat": "{{ai_system}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Sentiment Score Timeline",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "ai_sentiment_score",
+          "legendFormat": "Market Sentiment"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+[
+  {
+    "serviceName": "signalcartel-trading-engine",
+    "description": "QUANTUM FORGE™ Main Trading Engine",
+    "version": "1.0.0",
+    "environment": "production",
+    "endpoints": [
+      {"name": "health", "path": "/api/health"},
+      {"name": "metrics", "path": "/api/metrics"},
+      {"name": "status", "path": "/api/quantum-forge/status"}
+    ],
+    "expectedMetrics": [
+      "trades_executed_total",
+      "win_rate_percentage",
+      "profit_loss_usd",
+      "current_trading_phase"
+    ]
+  },
+  {
+    "serviceName": "signalcartel-ai-systems",
+    "description": "AI Performance Monitoring",
+    "version": "1.0.0",
+    "environment": "production",
+    "endpoints": [
+      {"name": "sentiment", "path": "/api/multi-source-sentiment"},
+      {"name": "intuition", "path": "/api/intuition-analysis"},
+      {"name": "orderbook", "path": "/api/order-book"}
+    ],
+    "expectedMetrics": [
+      "ai_response_time_ms",
+      "ai_confidence_level",
+      "ai_sentiment_score"
+    ]
+  }
+]
