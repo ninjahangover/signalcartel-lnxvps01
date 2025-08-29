@@ -1,0 +1,73 @@
+[
+  {
+    "alert": "SignalCartel_Low_Trading_Volume",
+    "expr": "rate(trades_executed_total[10m]) < 2",
+    "for": "10m",
+    "labels": {
+      "severity": "critical",
+      "service": "signalcartel-trading",
+      "team": "quantum-forge"
+    },
+    "annotations": {
+      "summary": "SignalCartel trading volume is critically low",
+      "description": "Trading volume has dropped below 2 trades per 10 minutes. The QUANTUM FORGE system may be stalled.",
+      "runbook_url": "https://docs.signalcartel.io/runbooks/low-trading-volume"
+    }
+  },
+  {
+    "alert": "SignalCartel_High_Database_Latency",
+    "expr": "histogram_quantile(0.95, database_query_latency_ms) > 1000",
+    "for": "5m",
+    "labels": {
+      "severity": "high",
+      "service": "signalcartel-database",
+      "team": "infrastructure"
+    },
+    "annotations": {
+      "summary": "SignalCartel database performance degraded",
+      "description": "Database queries are taking longer than 1 second at the 95th percentile."
+    }
+  },
+  {
+    "alert": "SignalCartel_AI_System_Slow",
+    "expr": "histogram_quantile(0.95, ai_response_time_ms) > 2000",
+    "for": "5m",
+    "labels": {
+      "severity": "high",
+      "service": "signalcartel-ai",
+      "team": "ai-systems"
+    },
+    "annotations": {
+      "summary": "SignalCartel AI systems responding slowly",
+      "description": "AI systems (sentiment, mathematical intuition, order book) are responding slower than expected."
+    }
+  },
+  {
+    "alert": "SignalCartel_Win_Rate_Below_Target",
+    "expr": "avg(win_rate_percentage) < 60",
+    "for": "30m",
+    "labels": {
+      "severity": "high",
+      "service": "signalcartel-trading",
+      "team": "trading"
+    },
+    "annotations": {
+      "summary": "SignalCartel win rate below target",
+      "description": "Trading win rate has dropped below 60% target for more than 30 minutes."
+    }
+  },
+  {
+    "alert": "SignalCartel_High_Memory_Usage",
+    "expr": "system_memory_usage_percent > 85",
+    "for": "15m",
+    "labels": {
+      "severity": "medium",
+      "service": "signalcartel-system",
+      "team": "infrastructure"
+    },
+    "annotations": {
+      "summary": "SignalCartel system memory usage high",
+      "description": "System memory usage has been above 85% for 15 minutes."
+    }
+  }
+]

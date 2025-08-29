@@ -1,0 +1,59 @@
+# Final Caddy Configuration with Correct SigNoz Subdomain
+
+pixelraidersystems.com {
+  reverse_proxy wordpress:80
+  encode gzip
+  tls {
+    protocols tls1.2 tls1.3
+  }
+}
+
+pixelraiders.tech {
+  reverse_proxy 173.208.142.43:3000 {
+    header_up X-Real-IP {remote}
+    header_down Strict-Transport-Security "max-age=31536000"
+  }  
+}
+
+# SigNoz monitoring on preferred subdomain
+monitor.pixelraidersystems.com {
+  reverse_proxy localhost:3301 {
+    header_up X-Real-IP {remote}
+    header_up X-Forwarded-For {remote}
+    header_up X-Forwarded-Proto {scheme}
+    header_up Host {host}
+    header_down Strict-Transport-Security "max-age=31536000"
+  }
+}
+
+# PostgreSQL Primary Database (port 5432)
+db-primary.pixelraidersystems.com {
+  reverse_proxy localhost:5432 {
+    header_up X-Real-IP {remote}
+    header_down Strict-Transport-Security "max-age=31536000"
+  }
+}
+
+# PostgreSQL SignalCartel Database (port 5433) - Main trading database
+db.pixelraidersystems.com {
+  reverse_proxy localhost:5433 {
+    header_up X-Real-IP {remote}
+    header_down Strict-Transport-Security "max-age=31536000"
+  }
+}
+
+# PostgreSQL Analytics Database (port 5434) 
+analytics.pixelraidersystems.com {
+  reverse_proxy localhost:5434 {
+    header_up X-Real-IP {remote}
+    header_down Strict-Transport-Security "max-age=31536000"
+  }
+}
+
+# Redis Cache (port 6379)
+cache.pixelraidersystems.com {
+  reverse_proxy localhost:6379 {
+    header_up X-Real-IP {remote}
+    header_down Strict-Transport-Security "max-age=31536000"
+  }
+}

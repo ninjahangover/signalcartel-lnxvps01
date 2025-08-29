@@ -1,0 +1,26 @@
+{
+  "databases": [
+    {
+      "name": "primary",
+      "url": "postgresql://trading_user:mp8728@db.pixelraidersystems.com:5432/signalcartel",
+      "priority": 1,
+      "healthCheckInterval": 30
+    },
+    {
+      "name": "replica", 
+      "url": "postgresql://trading_user:mp8728@db.pixelraidersystems.com:5433/signalcartel",
+      "priority": 2,
+      "healthCheckInterval": 30
+    },
+    {
+      "name": "pooled",
+      "url": "postgresql://trading_user:mp8728@db.pixelraidersystems.com:6432/signalcartel", 
+      "priority": 3,
+      "healthCheckInterval": 60
+    }
+  ],
+  "emergencyDatabase": "/tmp/quantum-forge-emergency.db",
+  "maxRetries": 3,
+  "retryDelay": 5000,
+  "emergencyStopFile": "/tmp/trading-emergency-stop"
+}

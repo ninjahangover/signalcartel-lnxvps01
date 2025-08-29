@@ -1,0 +1,79 @@
+{
+  "title": "QUANTUM FORGE™ Trading Performance",
+  "description": "SignalCartel main trading dashboard",
+  "tags": ["signalcartel", "trading", "quantum-forge"],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Current Trading Phase",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "current_trading_phase",
+          "legendFormat": "Phase"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": 2,
+      "title": "Trades Per Hour",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(trades_executed_total[1h]) * 3600",
+          "legendFormat": "{{strategy}}"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      }
+    },
+    {
+      "id": 3,
+      "title": "Win Rate by Strategy",
+      "type": "piechart",
+      "targets": [
+        {
+          "expr": "avg(win_rate_percentage) by (strategy)",
+          "legendFormat": "{{strategy}}"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      }
+    },
+    {
+      "id": 4,
+      "title": "Cumulative P&L",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(profit_loss_usd)",
+          "legendFormat": "Total P&L USD"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      }
+    }
+  ]
+}

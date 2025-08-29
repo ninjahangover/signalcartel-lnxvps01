@@ -1,0 +1,67 @@
+# Fixed Caddy Configuration for SignalCartel
+# Resolves duplicate hostname issues and implements proper path-based routing
+
+pixelraidersystems.com {
+  reverse_proxy wordpress:80
+  encode gzip
+  tls {
+    protocols tls1.2 tls1.3
+  }
+}
+
+pixelraiders.tech {
+  reverse_proxy 173.208.142.43:3000 {
+    header_up X-Real-IP {remote}
+    header_down Strict-Transport-Security "max-age=31536000"
+  }  
+}
+
+monitor.pixelraiders.tech {
+  reverse_proxy 173.208.142.43:3301 {
+    header_up X-Real-IP {remote}
+    header_down Strict-Transport-Security "max-age=31536000"  # Fixed typo
+  }
+}
+
+# FIXED: Single db hostname with path-based routing
+db.pixelraidersystems.com {
+  # PostgreSQL Primary Database (port 5432)
+  handle_path /primary/* {
+    reverse_proxy localhost:5432 {
+      header_up X-Real-IP {remote}
+      header_down Strict-Transport-Security "max-age=31536000"
+    }
+  }
+  
+  # PostgreSQL SignalCartel Database (port 5433)
+  handle_path /signalcartel/* {
+    reverse_proxy localhost:5433 {
+      header_up X-Real-IP {remote}
+      header_down Strict-Transport-Security "max-age=31536000"
+    }
+  }
+  
+  # Redis Cache (port 6379)
+  handle_path /cache/* {
+    reverse_proxy localhost:6379 {
+      header_up X-Real-IP {remote}
+      header_down Strict-Transport-Security "max-age=31536000"
+    }
+  }
+  
+  # Default route to SignalCartel database (most common usage)
+  handle {
+    reverse_proxy localhost:5433 {
+      header_up X-Real-IP {remote}
+      header_down Strict-Transport-Security "max-age=31536000"
+    }
+  }
+}
+
+# Analytics database gets its own subdomain (cleaner separation)
+analytics.pixelraidersystems.com {
+  reverse_proxy localhost:5434 {
+    header_up X-Real-IP {remote}
+    header_down Strict-Transport-Security "max-age=31536000"
+  }
+}

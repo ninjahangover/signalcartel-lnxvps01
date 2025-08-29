@@ -12,7 +12,7 @@ echo ""
 # Configuration
 PROJECT_DIR="/opt/quantum-forge-db"
 BACKUP_DIR="/opt/quantum-forge-backups"
-LOG_FILE="/tmp/quantum-forge-vms-deployment.log"
+LOG_FILE="/var/log/quantum-forge-vms-deployment.log"
 
 # Color codes for output
 RED='\033[0;31m'
@@ -23,7 +23,9 @@ NC='\033[0m' # No Color
 
 # Logging function
 log() {
-    echo -e "$1" | tee -a "$LOG_FILE"
+    echo -e "$1"
+    # Attempt to write to log file, ignore errors
+    echo -e "$1" >> "$LOG_FILE" 2>/dev/null || true
 }
 
 log "${BLUE}📋 DEPLOYMENT CHECKLIST:${NC}"

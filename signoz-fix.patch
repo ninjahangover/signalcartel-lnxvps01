@@ -1,0 +1,12 @@
+# Quick fix for SigNoz monitoring in Caddyfile
+# Replace lines 14-19 in your Caddyfile with this:
+
+monitor.pixelraiders.tech {
+  reverse_proxy localhost:3301 {
+    header_up X-Real-IP {remote}
+    header_up X-Forwarded-For {remote}
+    header_up X-Forwarded-Proto {scheme}
+    header_up Host {host}
+    header_down Strict-Transport-Security "max-age=31536000"  # Fixed typo
+  }
+}
