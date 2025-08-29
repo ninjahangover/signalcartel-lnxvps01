@@ -76,10 +76,22 @@ async function resetTradingBalance() {
     console.log(`   • MarketDataCollection: ${marketData.toLocaleString()} records`);
     console.log(`   • TradingSignal: ${signals.toLocaleString()} records`);
     
+    console.log('\\n🛡️ Restoring core exit strategies...');
+    // CRITICAL: Restore core exit strategies after any reset
+    try {
+      const { ensureCoreExitStrategies } = await import('./ensure-core-exit-strategies');
+      await ensureCoreExitStrategies();
+      console.log('✅ Core exit strategies restored and protected');
+    } catch (error) {
+      console.error('❌ Failed to restore core exit strategies:', error);
+      console.warn('⚠️ Trading system may not function properly without exit strategies!');
+    }
+    
     console.log('\\n✅ Balance Reset Complete!');
     console.log('🎯 Starting Balance: $10,000');
     console.log('💼 All positions cleared');
     console.log('🧠 AI learning data preserved');
+    console.log('🛡️ Core exit strategies protected');
     console.log('🚀 Ready for fresh trading session');
     
   } catch (error) {

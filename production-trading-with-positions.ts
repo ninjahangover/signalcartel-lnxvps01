@@ -3,16 +3,10 @@
  * Uses the full position management system with QUANTUM FORGE™ phase integration
  */
 
-import { PositionManager } from './src/lib/position-management/position-manager';
+import { positionService } from './src/lib/position-management/position-service';
 import { phaseManager } from './src/lib/quantum-forge-phase-config';
-import { PrismaClient } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
-
-const prisma = new PrismaClient({
-  log: ['error'],
-  errorFormat: 'minimal'
-});
 
 // Logging setup
 const LOG_DIR = '/tmp/signalcartel-logs';
@@ -44,10 +38,8 @@ interface MarketDataPoint {
 class ProductionTradingEngine {
   private isRunning = false;
   private cycleCount = 0;
-  private positionManager: PositionManager;
   
   constructor() {
-    this.positionManager = new PositionManager(prisma);
     log('🚀 QUANTUM FORGE™ PRODUCTION TRADING ENGINE');
     log('==========================================');
     log('✅ Complete position management lifecycle');
@@ -325,7 +317,7 @@ class ProductionTradingEngine {
       log(`⚡ FAST POSITION CHECK: Monitoring ${Object.keys(currentPrices).length} symbols for exits...`);
       try {
         const startTime = Date.now();
-        const closedPositions = await this.positionManager.monitorPositions(currentPrices);
+        const closedPositions = await positionService.monitorPositions();
         const monitorTime = Date.now() - startTime;
         
         for (const closed of closedPositions) {
@@ -355,22 +347,24 @@ class ProductionTradingEngine {
           
           try {
             // Use production position management system with AI strategy name
-            const strategyName = `phase-${currentPhase.phase}-ai-${aiAnalysis.aiSystems?.[0] || 'basic'}`;
-            const result = await this.positionManager.openPosition({
+            const strategyName = `phase-${currentPhase.phase}-ai-${aiAnalysis.aiSystems?.[0] || 'basic-technical'}`;
+            const result = await positionService.processSignal({
               symbol: data.symbol,
-              side,
+              action: side === 'long' ? 'BUY' : 'SELL',
               quantity,
               price: data.price,
               strategy: strategyName,
               timestamp: data.timestamp,
-              metadata: {
-                confidence: aiAnalysis.confidence,
-                aiSystems: aiAnalysis.aiSystems,
-                phase: currentPhase.phase
-              }
+              confidence: aiAnalysis.confidence
             });
             
-            log(`✅ POSITION OPENED: ${result.position.id} | ${side.toUpperCase()} ${quantity.toFixed(6)} ${data.symbol} @ $${data.price}`);
+            if (result.action === 'opened' && result.position) {
+              log(`✅ POSITION OPENED: ${result.position.id} | ${side.toUpperCase()} ${quantity.toFixed(6)} ${data.symbol} @ $${data.price}`);
+            } else if (result.action === 'closed' && result.pnl !== undefined) {
+              log(`💰 POSITION CLOSED: P&L = $${result.pnl.toFixed(2)} | ${result.pnl > 0 ? '🟢 WIN' : '🔴 LOSS'}`);
+            } else {
+              log(`ℹ️ Signal processed: ${result.action}`);
+            }
             
           } catch (positionError) {
             log(`❌ Position error: ${positionError.message}`);

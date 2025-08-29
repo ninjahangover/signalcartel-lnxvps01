@@ -14,8 +14,29 @@ export class PositionService {
   constructor() {
     this.prisma = new PrismaClient();
     this.positionManager = new PositionManager(this.prisma);
+    
+    // 🛡️ CRITICAL: Ensure core exit strategies are protected and available
+    this.ensureCoreStrategiesProtected();
+    
     this.initializeDefaultExitStrategies();
     this.loadExitStrategiesFromDatabase();
+  }
+  
+  /**
+   * 🛡️ CRITICAL SYSTEM PROTECTION: Ensure core exit strategies are always available
+   * This protects the system from database resets that would remove core strategies
+   */
+  private async ensureCoreStrategiesProtected() {
+    try {
+      // Import and run the protection system
+      const { ensureCoreExitStrategies } = await import('../../../admin/ensure-core-exit-strategies');
+      await ensureCoreExitStrategies();
+      console.log('🛡️ Core exit strategies protected and verified');
+    } catch (error) {
+      console.error('❌ Failed to protect core exit strategies:', error.message);
+      // Continue startup but warn that system may not work properly
+      console.warn('⚠️ System starting without protected strategies - positions may not close properly!');
+    }
   }
   
   /**
