@@ -6,6 +6,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import consolidatedDataService from './consolidated-ai-data-service';
+import { BayesianProbabilityEngine } from './bayesian-probability-engine';
 
 const prisma = new PrismaClient();
 
@@ -79,6 +80,67 @@ export class MathematicalIntuitionEngine {
       MathematicalIntuitionEngine.instance = new MathematicalIntuitionEngine();
     }
     return MathematicalIntuitionEngine.instance;
+  }
+
+  /**
+   * Analyze intuitively with Bayesian enhancement
+   */
+  private async analyzeIntuitivelyWithBayesian(
+    signal: any, 
+    marketData: any, 
+    crossSiteData: any,
+    flowField: any,
+    patternResonance: number,
+    timingIntuition: number,
+    energyAlignment: number,
+    adjustedMathIntuition: number,
+    bayesianSignal: any
+  ): Promise<IntuitiveSignal> {
+    // Synthesize overall feeling with Bayesian-adjusted intuition
+    const overallFeeling = this.synthesizeIntuitiveFeeling({
+      mathIntuition: adjustedMathIntuition,
+      flowField: flowField.currentStrength,
+      patternResonance,
+      timingIntuition,
+      energyAlignment
+    });
+    
+    // Generate recommendation considering Bayesian signal
+    let recommendation: IntuitiveSignal['recommendation'];
+    
+    // Combine intuitive and Bayesian recommendations
+    if (bayesianSignal.recommendation === 'STRONG_BUY' && overallFeeling > 0.6) {
+      recommendation = 'BUY';
+    } else if (bayesianSignal.recommendation === 'STRONG_SELL' && overallFeeling < 0.4) {
+      recommendation = 'SELL';
+    } else if (Math.abs(overallFeeling - 0.5) < 0.15 || bayesianSignal.uncertainty > 0.7) {
+      recommendation = 'WAIT';
+    } else {
+      recommendation = this.generateIntuitiveRecommendation(overallFeeling, {
+        mathIntuition: adjustedMathIntuition,
+        patternResonance,
+        timingIntuition
+      });
+    }
+    
+    const reasoning = `Mathematical intuition: ${(adjustedMathIntuition * 100).toFixed(1)}%, ` +
+                     `Bayesian: ${bayesianSignal.mostLikelyRegime} (${(bayesianSignal.confidence * 100).toFixed(1)}%), ` +
+                     `Flow field: ${(flowField.currentStrength * 100).toFixed(1)}%, ` +
+                     `Pattern resonance: ${(patternResonance * 100).toFixed(1)}%`;
+    
+    console.log(`✨ BAYESIAN-ENHANCED INTUITIVE RESULT: ${recommendation} (feeling: ${overallFeeling.toFixed(3)})`);
+    
+    return {
+      mathIntuition: adjustedMathIntuition,
+      flowFieldStrength: flowField.currentStrength,
+      patternResonance,
+      timingIntuition,
+      energyAlignment,
+      overallFeeling,
+      confidence: Math.max(bayesianSignal.confidence, Math.abs(overallFeeling - 0.5) * 2),
+      recommendation,
+      reasoning
+    };
   }
 
   /**
@@ -219,6 +281,29 @@ export class MathematicalIntuitionEngine {
     
     // Pure mathematical intuition (the core breakthrough)
     const mathIntuition = this.accessMathematicalInstinct(signal, marketData);
+    
+    // NEW: Bayesian probability analysis
+    let bayesianConfidence = 0.5;
+    try {
+      const bayesianEngine = BayesianProbabilityEngine.getInstance();
+      const evidence = await bayesianEngine.gatherMarketEvidence(signal.symbol);
+      const bayesianSignal = await bayesianEngine.generateSignal(signal.symbol, evidence);
+      bayesianConfidence = bayesianSignal.confidence;
+      
+      console.log(`🎯 BAYESIAN: ${bayesianSignal.mostLikelyRegime} regime (${(bayesianSignal.bullishProbability * 100).toFixed(1)}% bull, ${(bayesianSignal.bearishProbability * 100).toFixed(1)}% bear)`);
+      
+      // Weight Bayesian analysis into mathematical intuition
+      const bayesianWeight = 0.3;  // 30% weight to Bayesian inference
+      const adjustedMathIntuition = mathIntuition * (1 - bayesianWeight) + bayesianConfidence * bayesianWeight;
+      
+      return this.analyzeIntuitivelyWithBayesian(
+        signal, marketData, crossSiteData, 
+        flowField, patternResonance, timingIntuition, 
+        energyAlignment, adjustedMathIntuition, bayesianSignal
+      );
+    } catch (error) {
+      console.log('⚠️ Bayesian analysis unavailable, using pure intuition');
+    }
     
     // Synthesize overall feeling
     const overallFeeling = this.synthesizeIntuitiveFeeling({
