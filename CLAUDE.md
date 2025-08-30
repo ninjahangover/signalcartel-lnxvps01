@@ -107,7 +107,7 @@ SignalCartel is a revolutionary cryptocurrency trading platform featuring **QUAN
 - ✅ **GRACEFUL SHUTDOWN** - Ctrl+C stops all processes cleanly
 - ✅ **LINUX-OPTIMIZED WORKFLOW** - Terminal-based monitoring for server environments
 
-### 🛡️ **Professional PostgreSQL Backup System** (NEW - August 26, 2025)
+### 🛡️ **Professional PostgreSQL Backup System** (REORGANIZED - August 30, 2025)
 - ✅ **PROPER POSTGRESQL TOOLS** - pg_dump, pg_dumpall, pg_basebackup for enterprise-grade backups
 - ✅ **COMPREHENSIVE DATA PROTECTION** - Historical pricing (21,830+ points), sentiment data, trading signals
 - ✅ **MULTIPLE BACKUP FORMATS** - Custom format (.dump) and SQL format (.sql.gz) for flexibility
@@ -115,6 +115,8 @@ SignalCartel is a revolutionary cryptocurrency trading platform featuring **QUAN
 - ✅ **CLUSTER-WIDE BACKUPS** - Complete cluster backup including roles and global objects
 - ✅ **VERIFICATION & REPORTING** - Automatic integrity checks with detailed recovery instructions
 - ✅ **ENTERPRISE RETENTION** - 30-day logical, 7-day physical, 14-day cluster backup retention
+- ✅ **CLEANED UP STRUCTURE** - Deprecated scripts moved to `scripts/backup/deprecated/` folder
+- ✅ **SINGLE BACKUP SOLUTION** - Only professional PostgreSQL backup system active (no confusion)
 
 ### 🌐 **Multi-Instance Data Consolidation System** (NEW - August 27, 2025)
 - ✅ **CROSS-SITE AI DATA SHARING** - Consolidates data from multiple SignalCartel development sites
@@ -197,7 +199,7 @@ SignalCartel is a revolutionary cryptocurrency trading platform featuring **QUAN
 **🛡️ Professional Backup System:**
 - `scripts/backup/postgresql-professional-backup.sh` - Enterprise PostgreSQL backup using proper tools
 - `scripts/backup/setup-automated-postgresql-backups.sh` - Automated backup scheduling system
-- `scripts/backup/enterprise-backup-system.sh` - Legacy backup system (deprecated)
+- `scripts/backup/deprecated/` - Old backup scripts (DO NOT USE - kept for reference only)
 
 **🧠 Intelligence Systems:**
 - `src/lib/sentiment/simple-twitter-sentiment.ts` - Multi-source sentiment engine
@@ -351,7 +353,7 @@ npx tsx -r dotenv/config admin/test-position-tracking.ts
 npx tsx -r dotenv/config admin/test-phase-0-barriers.ts
 ```
 
-### 🛡️ **Professional PostgreSQL Backup System**
+### 🛡️ **Professional PostgreSQL Backup System** (REORGANIZED)
 ```bash
 # Manual backup using proper PostgreSQL tools (pg_dump, pg_dumpall)
 ./scripts/backup/postgresql-professional-backup.sh
@@ -363,10 +365,10 @@ npx tsx -r dotenv/config admin/test-phase-0-barriers.ts
 ls -la /home/telgkb9/signalcartel-enterprise-backups/
 
 # Monitor backup logs
-tail -f /tmp/signalcartel-backup*.log
+tail -f /tmp/signalcartel-postgresql-backup*.log
 
-# Legacy backup system (deprecated - use professional system above)
-./scripts/backup/simple-db-backup.sh
+# NOTE: Old backup scripts moved to scripts/backup/deprecated/
+# DO NOT USE deprecated scripts - only use professional PostgreSQL backup system
 ```
 
 ### 🔍 **SigNoz Enterprise Monitoring Deployment** (NEW - August 28, 2025)
@@ -711,3 +713,4 @@ SLACK_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
 
 ---
 *QUANTUM FORGE™ Bayesian Intelligence Achievement: Revolutionary 5-phase AI activation system enhanced with **Bayesian Probability Engine™** for probabilistic market regime detection, featuring ultra-low barriers for maximum data collection (Phase 0: 10% confidence threshold), complete position lifecycle management, Mathematical Intuition Engine with 30% Bayesian integration, real-time monitoring dashboard, intelligent phase transitions, cross-site data consolidation, and now **uncertainty-aware trading decisions** through sequential belief updating - the world's first cryptocurrency trading platform combining progressive intelligence activation, real mathematical algorithms, and advanced Bayesian inference for superior market regime classification and risk-aware probabilistic trading.*
+- signalcartel-lnxvps01
