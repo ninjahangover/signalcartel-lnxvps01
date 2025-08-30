@@ -5,17 +5,18 @@ SignalCartel is a revolutionary cryptocurrency trading platform featuring **QUAN
 
 ## Current State (As of August 30, 2025 - QUANTUM FORGE™ WITH BAYESIAN PROBABILITY ENGINE)
 
-### 🎯 **LATEST: BAYESIAN PROBABILITY ENGINE™ IMPLEMENTATION** (August 30, 2025)
+### 🎯 **LATEST: BAYESIAN PROBABILITY ENGINE™ TUNED A/B TESTING** (August 30, 2025)
 - 🧠 **BAYESIAN INFERENCE**: Revolutionary probabilistic reasoning for market regime detection
-- 📊 **MARKET REGIME CLASSIFICATION**: 6 regime states (STRONG_BULL, BULL, NEUTRAL, BEAR, STRONG_BEAR, VOLATILE)
-- 🔄 **SEQUENTIAL BELIEF UPDATING**: Bayes' theorem continuously refines market predictions with new evidence
+- 📊 **MARKET REGIME CLASSIFICATION**: 6 regime states with **CRYPTO-OPTIMIZED THRESHOLDS** (5%/2% vs 3%/1%)
+- 🔄 **SEQUENTIAL BELIEF UPDATING**: Bayes' theorem with **5% DECAY FACTOR** to prevent overconfidence buildup
 - 🎯 **PRIOR/LIKELIHOOD/POSTERIOR**: Complete Bayesian framework with domain-specific likelihood functions
-- ⚖️ **UNCERTAINTY QUANTIFICATION**: Entropy-based uncertainty metrics for risk-aware trading decisions
-- 🧮 **MATHEMATICAL INTUITION ENHANCEMENT**: 30% Bayesian weight integrated into intuitive analysis
+- ⚖️ **UNCERTAINTY QUANTIFICATION**: Entropy-based uncertainty with **10% MINIMUM THRESHOLD** for healthy skepticism
+- 🧮 **MATHEMATICAL INTUITION ENHANCEMENT**: **50% Bayesian weight** (increased from 30%) for stronger influence
 - 📈 **EVIDENCE-BASED ANALYSIS**: Price movement, volume, RSI, sentiment, volatility, trend strength, order book
-- 🎨 **INTELLIGENT RECOMMENDATIONS**: STRONG_BUY/BUY/HOLD/SELL/STRONG_SELL with confidence scores
+- 🎨 **INTELLIGENT RECOMMENDATIONS**: STRONG_BUY/BUY/HOLD/SELL/STRONG_SELL with **10-90% confidence bounds**
 - 🔮 **REGIME PROBABILITIES**: Bullish/bearish probability distributions for each market state
-- 🚀 **LIVE INTEGRATION**: Operational in dev2 with real-time Bayesian-enhanced trading decisions
+- 🚀 **A/B TESTING ACTIVE**: Dev2 vs Dev1 comparison with **$10,000 RESET** for clean performance metrics
+- 🔧 **FIXED OVERCONFIDENCE**: No more artificial 95% confidence caps, natural probabilistic distributions
 
 ### 🧮 **PREVIOUS: REAL MATHEMATICAL ALGORITHMS & DATABASE CLEANUP** (August 29, 2025)
 - 🧠 **REAL MATHEMATICAL ALGORITHMS**: Replaced all random values with genuine mathematical computations
@@ -234,6 +235,31 @@ SignalCartel is a revolutionary cryptocurrency trading platform featuring **QUAN
   - **AI Performance Metrics** - AI system comparison and learning insights across all sites
   - **Enhanced Analytics Views** - Unified performance, market conditions, phase progression analysis
 - **No SQLite** - Completely migrated to PostgreSQL architecture
+
+## 🧪 ACTIVE A/B TESTING: DEV1 vs DEV2 BAYESIAN ENGINE (August 30, 2025)
+
+### 📊 **Test Configuration**
+- **Dev1**: Original QUANTUM FORGE™ system WITHOUT Bayesian Probability Engine
+- **Dev2**: Enhanced system WITH tuned Bayesian Probability Engine (50% weight)
+- **Reset Date**: August 30, 2025 - Both systems reset to $10,000 starting balance
+- **Duration**: 24-48 hours for statistically significant results
+
+### 🔧 **Dev2 Bayesian Improvements**
+- **Market Regime Thresholds**: Crypto-optimized (5%/2% vs original 3%/1%)
+- **Belief Decay**: 5% decay factor prevents overconfidence accumulation
+- **Confidence Bounds**: Natural 10-90% range (no artificial 95% caps)
+- **Minimum Uncertainty**: 10% threshold maintains healthy skepticism
+- **Integration Weight**: 50% Bayesian influence (increased from 30%)
+
+### 🎯 **Success Metrics**
+- **Primary**: Average P&L per trade, win rate percentage
+- **Secondary**: Trade volume, confidence score distribution, drawdown management
+- **Qualitative**: Reduced overtrading, more balanced decision-making
+
+### 📈 **Expected Outcomes**
+- **Hypothesis**: Tuned Bayesian engine should outperform original system
+- **Key Indicators**: Less volatile confidence, better regime detection, improved risk management
+- **Failure Case**: If performance degrades, indicates Bayesian approach needs fundamental revision
 
 ## 🎪 GO LIVE READINESS ASSESSMENT (August 27, 2025)
 

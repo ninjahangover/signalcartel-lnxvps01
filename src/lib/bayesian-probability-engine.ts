@@ -208,26 +208,40 @@ export class BayesianProbabilityEngine {
 
   /**
    * Classify price movement into regime
+   * Adjusted for crypto volatility - 5% for strong moves, 2% for regular
    */
   private classifyPriceMovement(currentPrice: number, previousPrice: number): MarketRegime {
     const change = ((currentPrice - previousPrice) / previousPrice) * 100;
     
-    if (change > 3) return MarketRegime.STRONG_BULL;
-    if (change > 1) return MarketRegime.BULL;
-    if (change < -3) return MarketRegime.STRONG_BEAR;
-    if (change < -1) return MarketRegime.BEAR;
+    if (change > 5) return MarketRegime.STRONG_BULL;
+    if (change > 2) return MarketRegime.BULL;
+    if (change < -5) return MarketRegime.STRONG_BEAR;
+    if (change < -2) return MarketRegime.BEAR;
     return MarketRegime.NEUTRAL;
   }
 
   /**
-   * Update beliefs using Bayes' theorem
+   * Update beliefs using Bayes' theorem with decay
    * P(regime | evidence) = P(evidence | regime) * P(regime) / P(evidence)
    */
   async updateBelief(evidence: MarketEvidence): Promise<BayesianBelief> {
-    // Use previous posteriors as new priors (sequential updating)
-    const priors = this.currentBelief ? 
-      new Map(this.currentBelief.posteriors) : 
-      new Map(this.defaultPriors);
+    // Use previous posteriors as new priors with decay factor
+    // Decay prevents overconfidence buildup by gradually returning toward uniform priors
+    const DECAY_FACTOR = 0.95;  // 5% decay toward uniform distribution
+    const UNIFORM_PRIOR = 1 / 6;  // 6 regimes
+    
+    let priors: Map<MarketRegime, number>;
+    if (this.currentBelief) {
+      priors = new Map();
+      for (const regime of Object.values(MarketRegime)) {
+        const prevPosterior = this.currentBelief.posteriors.get(regime) || UNIFORM_PRIOR;
+        // Apply decay: move slightly toward uniform distribution
+        const decayedPrior = prevPosterior * DECAY_FACTOR + UNIFORM_PRIOR * (1 - DECAY_FACTOR);
+        priors.set(regime, decayedPrior);
+      }
+    } else {
+      priors = new Map(this.defaultPriors);
+    }
 
     // Calculate likelihoods for each regime
     const likelihoods = new Map<MarketRegime, number>();
@@ -335,7 +349,12 @@ export class BayesianProbabilityEngine {
     }
 
     // Adjust confidence based on uncertainty
-    confidence = confidence * (1 - uncertainty * 0.5);  // High uncertainty reduces confidence
+    // Ensure minimum 10% uncertainty for healthy skepticism
+    const adjustedUncertainty = Math.max(0.1, uncertainty);
+    confidence = confidence * (1 - adjustedUncertainty * 0.5);  // High uncertainty reduces confidence
+    
+    // Apply natural confidence bounds (no artificial caps)
+    confidence = Math.max(0.1, Math.min(0.9, confidence));  // Keep between 10-90%
 
     // Generate reasoning
     const reasoning = this.generateReasoning(
@@ -435,7 +454,10 @@ export class BayesianProbabilityEngine {
           reasoning: `Bayesian inference: ${recommendation} with ${(confidence * 100).toFixed(1)}% confidence`,
           crossSiteResonance: 0,
           traditionalWinRate: 0,
-          intuitionWinRate: 0
+          intuitionWinRate: 0,
+          signalType: recommendation === 'STRONG_BUY' || recommendation === 'BUY' ? 'BUY' : 
+                     recommendation === 'STRONG_SELL' || recommendation === 'SELL' ? 'SELL' : 'WAIT',
+          originalConfidence: confidence  // Add missing field
         }
       });
     } catch (error) {

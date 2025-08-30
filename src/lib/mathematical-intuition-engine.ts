@@ -293,7 +293,7 @@ export class MathematicalIntuitionEngine {
       console.log(`🎯 BAYESIAN: ${bayesianSignal.mostLikelyRegime} regime (${(bayesianSignal.bullishProbability * 100).toFixed(1)}% bull, ${(bayesianSignal.bearishProbability * 100).toFixed(1)}% bear)`);
       
       // Weight Bayesian analysis into mathematical intuition
-      const bayesianWeight = 0.3;  // 30% weight to Bayesian inference
+      const bayesianWeight = 0.5;  // 50% weight to Bayesian inference (increased from 30%)
       const adjustedMathIntuition = mathIntuition * (1 - bayesianWeight) + bayesianConfidence * bayesianWeight;
       
       return this.analyzeIntuitivelyWithBayesian(
