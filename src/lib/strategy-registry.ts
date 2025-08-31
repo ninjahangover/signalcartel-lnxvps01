@@ -115,21 +115,29 @@ class StrategyRegistry {
     return StrategyRegistry.instance;
   }
 
-  // Initialize with competition strategies only
+  // Initialize with database strategies using proper IDs and names
   private initializeDefaultStrategies(): void {
     const defaultStrategies: PineScriptStrategy[] = [
       {
-        id: 'rsi-pullback-pro',
-        name: 'RSI Pullback Pro',
-        description: 'User\'s proven RSI strategy with ultra-aggressive 2-period RSI and tight entry levels',
+        id: 'default-rsi-strategy',
+        name: 'Default RSI Strategy',
+        description: 'User\'s proven RSI strategy with 95% win rate parameters',
         symbol: 'BTCUSD',
         timeframe: '5m',
-        webhookUrl: 'https://kraken.circuitcartel.com/webhook/strategy/rsi-pullback-001',
+        webhookUrl: 'https://kraken.circuitcartel.com/webhook/strategy/default-rsi',
         status: 'ACTIVE',
         inputs: {
-          rsi_length: 2,      // User's preferred ultra-aggressive RSI
-          rsi_overbought: 72, // User's preferred exit levels
-          rsi_oversold: 28,   // User's preferred entry levels
+          // Your 95% win rate RSI parameters
+          rsi_length: 2,          // RSI Lookback = 2 (Your exact winning setup)
+          rsi_overbought: 72,     // Upper Threshold = 72  
+          rsi_oversold: 43,       // Lower Barrier = 43 (Updated to your winning level)
+          rsi_upper_barrier: 45,  // Upper Barrier = 45 (Added your parameter)
+          rsi_lower_threshold: 65, // Lower Threshold = 65 (Added your parameter) 
+          ma_length: 70,          // MA Length = 70 (Updated to your winning setting)
+          atr_stop_loss: 11,      // ATR Multiplier for Stop-Loss = 11 (Your parameter)
+          atr_take_profit: 2,     // ATR Multiplier for Take-Profit = 2 (Your parameter)
+          
+          // Standard parameters (kept for compatibility)
           macd_fast: 12,
           macd_slow: 26,
           macd_signal: 9,
@@ -188,14 +196,47 @@ class StrategyRegistry {
         }
       },
       {
-        id: 'momentum_breakout_v2',
-        name: 'Momentum Breakout v2',
-        description: 'Breakout strategy with momentum confirmation and volume analysis',
+        id: 'enhanced-rsi-strategy',
+        name: 'Enhanced RSI Technical Analysis',
+        description: 'Enhanced RSI strategy with advanced technical indicators and your 95% parameters',
         symbol: 'ETHUSD',
         timeframe: '15m',
-        webhookUrl: 'https://kraken.circuitcartel.com/webhook', // Live Kraken trading only
+        webhookUrl: 'https://kraken.circuitcartel.com/webhook/strategy/enhanced-rsi',
         status: 'ACTIVE',
         inputs: {
+          // Enhanced RSI with your winning parameters
+          rsi_length: 2,          // Your winning RSI lookback
+          rsi_overbought: 72,     // Your upper threshold
+          rsi_oversold: 43,       // Your lower barrier  
+          rsi_upper_barrier: 45,  // Your upper barrier
+          rsi_lower_threshold: 65, // Your lower threshold
+          ma_length: 70,          // Your MA length
+          atr_stop_loss: 11,      // Your ATR stop loss
+          atr_take_profit: 2,     // Your ATR take profit
+          
+          // Enhanced technical indicators
+          macd_fast: 12,
+          macd_slow: 26,
+          macd_signal: 9,
+          ema_length: 21,
+          sma_length: 50,
+          stop_loss_percent: 2.5,
+          take_profit_percent: 6.0,
+          risk_reward_ratio: 2.4,
+          position_size_percent: 2.5,
+          max_positions: 2,
+          momentum_threshold: 1.2,
+          volume_threshold: 1500,
+          volatility_filter: 25,
+          enable_session_filter: true,
+          start_hour: 8,
+          end_hour: 17,
+          enable_weekend_trading: false,
+          enable_pyramiding: true,
+          max_pyramid_levels: 2,
+          trend_filter_enabled: true,
+          min_trend_strength: 0.6
+        },
           rsi_length: 14,
           rsi_overbought: 70,
           rsi_oversold: 30,
@@ -257,38 +298,50 @@ class StrategyRegistry {
         }
       },
       {
-        id: 'mean_reversion_alpha',
-        name: 'Mean Reversion Alpha',
-        description: 'Mean reversion strategy targeting oversold/overbought conditions',
-        symbol: 'ADAUSD',
+        id: 'fear-greed-sentiment-strategy',
+        name: 'Fear & Greed Index Strategy',
+        description: 'Sentiment-based strategy using Fear & Greed Index with market psychology analysis',
+        symbol: 'BTCUSD',
         timeframe: '1h',
         webhookUrl: 'https://kraken.circuitcartel.com/webhook', // Live Kraken trading only
         status: 'ACTIVE',
         inputs: {
+          // Fear & Greed specific parameters
+          fear_threshold: 25,        // Buy when fear index below 25 (extreme fear)
+          greed_threshold: 75,       // Sell when greed index above 75 (extreme greed)
+          sentiment_confidence_min: 80, // Minimum sentiment confidence required
+          fear_greed_weight: 4.0,    // Weight for Fear & Greed index in decision
+          
+          // Technical confirmation parameters
           rsi_length: 14,
-          rsi_overbought: 80,
-          rsi_oversold: 20,
-          macd_fast: 8,
-          macd_slow: 21,
+          rsi_overbought: 70,
+          rsi_oversold: 30,
+          ma_length: 50,             // Moving average for trend confirmation
+          atr_stop_loss: 3,          // Conservative ATR stop loss
+          atr_take_profit: 6,        // 2:1 reward ratio
+          
+          // Standard parameters
+          macd_fast: 12,
+          macd_slow: 26,
           macd_signal: 9,
           ema_length: 20,
           sma_length: 50,
-          stop_loss_percent: 1.5,
-          take_profit_percent: 3.0,
+          stop_loss_percent: 2.5,
+          take_profit_percent: 5.0,
           risk_reward_ratio: 2.0,
-          position_size_percent: 1.8,
-          max_positions: 4,
-          momentum_threshold: 0.8,
-          volume_threshold: 800,
-          volatility_filter: 35,
+          position_size_percent: 2.0,
+          max_positions: 2,
+          momentum_threshold: 1.0,
+          volume_threshold: 1000,
+          volatility_filter: 25,
           enable_session_filter: false,
           start_hour: 0,
           end_hour: 23,
           enable_weekend_trading: true,
           enable_pyramiding: false,
           max_pyramid_levels: 1,
-          trend_filter_enabled: false,
-          min_trend_strength: 0.3
+          trend_filter_enabled: true,
+          min_trend_strength: 0.4
         },
         performance: {
           totalTrades: 89,
@@ -326,14 +379,32 @@ class StrategyRegistry {
         }
       },
       {
-        id: 'claude_bollinger_beast',
-        name: 'Claude\'s Bollinger Beast',
-        description: 'Claude\'s challenge strategy using Bollinger Bands with volume confirmation',
-        symbol: 'SOLUSD',
+        id: 'mathematical-intuition-strategy',
+        name: 'Stratus Core Neural Engine',
+        description: 'Multi-timeframe momentum strategy with neural network-inspired signal processing',
+        symbol: 'ETHUSD',
         timeframe: '15m',
-        webhookUrl: 'https://kraken.circuitcartel.com/webhook',
+        webhookUrl: 'https://kraken.circuitcartel.com/webhook/strategy/quantum-oscillator',
         status: 'ACTIVE',
         inputs: {
+          // Quantum Oscillator specific parameters
+          macd_fast: 8,              // Faster MACD for quantum signals
+          macd_slow: 21,             // Fibonacci-based slow period
+          macd_signal: 5,            // Quick signal line
+          stochastic_k: 14,          // Stochastic %K period
+          stochastic_d: 3,           // Stochastic %D smoothing
+          stochastic_overbought: 80, // Overbought level
+          stochastic_oversold: 20,   // Oversold level
+          
+          // Your RSI confirmation 
+          rsi_length: 2,             // Your winning RSI lookback
+          rsi_overbought: 72,        // Your upper threshold
+          rsi_oversold: 43,          // Your lower barrier
+          
+          // Quantum signal processing
+          ma_length: 34,             // Fibonacci MA for trend
+          atr_stop_loss: 8,          // ATR-based stop loss
+          atr_take_profit: 13,       // Fibonacci take profit ratio"
           rsi_length: 21,
           rsi_overbought: 85,
           rsi_oversold: 15,

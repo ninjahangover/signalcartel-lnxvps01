@@ -105,10 +105,15 @@ class ProductionTradingEngine {
       sentimentEnabled: phase.features.sentimentEnabled,
       orderBookEnabled: phase.features.orderBookEnabled,
       
-      // AI-Optimized Strategy Parameters (Pine Script Input Optimizer)
-      rsiLength: optimizedInputs?.rsi_length || this.calculateRSIPeriod(marketData.price),
-      rsiOverbought: optimizedInputs?.rsi_overbought || 75,
-      rsiOversold: optimizedInputs?.rsi_oversold || 25,
+      // AI-Optimized Strategy Parameters (Your 95% win rate RSI setup)
+      rsiLength: optimizedInputs?.rsi_length || 2,        // RSI Lookback = 2 (Your winning parameter)
+      rsiOverbought: optimizedInputs?.rsi_overbought || 72, // Upper Threshold = 72 (Your parameter)
+      rsiOversold: optimizedInputs?.rsi_oversold || 43,    // Lower Barrier = 43 (Your parameter)
+      rsiUpperBarrier: optimizedInputs?.rsi_upper_barrier || 45, // Upper Barrier = 45 (Your parameter)
+      rsiLowerThreshold: optimizedInputs?.rsi_lower_threshold || 65, // Lower Threshold = 65 (Your parameter)
+      maLength: optimizedInputs?.ma_length || 70,          // MA Length = 70 (Your parameter)
+      atrStopLoss: optimizedInputs?.atr_stop_loss || 11,   // ATR Stop Loss = 11x (Your parameter)
+      atrTakeProfit: optimizedInputs?.atr_take_profit || 2, // ATR Take Profit = 2x (Your parameter)
       macdFast: optimizedInputs?.macd_fast || 12,
       macdSlow: optimizedInputs?.macd_slow || 26,
       macdSignal: optimizedInputs?.macd_signal || 9,
@@ -132,7 +137,9 @@ class ProductionTradingEngine {
     log(`📊 STRATEGY INPUTS: ${strategyName} ${inputs.aiOptimized ? '🤖 AI-OPTIMIZED' : '⚙️  CALCULATED'}`);
     log(`   💹 Market: ${inputs.symbol} @ $${inputs.price} (${inputs.marketRegime} regime)`);
     log(`   🧠 AI: ${(inputs.confidence * 100).toFixed(1)}% confidence [${inputs.aiSystems.join(', ')}]`);
-    log(`   📊 RSI: ${inputs.rsiLength}p, OB=${inputs.rsiOverbought}, OS=${inputs.rsiOversold}`);
+    log(`   🏆 RSI (95% WIN RATE): Length=${inputs.rsiLength}, LowerBarrier=${inputs.rsiOversold}, UpperBarrier=${inputs.rsiUpperBarrier}`);
+    log(`   🎯 RSI Thresholds: LowerThreshold=${inputs.rsiLowerThreshold}, UpperThreshold=${inputs.rsiOverbought}`);
+    log(`   📊 MA Length: ${inputs.maLength}, ATR: SL=${inputs.atrStopLoss}x, TP=${inputs.atrTakeProfit}x`);
     log(`   📈 MACD: ${inputs.macdFast}/${inputs.macdSlow}/${inputs.macdSignal}, MA: EMA${inputs.emaLength}/SMA${inputs.smaLength}`);
     log(`   🎯 Risk: SL=${inputs.stopLossPercent}%, TP=${inputs.takeProfitPercent}%, Size=${inputs.positionSizePercent}%`);
     log(`   ⏱️  Hold: ${inputs.maxHoldTimeMinutes}min, Vol Filter: ${inputs.volatilityFilter}%`);

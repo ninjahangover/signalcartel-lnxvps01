@@ -16,17 +16,24 @@ import { competitionStrategyRegistry, type PineScriptStrategy, getAllStrategies,
 import { alpacaPaperTradingService } from './alpaca-paper-trading-service';
 
 export interface PineScriptInputs {
-  // RSI Inputs
-  rsi_length: number;
-  rsi_overbought: number;
-  rsi_oversold: number;
+  // RSI Inputs (Your 95% win rate parameters)
+  rsi_length: number;           // RSI Lookback = 2
+  rsi_overbought: number;       // Upper Threshold = 72
+  rsi_oversold: number;         // Lower Barrier = 43
+  rsi_upper_barrier: number;    // Upper Barrier = 45
+  rsi_lower_threshold: number;  // Lower Threshold = 65
+  
+  // Moving Average Inputs (Your parameters)
+  ma_length: number;            // MA Length = 70
+  atr_stop_loss: number;        // ATR Multiplier for Stop-Loss = 11
+  atr_take_profit: number;      // ATR Multiplier for Take-Profit = 2
   
   // MACD Inputs
   macd_fast: number;
   macd_slow: number;
   macd_signal: number;
   
-  // Moving Average Inputs
+  // Standard Moving Average Inputs
   ema_length: number;
   sma_length: number;
   
