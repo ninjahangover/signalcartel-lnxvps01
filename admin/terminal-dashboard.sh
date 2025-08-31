@@ -467,6 +467,13 @@ show_recent_activity() {
         echo -e "  ${WHITE}Open Positions:${NC}     ${GREEN}$(format_number $FALLBACK_OPEN_POSITIONS)${NC}"
         echo -e "  ${WHITE}Total Positions:${NC}    ${CYAN}$(format_number $FALLBACK_TOTAL_POSITIONS)${NC}"
     fi
+    
+    # Show recent strategies used
+    local recent_strategies
+    recent_strategies=$(db_query "SELECT DISTINCT strategy FROM \"ManagedTrade\" WHERE \"executedAt\" > NOW() - INTERVAL '1 hour' LIMIT 3;" | tr '\n' ',' | sed 's/,$//')
+    if [[ -n "$recent_strategies" && "$recent_strategies" != "0" ]]; then
+        echo -e "  ${WHITE}Active Strategies:${NC}   ${PURPLE}$(echo "$recent_strategies" | cut -c1-35)...${NC}"
+    fi
     echo ""
 }
 
