@@ -7,6 +7,7 @@ import { QuantumProfitOptimizer, AdvancedTradeSignal } from './quantum-profit-op
 import { QuantumSupremacyEngine, QuantumTradeSignal } from './quantum-supremacy-engine';
 import { phaseManager, PhaseConfig } from './quantum-forge-phase-config';
 import { positionService } from './position-management/position-service';
+import { dev2AIPositionService } from './position-management/dev2-ai-position-service';
 import { webhookClient } from './webhooks/webhook-client';
 import { quantumForgeLiveExecutor } from './live-trading/quantum-forge-live-executor';
 import { TradingTelemetry, TradingTracing } from './telemetry/trading-metrics';
@@ -1355,7 +1356,10 @@ class StrategyExecutionEngine {
           };
           
           // Process signal through position management for proper entry→exit tracking
-          console.log('📊 Processing signal through Position Management System...');
+          // Use dev2 enhanced AI service if running as dev2
+          const isDev2 = process.env.NTFY_TOPIC === 'signal-cartel-dev2';
+          console.log(`📊 Processing signal through ${isDev2 ? 'DEV2 AI Enhanced' : 'Standard'} Position Management System...`);
+          
           const result = await TradingTracing.executeWithTracing(
             'position.process_signal',
             async (span) => {
@@ -1364,9 +1368,16 @@ class StrategyExecutionEngine {
                 'trading.action': action,
                 'trading.confidence': confidence,
                 'trading.price': currentPrice,
-                'trading.strategy': this.getStrategyName(strategyId)
+                'trading.strategy': this.getStrategyName(strategyId),
+                'trading.variant': isDev2 ? 'dev2_ai_enhanced' : 'standard'
               });
-              return await positionService.processSignal(tradingSignal);
+              
+              // Route to appropriate service based on environment
+              if (isDev2) {
+                return await dev2AIPositionService.processSignal(tradingSignal);
+              } else {
+                return await positionService.processSignal(tradingSignal);
+              }
             },
             {
               'trading.signal_type': action,

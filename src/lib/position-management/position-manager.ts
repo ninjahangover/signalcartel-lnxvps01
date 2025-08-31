@@ -360,13 +360,39 @@ export class PositionManager {
       return `quick_profit_${pnlPercent.toFixed(1)}%_${holdTimeMinutes.toFixed(1)}min`;
     }
     
-    // ⏰ TIME-BASED EXITS (but only if not very profitable)
-    if (holdTimeMinutes >= 10 && pnlPercent < 2.0) {
-      return `time_exit_${holdTimeMinutes.toFixed(1)}min_${pnlPercent.toFixed(1)}%`;
+    // ⏰ TIME-BASED EXITS - More intelligent with strategy validation
+    // Phase 3/4 AI-validated positions get more time to develop
+    const isAIValidated = position.strategy.includes('phase-3') || position.strategy.includes('phase-4');
+    const isQuantumForge = position.strategy.includes('quantum-forge');
+    
+    // For AI-validated positions, allow longer hold times
+    if (isAIValidated) {
+      // Only exit if losing significantly after extended time
+      if (holdTimeMinutes >= 20 && pnlPercent <= -2.0) {
+        return `ai_validated_loss_exit_${holdTimeMinutes.toFixed(1)}min_${pnlPercent.toFixed(1)}%`;
+      }
+      
+      // For quantum forge positions, even more patience
+      if (isQuantumForge) {
+        // Allow up to 45 minutes for quantum forge validated positions
+        if (holdTimeMinutes >= 45 && pnlPercent < 0) {
+          return `quantum_forge_time_exit_${holdTimeMinutes.toFixed(1)}min_${pnlPercent.toFixed(1)}%`;
+        }
+      } else {
+        // Regular AI positions get 30 minutes
+        if (holdTimeMinutes >= 30 && pnlPercent < 0) {
+          return `ai_time_exit_${holdTimeMinutes.toFixed(1)}min_${pnlPercent.toFixed(1)}%`;
+        }
+      }
+    } else {
+      // Non-AI positions use original 10-minute rule but only if losing
+      if (holdTimeMinutes >= 10 && pnlPercent < 0) {
+        return `basic_time_exit_${holdTimeMinutes.toFixed(1)}min_${pnlPercent.toFixed(1)}%`;
+      }
     }
     
-    // ❌ EMERGENCY EXIT: Positions older than 30 minutes (regardless of P&L)
-    if (holdTimeMinutes >= 30) {
+    // ❌ EMERGENCY EXIT: Positions older than 60 minutes (regardless of P&L)
+    if (holdTimeMinutes >= 60) {
       return `emergency_time_exit_${holdTimeMinutes.toFixed(1)}min`;
     }
     
